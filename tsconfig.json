@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@r1/core": ["./packages/core/src/index.ts"],
+      "@r1/kernel": ["./packages/kernel/src/index.ts"],
+      "@r1/apis": ["./packages/apis/src/index.ts"],
+      "@r1/window": ["./packages/window/src/index.ts"],
+      "@r1/sw": ["./packages/sw/src/index.ts"],
+      "@r1/vite-plugin": ["./packages/vite-plugin/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "apps/*/src/**/*",
+    "vitest.config.ts",
+    "vite.config.base.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/dist/**"
+  ]
+}
