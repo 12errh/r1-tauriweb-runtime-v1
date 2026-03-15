@@ -61,10 +61,29 @@ router.register('PING', async () => ({ pong: true, ts: Date.now() }));
 // 2.5 - IPC_INVOKE handler: Now routes to the hierarchical plugin:command
 router.register('IPC_INVOKE', async (payload: any) => {
   const { command, args } = payload;
-  return router.handle({ id: 'internal', type: command, payload: args }).then(res => {
-    if (res.error) throw new Error(res.error);
-    return res.payload;
-  });
+  
+  // 1. Try routing via plugins first
+  const response = await router.handle({ id: 'internal', type: command, payload: args });
+  if (!response.error) return response.payload;
+
+  // 2. Fallback: Check if it's a WASM command (mapped as module:fn)
+  // or just attempt  // 2. Fallback: Check if it's a WASM command (mapped as module:fn)
+  try {
+    // If command has no colon, assume 'main:' prefix for the primary app WASM
+    const finalCmd = command.includes(':') ? command : `main:${command}`;
+    const [module, fn] = finalCmd.split(':');
+    
+    // Wrap args in an array if it's not one, as callFunction expects positional args
+    const wasmArgs = Array.isArray(args) ? args : [args];
+    return await wasmOrchestrator.callFunction(module, fn, wasmArgs);
+  } catch (e) {
+    // If it was a wasm-specific error, throw that. Otherwise fallback to the router error.
+    const wasmError = (e as Error).message;
+    if (wasmError.includes('[WasmOrchestrator]')) {
+      throw e;
+    }
+    throw new Error(response.error || wasmError);
+  }
 });
 
 // 3.6 - VFS Routing Endpoints
@@ -120,7 +139,6 @@ router.register('WASM_UNLOAD', async ({ name }) => {
 self.onmessage = async (event: MessageEvent<KernelRequest | { type: string, id: string, payload: any, error?: string }>) => {
   const data = event.data;
   if (!data || !data.id || typeof data.type !== 'string') {
-    console.error('[R1 Kernel] Received malformed message:', event.data);
     return;
   }
 
@@ -135,6 +153,9 @@ self.onmessage = async (event: MessageEvent<KernelRequest | { type: string, id: 
     }
     return;
   }
+  
+  // Ensure VFS is ready before handling any FS-related command
+  await vfsReady;
   
   const response = await router.handle(data as KernelRequest);
   self.postMessage(response);

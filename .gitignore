@@ -5,4 +5,19 @@ build/
 .env.*
 !.env.example
 .DS_Store
-tests/fixtures/wasm/target/
+.agent/
+.gemini/
+.idea/
+.vscode/
+*.wasm
+!public/wasm/*.wasm
+package-lock.json (if using yank/yarn)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.turbo
+.next
+**/target/
+vite.config.ts.timestamp-*

@@ -1,39 +1,39 @@
 # Contributing to R1 TauriWeb Runtime
 
-Thank you for your interest in contributing to the R1 TauriWeb Runtime! This project aims to bring native Rust/Tauri applications seamlessly to the browser environment.
+We love your input! We want to make contributing to R1 as easy and transparent as possible, whether it's:
 
-## Monorepo Architecture
+- Reporting a bug
+- Discussing the current state of the code
+- Submitting a fix
+- Proposing new features
+- Becoming a maintainer
 
-This project is structured as a TypeScript monorepo using standard NPM workspaces:
-- `@r1/core`: The main thread IPC bridge mapping Tauri `invoke` objects over to the web worker thread.
-- `@r1/kernel`: The Web Worker sandbox environment housing the Virtual File System (VFS) and the `WasmOrchestrator`.
-- `@r1/sw`: The Service Worker hijacking the local browser asset protocol so static frontends can be served internally without remote servers.
-- `@r1/window`: A virtual window mapping suite intercepting OS-level calls natively to DOM HTML windows.
-- `@r1/vite-plugin`: The bundler compiling Rust applications directly into our `.wasm` schema.
+## Development Process
 
-## Development Setup
+We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
 
-1. **Install Node dependencies:**
-   ```bash
-   npm install
-   ```
-2. **Setup Rust Toolchain:**
-   Ensure you have Rust installed. We compile to WebAssembly natively.
-   ```bash
-   rustup target add wasm32-unknown-unknown
-   ```
-3. **Run local demo:**
-   ```bash
-   npm run dev -w apps/demo
-   ```
-4. **Run Tests:**
-   We enforce strict unit coverage testing mock bounds perfectly utilizing `happy-dom`.
-   ```bash
-   npm test
-   ```
+1. Fork the repo and create your branch from `main`.
+2. If you've added code that should be tested, add tests.
+3. If you've changed APIs, update the documentation.
+4. Ensure the test suite passes (`npm run test`).
+5. Make sure your code lints.
+6. Issue that pull request!
 
-## Contribution Rules
+## Any contributions you make will be under the MIT Software License
+In short, when you submit code contributions, you agree to license your contribution under the MIT license to the project.
 
-- ALL WebAssembly execution must happen strictly inside the Kernel Worker. Never run WASM on the main DOM thread.
-- JS to WASM communication strictly travels as JSON strings.
-- Please test rigorously via Vitest suites before pushing PRs.
+## Report bugs using GitHub's [issue tracker]
+We use GitHub issues to track public bugs. Report a bug by opening a new issue; it's that easy!
+
+## Write bug reports with detail, background, and sample code
+**Great Bug Reports** tend to have:
+- A quick summary and/or background
+- Steps to reproduce
+  - Be specific!
+  - Give sample code if you can.
+- What you expected would happen
+- What actually happened
+- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+
+## License
+By contributing, you agree that your contributions will be licensed under its MIT License.

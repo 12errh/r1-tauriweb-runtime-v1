@@ -1,7 +1,10 @@
 {
   "name": "@r1/kernel",
   "version": "0.1.0",
+  "description": "The core OS-like kernel for the R1 Runtime, managing IPC, WASM, and VFS.",
   "type": "module",
+  "author": "R1 Runtime Team",
+  "license": "MIT",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"

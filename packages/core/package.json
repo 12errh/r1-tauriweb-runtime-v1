@@ -1,7 +1,10 @@
 {
   "name": "@r1/core",
   "version": "0.1.0",
+  "description": "Main thread runtime for R1, providing the IPC bridge and boot synchronization.",
   "type": "module",
+  "author": "R1 Runtime Team",
+  "license": "MIT",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"

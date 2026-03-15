@@ -11,6 +11,7 @@ export class WindowManager {
   private theme: OSTheme = 'macos';
 
   private constructor() {
+    this.injectStyles();
     this.container = document.createElement('div');
     this.container.id = 'r1-window-container';
     this.container.style.position = 'fixed';
@@ -18,6 +19,37 @@ export class WindowManager {
     this.container.style.pointerEvents = 'none';
     this.container.style.zIndex = '9999';
     this.ensureContainer();
+  }
+
+  /**
+   * Injects core window/dialog styles into the document head at runtime.
+   * This ensures UI components are styled even if the bundle loader skips CSS.
+   */
+  private injectStyles() {
+    if (document.getElementById('r1-core-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'r1-core-styles';
+    style.textContent = `
+      #r1-window-container { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .r1-dialog-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 10000; pointer-events: auto;
+      }
+      .r1-modal {
+        background: #2b2b2b; color: white; border-radius: 12px; padding: 24px;
+        min-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .r1-modal-title { font-weight: 600; margin-bottom: 8px; font-size: 16px; }
+      .r1-modal-body { margin-bottom: 24px; font-size: 14px; opacity: 0.8; }
+      .r1-modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+      .r1-btn { padding: 8px 20px; border-radius: 8px; border: none; font-size: 14px; cursor: pointer; transition: filter 0.2s; }
+      .r1-btn:hover { filter: brightness(1.1); }
+      .r1-btn-primary { background: #007aff; color: white; }
+      .r1-btn-secondary { background: #444; color: white; }
+    `;
+    document.head.appendChild(style);
   }
 
   private ensureContainer() {

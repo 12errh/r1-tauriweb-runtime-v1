@@ -85,8 +85,9 @@ export class WasmOrchestrator {
             env: createEnv(() => instanceRef)
         };
 
-        // Note: jsModule.default usually takes (buffer, imports)
-        const wasmInstance = await jsModule.default(buffer, imports);
+        // Note: jsModule.default (wasm-bindgen init) takes an options object or the buffer.
+        // To suppress deprecation warnings, we pass the object format.
+        const wasmInstance = await jsModule.default({ module_or_path: buffer, ...imports });
         instanceRef = wasmInstance; // capturing for the closure
 
         if (wasmInstance && wasmInstance.memory) {
@@ -134,12 +135,16 @@ export class WasmOrchestrator {
    * Auto-discovers exported functions and registers them in the kernel router.
    */
   private registerModuleCommands(moduleName: string, exports: any) {
-    for (const [fnName, func] of Object.entries(exports)) {
+    // Module namespace objects might not work well with Object.entries in some environments
+    const keys = Object.keys(exports).concat(Object.getOwnPropertyNames(exports));
+    const uniqueKeys = Array.from(new Set(keys));
+    
+    for (const fnName of uniqueKeys) {
+      const func = exports[fnName];
       if (typeof func === 'function' && !fnName.startsWith('__') && fnName !== 'default') {
         const fullCmdName = `${moduleName}:${fnName}`;
+        console.log(`[WasmOrchestrator] Registering command: ${fullCmdName}`);
         this.router.register(fullCmdName, async (payload: any) => {
-          // If payload is an array, assume positional arguments. 
-          // If it's a single value/object, wrap it.
           const args = Array.isArray(payload) ? payload : [payload];
           return this.callFunction(moduleName, fnName, args);
         });
@@ -175,7 +180,10 @@ export class WasmOrchestrator {
         if (parsed.error !== undefined) {
           throw new Error(parsed.error);
         }
-        return parsed.ok;
+        
+        // If the response follows the { ok: ... } pattern, return the value.
+        // Otherwise, return the whole parsed object (transparent bridge).
+        return parsed.ok !== undefined ? parsed.ok : parsed;
       }
 
       // Raw array / primitives evaluation mapping (Phase 4)

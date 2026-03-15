@@ -1,14 +1,33 @@
 {
   "name": "@r1/vite-plugin",
   "version": "0.1.0",
+  "description": "The official Vite plugin for R1, automating Rust compilation and runtime injection.",
   "type": "module",
-  "main": "./src/index.ts",
+  "author": "R1 Runtime Team",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts"
+  ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "esbuild": "^0.20.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-dts": "^4.5.4"
   },
   "peerDependencies": {
     "vite": "^5.0.0"

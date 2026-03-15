@@ -1,10 +1,20 @@
 {
   "name": "@r1/apis",
   "version": "0.1.0",
+  "description": "Standardized Tauri API shims for the R1 Runtime (FS, Dialog, Event, etc.)",
   "type": "module",
+  "author": "R1 Runtime Team",
+  "license": "MIT",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tauri": "./src/tauri/index.ts",
+    "./event": "./src/event/index.ts",
+    "./fs": "./src/fs/index.ts",
+    "./dialog": "./src/dialog/index.ts",
+    "./os": "./src/os/index.ts",
+    "./clipboard": "./src/clipboard/index.ts",
+    "./window": "./src/window/index.ts"
   },
   "scripts": {
     "build": "vite build",
