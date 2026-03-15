@@ -717,11 +717,11 @@ it to the VFS.
   - Verify an unimplemented WASI syscall returns `ERRNO_NOSYS`, no crash
 
 ### Exit Criteria
-- [ ] `std::fs::write` and `std::fs::read_to_string` work from Rust.
-- [ ] Files written by Rust are readable from JS via VFS.
-- [ ] Files written by Rust survive browser refresh.
-- [ ] An unimplemented WASI syscall returns `ERRNO_NOSYS`, no crash.
-- [ ] `proc_exit(0)` throws a catchable error, not a hard Worker crash.
+- [x] `std::fs::write` and `std::fs::read_to_string` work from Rust.
+- [x] Files written by Rust are readable from JS via VFS.
+- [x] Files written by Rust survive browser refresh.
+- [x] An unimplemented WASI syscall returns `ERRNO_NOSYS`, no crash.
+- [x] `proc_exit(0)` throws a catchable error, not a hard Worker crash.
 
 ---
 

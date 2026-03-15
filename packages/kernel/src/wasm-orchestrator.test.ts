@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WasmOrchestrator } from './wasm-orchestrator';
+import { VFS } from './vfs';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
+describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   let wasmBgBytes: ArrayBuffer;
   let originalFetch: any;
+  let vfs: VFS;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vfs = new VFS();
+    // Mock VFS init to avoid OPFS issues in Node
+    (vfs as any).isInit = true;
+
     originalFetch = globalThis.fetch;
     globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
       let fileName = '';
@@ -15,6 +21,8 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
         fileName = 'test-module_bg.wasm';
       } else if (url.includes('test-module.wasm')) {
         fileName = 'test-module.wasm';
+      } else if (url.includes('test-wasi.wasm')) {
+        fileName = 'test-wasi.wasm';
       }
 
       if (fileName) {
@@ -36,7 +44,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
   });
 
   it('1. Two .wasm modules loaded simultaneously under different names are isolated', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     
     // Load two completely independent WASM memory bounds
     await orchestrator.loadModule('my-app-1', '/test-module.wasm');
@@ -51,7 +59,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
   });
 
   it('2. Calling a function on an unloaded/non-existent module returns a clean error', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     
     expect(() => orchestrator.callFunction('ghost-app', 'add', [1, 2]))
       .toThrowError("[WasmOrchestrator] Module 'ghost-app' is not loaded.");
@@ -63,7 +71,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
   });
 
   it('3. A WASM panic is caught and returned as an error string without crashing the thread', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     await orchestrator.loadModule('my-app', '/test-module.wasm');
 
     // The Rust `force_panic` triggers a memory trap 'unreachable' execution.
@@ -73,7 +81,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
   });
 
   it('4. unloadModule does not affect other loaded modules', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     
     await orchestrator.loadModule('app-A', '/test-module.wasm');
     await orchestrator.loadModule('app-B', '/test-module.wasm');
@@ -92,7 +100,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
 
   // --- Phase 5 Tests ---
   it('5. A nested JS object round-trips through Rust via Serde without data loss', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     
     // Instead of instantiating raw WebAssembly, let's mock testing evaluation pointing exactly to the `.js` 
     // generated glue via absolute path native ESM loading.
@@ -108,7 +116,7 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
   });
 
   it('6. Missing required fields return a clean error from Rust, not a panic', async () => {
-    const orchestrator = new WasmOrchestrator();
+    const orchestrator = new WasmOrchestrator(vfs);
     const jsUrl = resolve(__dirname, '../../../tests/fixtures/wasm/test-module.js');
     await orchestrator.loadModule('serde-app', jsUrl);
 
@@ -117,5 +125,17 @@ describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
 
     expect(() => orchestrator.callFunction('serde-app', 'echo_object', [invalidPayload]))
       .toThrowError('Missing required fields or malformed JSON');
+  });
+
+  // --- Phase 6 Tests ---
+  it('7. WASI: Rust can write to a file via std::fs (redirected to VFS)', async () => {
+    const orchestrator = new WasmOrchestrator(vfs);
+    await orchestrator.loadModule('wasi-app', '/test-wasi.wasm');
+
+    // Call the un-mangled test function
+    const result = orchestrator.callFunction('wasi-app', 'test_wasi_write', []);
+
+    expect(result).toBe(1); // 1 = Success in our Rust code
+    expect(vfs.readText('/wasi-test.txt')).toBe('WASI IS WORKING');
   });
 });

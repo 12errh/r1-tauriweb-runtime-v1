@@ -5,7 +5,7 @@ import type { KernelRequest } from './protocol';
 
 const router = new Router();
 const vfs = new VFS();
-const wasmOrchestrator = new WasmOrchestrator();
+const wasmOrchestrator = new WasmOrchestrator(vfs);
 
 // Ensure VFS is initialised strictly before it handles anything
 // In Phase 8, this will be part of a proper Boot sequence

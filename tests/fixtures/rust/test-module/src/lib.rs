@@ -49,3 +49,39 @@ pub fn echo_object(payload: &str) -> String {
         Err(e) => format!(r#"{{"error": "serialization failed: {}"}}"#, e),
     }
 }
+
+/* --- PHASE 6: WASI FILE I/O --- */
+
+#[derive(Serialize, Deserialize)]
+struct WasiArgs {
+    path: String,
+    content: String,
+}
+
+#[wasm_bindgen]
+pub fn write_and_read(payload: &str) -> String {
+    let args: WasiArgs = match serde_json::from_str(payload) {
+        Ok(a) => a,
+        Err(_) => return r#"{"error": "invalid wasi payload"}"#.to_string(),
+    };
+
+    // USES STANDARD std::fs (this becomes WASI syscalls)
+    if let Err(e) = std::fs::write(&args.path, &args.content) {
+        return format!(r#"{{"error": "write failed: {}"}}"#, e);
+    }
+
+    match std::fs::read_to_string(&args.path) {
+        Ok(content) => format!(r#"{{"ok": "{}"}}"#, content),
+        Err(e) => format!(r#"{{"error": "read failed: {}"}}"#, e),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn test_wasi_write() -> i32 {
+    let path = "/wasi-test.txt";
+    let content = "WASI IS WORKING";
+    match std::fs::write(path, content) {
+        Ok(_) => 1,
+        Err(_) => 0,
+    }
+}
