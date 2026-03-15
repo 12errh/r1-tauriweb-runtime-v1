@@ -9,5 +9,8 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@r1/kernel": "workspace:*"
   }
 }

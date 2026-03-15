@@ -1,18 +1,13 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App';
-import { R1Runtime } from '@r1/core';
+import { WindowManager } from '@r1/window';
 
-// Boot the Kernel Worker and install the IPC Bridge
-const r1 = new R1Runtime();
-// For Vite dev, we point to the compiled worker module
-// Later this might be a static sw.js URL
-import KernelWorkerUrl from '../../../packages/kernel/src/kernel.worker.ts?url';
+// Expose Window Manager globally for the showcase to demonstrate it
+(window as any).__R1_WM__ = WindowManager.getInstance();
 
-r1.boot(KernelWorkerUrl).then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
-});
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

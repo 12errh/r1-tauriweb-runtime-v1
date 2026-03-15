@@ -1,5 +1,6 @@
 import type { KernelRequest, KernelResponse } from '@r1/kernel';
 import { EventBus } from './event-bus';
+import { WindowManager } from '@r1/window';
 
 /** Let's wait up to 30s before considering the worker dead/stuck. */
 const REQUEST_TIMEOUT_MS = 30000;
@@ -106,9 +107,12 @@ export class KernelProxy {
 
     try {
       if (api === 'dialog') {
-        if (method === 'message') alert(args.message);
-        else if (method === 'confirm') result = confirm(args.message);
-        else if (method === 'ask') result = confirm(args.message);
+        if (method === 'message') {
+            await WindowManager.getInstance().showDialog({ message: args.message, title: args.title, type: 'alert' });
+        }
+        else if (method === 'confirm' || method === 'ask') {
+            result = await WindowManager.getInstance().showDialog({ message: args.message, title: args.title, type: 'confirm' });
+        }
       } else if (api === 'clipboard') {
         if (method === 'write_text') await navigator.clipboard.writeText(args.text);
         else if (method === 'read_text') result = await navigator.clipboard.readText();
@@ -117,6 +121,25 @@ export class KernelProxy {
         else if (method === 'notify') new Notification(args.title, args.options);
       } else if (api === 'shell') {
         if (method === 'open') window.open(args.url, '_blank');
+      } else if (api === 'window') {
+        const wm = WindowManager.getInstance();
+        const winId = args.id || 'main';
+        const methodMapping: Record<string, string> = {
+          'set_title': 'setTitle',
+          'close': 'close',
+          'maximize': 'maximize',
+          'minimize': 'minimize',
+          'focus': 'focus'
+        };
+
+        if (method === 'close') {
+          wm.close(winId);
+        } else if (method === 'focus') {
+          wm.focus(winId);
+        } else if (method === 'set_title') {
+            const win = wm.getWindow(winId);
+            if (win) win.setTitle(args.title);
+        }
       }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);

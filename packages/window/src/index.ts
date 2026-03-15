@@ -1,2 +1,3 @@
-// @r1/window — Virtual Window Manager, OS-accurate chrome (macOS, Windows 11, Linux)
-export {};
+export * from './virtual-window';
+export * from './window-manager';
+import './window.css';

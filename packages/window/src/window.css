@@ -1,0 +1,218 @@
+:root {
+  --r1-window-macos-radius: 12px;
+  --r1-window-windows-radius: 8px;
+  --r1-window-linux-radius: 6px;
+  
+  --r1-shadow-premium: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.r1-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1e1e1e;
+  color: #ffffff;
+  box-shadow: var(--r1-shadow-premium);
+  min-width: 200px;
+  min-height: 100px;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.r1-window-chrome {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.r1-window-title {
+  flex-grow: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.r1-window-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.r1-window-content {
+  flex-grow: 1;
+  background: #000;
+  position: relative;
+}
+
+.r1-window-content iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Themes */
+.r1-theme-macos {
+  border-radius: var(--r1-window-macos-radius);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  background: #282828;
+}
+
+.r1-theme-macos .r1-window-chrome {
+  background: #3c3c3c;
+  border-bottom: 0.5px solid #1a1a1a;
+}
+
+.r1-control-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.r1-control-dot:hover {
+  filter: brightness(0.8);
+}
+
+.r1-theme-windows {
+  border-radius: var(--r1-window-windows-radius);
+  border: 1px solid #333;
+  background: #191919;
+}
+
+.r1-theme-windows .r1-window-chrome {
+  padding-left: 12px;
+  padding-right: 0;
+  justify-content: space-between;
+}
+
+.r1-theme-windows .r1-window-title {
+  text-align: left;
+}
+
+.r1-theme-windows .r1-window-controls {
+  height: 100%;
+  gap: 0;
+}
+
+.r1-win-btn {
+  width: 46px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.r1-win-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.r1-win-btn.r1-close:hover {
+  background: #e81123;
+}
+.r1-theme-linux {
+  border-radius: var(--r1-window-linux-radius);
+  border: 1px solid #1a1a1a;
+  background: #242424;
+}
+
+.r1-theme-linux .r1-window-chrome {
+  background: #353535;
+  color: #eeeeee;
+  justify-content: space-between;
+}
+
+.r1-theme-linux .r1-window-controls {
+  order: 2;
+  gap: 6px;
+}
+
+.r1-btn-linux {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #454545;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.r1-btn-linux:hover {
+  background: #555555;
+}
+
+.r1-dialog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+.r1-modal {
+  background: #2b2b2b;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 300px;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border: 0.5px solid rgba(255,255,255,0.1);
+}
+
+.r1-modal-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.r1-modal-body {
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.r1-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.r1-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.r1-btn-primary { background: #007aff; color: white; }
+.r1-btn-secondary { background: #444; color: white; }
+
+.r1-handle {
+  position: absolute;
+  z-index: 10;
+}
+
+.r1-handle-n { top: -4px; left: 4px; right: 4px; height: 8px; cursor: ns-resize; }
+.r1-handle-s { bottom: -4px; left: 4px; right: 4px; height: 8px; cursor: ns-resize; }
+.r1-handle-e { right: -4px; top: 4px; bottom: 4px; width: 8px; cursor: ew-resize; }
+.r1-handle-w { left: -4px; top: 4px; bottom: 4px; width: 8px; cursor: ew-resize; }
+
+.r1-handle-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nwse-resize; }
+.r1-handle-ne { top: -4px; right: -4px; width: 12px; height: 12px; cursor: nesw-resize; }
+.r1-handle-sw { bottom: -4px; left: -4px; width: 12px; height: 12px; cursor: nesw-resize; }
+.r1-handle-se { bottom: -4px; right: -4px; width: 12px; height: 12px; cursor: nwse-resize; }

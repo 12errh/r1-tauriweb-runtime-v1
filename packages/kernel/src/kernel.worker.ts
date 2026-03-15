@@ -10,7 +10,8 @@ import {
   OsPlugin, 
   HttpPlugin, 
   PathPlugin,
-  MainBridgePlugin 
+  MainBridgePlugin,
+  WindowPlugin 
 } from '@r1/apis';
 
 const router = new Router();
@@ -38,6 +39,7 @@ router.use(new StorePlugin(vfs));
 router.use(new OsPlugin());
 router.use(new HttpPlugin());
 router.use(new PathPlugin());
+router.use(new WindowPlugin(onMainThreadCall));
 
 // Main Thread Bridged APIs
 router.use(new MainBridgePlugin('dialog', onMainThreadCall));

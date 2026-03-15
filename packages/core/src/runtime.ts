@@ -29,6 +29,10 @@ export class R1Runtime {
     console.log('[R1] Boot complete.');
   }
 
+  async invoke(type: string, payload: any): Promise<any> {
+    return this.kernel.send(type, payload);
+  }
+
   /** Get direct access to the kernel proxy if needed internally */
   get kernel(): KernelProxy {
     if (!this.kernelProxy) throw new Error('[R1] Runtime not booted.');

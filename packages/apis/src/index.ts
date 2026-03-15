@@ -6,3 +6,4 @@ export { OsPlugin } from './os';
 export { HttpPlugin } from './http';
 export { PathPlugin } from './path_util';
 export { MainBridgePlugin } from './main_bridge';
+export { WindowPlugin } from './window';
