@@ -31,7 +31,9 @@ r1-tauriweb-runtime/
 
 ## 🛠️ Getting Started
 
-Check out the [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for a deep dive into how to build and use R1 in your own projects.
+We have provided detailed guides to help you start building:
+- 📖 **[USAGE_GUIDE.md](./USAGE_GUIDE.md)**: A step-by-step tutorial for your first app.
+- 🏗️ **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**: Deep technical architecture and limitations.
 
 ### Quick Start (Running the Todo Demo)
 
