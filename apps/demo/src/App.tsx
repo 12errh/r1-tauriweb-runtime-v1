@@ -4,11 +4,12 @@ import './index.css';
 import workerUrl from './sw?worker&url';
 
 const PHASES = [
-  { id: 'foundation', icon: '⚡', label: 'Foundation (P1-P2)', title: 'Kernel & IPC Protocol' },
-  { id: 'vfs', icon: '📂', label: 'Filesystem (P3)', title: 'Virtual File System (OPFS)' },
-  { id: 'wasm', icon: '🦀', label: 'WASM & WASI (P4-P7)', title: 'Rust Orchestration' },
-  { id: 'apis', icon: '🛠️', label: 'Tauri APIs (P8)', title: 'Tauri Compatibility Layer' },
-  { id: 'window', icon: '🪟', label: 'Windowing (P9)', title: 'Virtual Desktop & Themes' },
+  { id: 'foundation', icon: '⚡', label: 'Foundation', title: 'Kernel & IPC Protocol' },
+  { id: 'vfs', icon: '📂', label: 'Filesystem', title: 'Virtual File System (OPFS)' },
+  { id: 'wasm', icon: '🦀', label: 'WASM & WASI', title: 'Rust Orchestration' },
+  { id: 'apis', icon: '🛠️', label: 'Tauri APIs', title: 'Tauri Compatibility Layer' },
+  { id: 'window', icon: '🪟', label: 'Windowing', title: 'Virtual Desktop & Themes' },
+  { id: 'assets', icon: '🖼️', label: 'Assets (P10)', title: 'Service Worker Protocol' },
 ];
 
 export default function App() {
@@ -184,12 +185,40 @@ export default function App() {
                 </div>
               </div>
               <div className="panel">
-                <div className="panel-header">Persistent settings</div>
-                <p>Using the hierarchical <code>store:set</code> plugin.</p>
-                <button className="btn" onClick={async () => {
-                    await r1.current?.invoke('store:set', { name: 'demo', key: 'ver', value: '1.0' });
-                    addLog('Settings persisted to VFS.');
-                }}>Save Version to Store</button>
+                <div className="panel-header">Custom OS Dialogs</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn" onClick={() => (window as any).alert('This is a themed alert!')}>Show Alert</button>
+                  <button className="btn btn-secondary" onClick={async () => {
+                    const ok = await (window as any).confirm('Do you want to continue?');
+                    addLog(`Confirm result: ${ok}`);
+                  }}>Show Confirm</button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activePhase === 'assets' && (
+            <>
+              <div className="panel">
+                <div className="panel-header">Asset Protocol Test</div>
+                <p>Loads files from VFS using <code>r1-asset://</code></p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <button className="btn" onClick={async () => {
+                    const content = `<html><body style="background: #111; color: #00ff00; font-family: monospace; padding: 20px;"><h1>Hello from VFS!</h1><p>The Service Worker intercepted this request and read it from OPFS.</p><p>Timestamp: ${new Date().toLocaleTimeString()}</p></body></html>`;
+                    await r1.current?.invoke('fs:write_text_file', { path: '/demo.html', contents: content });
+                    addLog('Generated /demo.html in VFS');
+                  }}>1. Generate HTML file</button>
+                  
+                  <button className="btn btn-secondary" onClick={() => {
+                    const frame = document.getElementById('asset-preview') as HTMLIFrameElement;
+                    if (frame) frame.src = '/r1-asset/demo.html?t=' + Date.now();
+                    addLog('Loading /r1-asset/demo.html into preview...');
+                  }}>2. Load into Frame</button>
+                </div>
+
+                <div style={{ marginTop: '16px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
+                    <iframe id="asset-preview" style={{ width: '100%', height: '200px', background: '#000', border: 'none' }}></iframe>
+                </div>
               </div>
             </>
           )}

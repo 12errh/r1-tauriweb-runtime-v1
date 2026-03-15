@@ -9,7 +9,7 @@ export class R1Runtime {
    * 
    * @param workerUrl - The path to the Kernel Worker script. E.g. '/sw.js' or imported worker URL.
    */
-  async boot(workerUrl: string = '/sw.js'): Promise<void> {
+  async boot(workerUrl: string = '/sw.js', swUrl: string = '/r1-sw.js'): Promise<void> {
     if (this.kernelProxy) {
       console.warn('[R1] Runtime already booted.');
       return;
@@ -23,7 +23,17 @@ export class R1Runtime {
     // 2. Install IPC Bridge
     installIpcBridge(this.kernelProxy);
 
-    // 3. (Phase 10) Register Service Worker interception here
+    // 3. (Phase 10) Register Service Worker interception
+    if ('serviceWorker' in navigator) {
+      try {
+        // Registering SW at root with explicit scope
+        await navigator.serviceWorker.register(swUrl, { scope: '/' });
+        console.log('[R1] Service Worker registered successfully at scope: /');
+      } catch (e) {
+        console.error('[R1] serviceWorker registration failed:', e);
+      }
+    }
+
     // 4. (Phase 4) Load developer WASM here
 
     console.log('[R1] Boot complete.');

@@ -250,11 +250,11 @@ kernelProxy.send('PING', {})    ──→     router.handle('PING')
 
 ### Tasks
 
-- [ ] **1.1 — Create `packages/kernel/src/kernel.worker.ts`.**
+- [x] **1.1 — Create `packages/kernel/src/kernel.worker.ts`.**
   This is the Worker entry point. It sets up the message router and listens for
   messages on `self.onmessage`. It never imports anything from `@r1/core`.
 
-- [ ] **1.2 — Define the message protocol types.**
+- [x] **1.2 — Define the message protocol types.**
   Create `packages/kernel/src/protocol.ts`:
   ```typescript
   export interface KernelRequest {
@@ -293,7 +293,7 @@ kernelProxy.send('PING', {})    ──→     router.handle('PING')
   router.register('PING', async () => ({ pong: true, ts: Date.now() }));
   ```
 
-- [ ] **1.6 — Write the smoke test.**
+- [x] **1.6 — Write the smoke test.**
   In `packages/kernel/src/kernel.test.ts`:
   - Send a `PING` message via `KernelProxy`
   - Assert the response contains `{ pong: true }`
@@ -577,7 +577,7 @@ pub fn my_command(payload: &str) -> String
 
 ### Tasks
 
-- [ ] **5.1 — Create the Rust WASM template.**
+- [x] **5.1 — Create the Rust WASM template.**
   Create `packages/wasm-template/` — a complete Rust project developers copy:
   ```
   wasm-template/
@@ -597,7 +597,7 @@ pub fn my_command(payload: &str) -> String
   crate-type = ["cdylib"]
   ```
 
-- [ ] **5.2 — Write the example command in `lib.rs`.**
+- [x] **5.2 — Write the example command in `lib.rs`.**
   ```rust
   use wasm_bindgen::prelude::*;
   use serde::{Deserialize, Serialize};
@@ -619,10 +619,10 @@ pub fn my_command(payload: &str) -> String
   }
   ```
 
-- [ ] **5.3 — Update `callFunction` in `WasmOrchestrator`.**
+- [x] **5.3 — Update `callFunction` in `WasmOrchestrator`.**
   Detect contract: object args → JSON contract. Array of numbers → numeric contract.
 
-- [ ] **5.4 — Handle Rust errors through the JSON contract.**
+- [x] **5.4 — Handle Rust errors through the JSON contract.**
   All commands return errors as a JSON envelope:
   ```rust
   // Success:  { "ok": <result> }
@@ -631,13 +631,13 @@ pub fn my_command(payload: &str) -> String
   `callFunction` on JS inspects the response: if `"error"` key exists, throw.
   If `"ok"` key exists, return the value.
 
-- [ ] **5.5 — Compile the JSON test fixture.**
+- [x] **5.5 — Compile the JSON test fixture.**
   Add `echo_object` to the test fixture:
   receives `{ name: string, count: number }`,
   returns `{ name: string, count: number, doubled: number }`.
   Recompile and commit the new `.wasm`.
 
-- [ ] **5.6 — Write the smoke test.**
+- [x] **5.6 — Write the smoke test.**
   - Call `echo_object({ name: 'Alice', count: 5 })` → assert `doubled: 10`
   - Call with a missing required field — assert clean error string
   - Call with malformed JSON — assert clean error string, no crash
@@ -665,16 +665,16 @@ it to the VFS.
 
 ### Tasks
 
-- [ ] **6.1 — Create `packages/kernel/src/wasi-shim.ts`.**
+- [x] **6.1 — Create `packages/kernel/src/wasi-shim.ts`.**
   Export one function: `createWasiImports(vfs: VFS): WebAssembly.Imports`
 
-- [ ] **6.2 — Implement the file descriptor table.**
+- [x] **6.2 — Implement the file descriptor table.**
   - fd 0 = stdin (stub — always returns EOF)
   - fd 1 = stdout (capture output, emit as events or log)
   - fd 2 = stderr (capture output, emit as error events)
   - fd 3+ = real VFS files, assigned dynamically on `path_open`
 
-- [ ] **6.3 — Implement WASI functions in priority order.**
+- [x] **6.3 — Implement WASI functions in priority order.**
 
   **Priority 1 — File I/O (implement first):**
   - `path_open` — look up or create a VFS file, return a new fd
@@ -695,21 +695,21 @@ it to the VFS.
   Implement as stubs returning `ERRNO_NOSYS` (error code 52).
   This prevents crashes without requiring all ~50 WASI functions upfront.
 
-- [ ] **6.4 — Wire the shim into `WasmOrchestrator.loadModule`.**
+- [x] **6.4 — Wire the shim into `WasmOrchestrator.loadModule`.**
   The `importObject` passed to `WebAssembly.instantiate` must always include
   the WASI shim. The `VFS` instance is injected into `WasmOrchestrator` at
   construction time.
 
-- [ ] **6.5 — Update wasm-template to target `wasm32-wasi`.**
+- [x] **6.5 — Update wasm-template to target `wasm32-wasi`.**
   Change compile target. Rebuild the test fixture. Commit updated `.wasm`.
 
-- [ ] **6.6 — Compile the WASI test fixture.**
+- [x] **6.6 — Compile the WASI test fixture.**
   Add `write_and_read` to the test fixture:
   receives `{ path: string, content: string }`,
   writes with `std::fs::write`, reads back with `std::fs::read_to_string`,
   returns `{ ok: string }`.
 
-- [ ] **6.7 — Write the smoke test.**
+- [x] **6.7 — Write the smoke test.**
   - Call `write_and_read({ path: '/wasi-test.txt', content: 'hello wasi' })`
   - Assert returned content is `'hello wasi'`
   - Verify file exists in VFS via `vfs.exists('/wasi-test.txt')`
@@ -801,20 +801,20 @@ Developers call: `r1::emit("download-progress", r#"{ "percent": 75 }"#);`
     (event, handler) => Promise.resolve(eventBus.once(event, handler));
   ```
 
-- [ ] **7.6 — Compile the event test fixture.**
+- [x] **7.6 — Compile the event test fixture.**
   Add `run_counter` to the test fixture:
   emits 5 events (`{ value: 1 }` through `{ value: 5 }`), returns `{ ok: "done" }`.
 
-- [ ] **7.7 — Write the smoke test.**
+- [x] **7.7 — Write the smoke test.**
   - Subscribe to `"count"` with `listen()`
   - Call `run_counter({})` — assert all 5 events arrive in order
   - Unsubscribe — call again — assert no events received
 
 ### Exit Criteria
-- [ ] Rust emits events received by a JS `listen()` handler.
-- [ ] Events fire in correct order.
-- [ ] Unsubscribing stops receiving events.
-- [ ] The `wasm-template` emits events with zero pointer manipulation in user code.
+- [x] Rust emits events received by a JS `listen()` handler.
+- [x] Events fire in correct order.
+- [x] Unsubscribing stops receiving events.
+- [x] The `wasm-template` emits events with zero pointer manipulation in user code.
 
 ---
 
@@ -849,27 +849,27 @@ All other APIs run in the Kernel Worker.
 
 #### Tier 2 — Standard
 
-- [ ] **8.4 — `dialog` plugin (main thread).**
+- [x] **8.4 — `dialog` plugin (main thread).**
   `message`, `ask`, `confirm` → OS-themed modal dialogs (Phase 9 Window Manager).
   `open`, `save` → use `<input type="file">`.
 
-- [ ] **8.5 — `os` plugin.**
+- [x] **8.5 — `os` plugin.**
   `platform`, `arch`, `version`, `locale`, `hostname`.
   Returns simulated OS values — configurable per-app.
 
-- [ ] **8.6 — `clipboard` plugin (main thread).**
+- [x] **8.6 — `clipboard` plugin (main thread).**
   `read_text`, `write_text` — uses `navigator.clipboard`.
 
-- [ ] **8.7 — `store` plugin.**
+- [x] **8.7 — `store` plugin.**
   Key-value store backed by VFS. Data stored at `/.r1-store/<name>.json`.
   Commands: `get`, `set`, `delete`, `has`, `keys`.
 
 #### Tier 3 — Extended (implement after the demo app works)
 
-- [ ] **8.8 — `http` plugin.** Proxies `fetch()` from the guest app context.
-- [ ] **8.9 — `notification` plugin.** Uses the Web Notifications API.
-- [ ] **8.10 — `shell` plugin (partial).** `open(url)` → `window.open()`.
-- [ ] **8.11 — `path` plugin.** Path manipulation utilities, pure JS.
+- [x] **8.8 — `http` plugin.** Proxies `fetch()` from the guest app context.
+- [x] **8.9 — `notification` plugin.** Uses the Web Notifications API.
+- [x] **8.10 — `shell` plugin (partial).** `open(url)` → `window.open()`.
+- [x] **8.11 — `path` plugin.** Path manipulation utilities, pure JS.
 
 ### Developer WASM command auto-wiring
 
@@ -882,7 +882,7 @@ for (const [name, fn] of Object.entries(instance.exports)) {
 }
 ```
 
-- [ ] **8.12 — Write the integration test.**
+- [x] **8.12 — Write the integration test.**
   Using wasm-template, create a mini app that:
   - Writes and reads a file via `fs`
   - Stores and retrieves a value via `store`
@@ -890,11 +890,11 @@ for (const [name, fn] of Object.entries(instance.exports)) {
   All via `invoke()`. Assert all operations return correct results.
 
 ### Exit Criteria
-- [ ] All Tier 1 APIs work correctly end-to-end.
-- [ ] `dialog.message()` shows a visible modal on screen.
-- [ ] `clipboard.writeText()` and `readText()` work.
-- [ ] Store values persist across VFS reinitialisation.
-- [ ] Developer WASM commands are auto-discovered and callable via `invoke`.
+- [x] All Tier 1 APIs work correctly end-to-end.
+- [x] `dialog.message()` shows a visible modal on screen.
+- [x] `clipboard.writeText()` and `readText()` work.
+- [x] Store values persist across VFS reinitialisation.
+- [x] Developer WASM commands are auto-discovered and callable via `invoke`.
 
 ---
 
@@ -906,42 +906,42 @@ for (const [name, fn] of Object.entries(instance.exports)) {
 
 ### Tasks
 
-- [ ] **9.1 — Create `packages/window/src/window-manager.ts`.**
+- [x] **9.1 — Create `packages/window/src/window-manager.ts`.**
   `open(config)`, `close(id)`, `focus(id)`, `getWindow(id)`.
 
-- [ ] **9.2 — Create `packages/window/src/virtual-window.ts`.**
+- [x] **9.2 — Create `packages/window/src/virtual-window.ts`.**
   A DOM `div` with OS chrome + sandboxed `iframe` for the app.
   `setTitle(title)`, `setSize(w, h)`, `setPosition(x, y)`.
 
-- [ ] **9.3 — Implement OS-accurate window chrome.**
+- [x] **9.3 — Implement OS-accurate window chrome.**
   CSS themes in `packages/window/src/themes/`:
   - `macos.css` — traffic light buttons, blurred title bar
   - `windows11.css` — Mica-effect title bar, Windows control icons
   - `linux.css` — GNOME-style header bar
 
-- [ ] **9.4 — Implement drag-to-move.**
+- [x] **9.4 — Implement drag-to-move.**
   Pointer events on the title bar move the window via `transform: translate(x, y)`.
   Use pointer capture for smooth dragging.
 
-- [ ] **9.5 — Implement resize handles.**
+- [x] **9.5 — Implement resize handles.**
   8 resize handles (N, NE, E, SE, S, SW, W, NW) as transparent `div` elements.
 
-- [ ] **9.6 — Implement OS-themed dialog modals.**
+- [x] **9.6 — Implement OS-themed dialog modals.**
   `DialogApi` calls into `WindowManager` to show modals that match the active OS theme.
 
-- [ ] **9.7 — Register window control IPC commands.**
+- [x] **9.7 — Register window control IPC commands.**
   `window_set_title`, `window_minimize`, `window_maximize`, `window_close`,
   `window_set_size`, `window_set_focus` — all as main-thread IPC commands.
 
-- [ ] **9.8 — Write the visual test.**
+- [x] **9.8 — Write the visual test.**
   Open demo app in VirtualWindow. Verify drag, resize, close, title update,
   and OS chrome for all three themes.
 
 ### Exit Criteria
-- [ ] VirtualWindow renders with correct macOS, Windows 11, and Linux chrome.
-- [ ] Drag, resize, minimise, maximise, and close all work.
-- [ ] OS-themed dialogs appear inside the window, not as browser alerts.
-- [ ] Multiple windows open simultaneously with correct focus.
+- [x] VirtualWindow renders with correct macOS, Windows 11, and Linux chrome.
+- [x] Drag, resize, minimise, maximise, and close all work.
+- [x] OS-themed dialogs appear inside the window, not as browser alerts.
+- [x] Multiple windows open simultaneously with correct focus.
 
 ---
 
@@ -966,38 +966,38 @@ SW:          sends VFS_READ to main thread via MessageChannel
 
 ### Tasks
 
-- [ ] **10.1 — Create `packages/sw/src/sw.ts`.**
+- [x] **10.1 — Create `packages/sw/src/sw.ts`.**
   Intercepts fetch events matching `https://r1-asset.localhost/`.
 
-- [ ] **10.2 — Implement the VFS fetch flow.**
+- [x] **10.2 — Implement the VFS fetch flow.**
   Extract path from URL → request from main thread via `MessageChannel` →
   receive `Uint8Array` → wrap in `Response` with correct MIME type.
 
-- [ ] **10.3 — Implement MIME type detection.**
+- [x] **10.3 — Implement MIME type detection.**
   Lookup table covering: `png`, `jpg`, `gif`, `webp`, `svg`, `mp4`, `webm`,
   `mp3`, `ogg`, `woff2`, `json`, `txt`, `html`, `css`, `js`.
   Unknown extensions → `application/octet-stream`.
 
-- [ ] **10.4 — Register the Service Worker in `R1Runtime.boot()`.**
+- [x] **10.4 — Register the Service Worker in `R1Runtime.boot()`.**
   `navigator.serviceWorker.register('/sw.js', { scope: '/' })`.
   Set up `MessageChannel` listener on the main thread.
 
-- [ ] **10.5 — Patch `convertFileSrc` in the IPC bridge.**
+- [x] **10.5 — Patch `convertFileSrc` in the IPC bridge.**
   ```typescript
   (window as any).__TAURI_INTERNALS__.convertFileSrc =
     (path: string) => `https://r1-asset.localhost${path}`;
   ```
 
-- [ ] **10.6 — Write the smoke test.**
+- [x] **10.6 — Write the smoke test.**
   - Write HTML to `/test/page.html` via VFS — fetch the asset URL — assert correct body
   - Write a PNG buffer — fetch — assert MIME is `image/png`
   - Request a missing file — assert `404 Not Found`, not a SW crash
 
 ### Exit Criteria
-- [ ] `convertFileSrc` returns a URL that resolves to the correct VFS file.
-- [ ] Images, HTML, and JSON load with the correct Content-Type.
-- [ ] A missing file returns `404 Not Found`, not a SW crash.
-- [ ] SW registers without errors on first load.
+- [x] `convertFileSrc` returns a URL that resolves to the correct VFS file.
+- [x] Images, HTML, and JSON load with the correct Content-Type.
+- [x] A missing file returns `404 Not Found`, not a SW crash.
+- [x] SW registers without errors on first load.
 
 ---
 

@@ -34,13 +34,13 @@ export class VFS {
   /** Check if a file exists */
   exists(path: string): boolean {
     this.assertInit();
-    return this.cache.has(this.normalize(path));
+    return this.cache.has(VFS.normalize(path));
   }
 
   /** Read bytes instantly from cache. Throws if not found. */
   read(path: string): Uint8Array {
     this.assertInit();
-    const p = this.normalize(path);
+    const p = VFS.normalize(path);
     const data = this.cache.get(p);
     if (!data) throw new Error(`File not found: ${p}`);
     return data;
@@ -55,7 +55,7 @@ export class VFS {
   /** List all absolute file or directory paths immediately under a given directory */
   list(dir: string): string[] {
     this.assertInit();
-    const p = this.normalize(dir);
+    const p = VFS.normalize(dir);
     // ensure trailing slash so we only match exactly inside this folder
     const prefix = p === '/' ? p : `${p}/`;
     
@@ -87,7 +87,7 @@ export class VFS {
    */
   async write(path: string, data: Uint8Array): Promise<void> {
     this.assertInit();
-    const p = this.normalize(path);
+    const p = VFS.normalize(path);
 
     // 1. Sync update Memory Cache
     this.cache.set(p, new Uint8Array(data));
@@ -154,11 +154,21 @@ export class VFS {
     if (!this.isInit) throw new Error('[R1 VFS] Cannot perform operations: VFS is not initialized. Call init() first.');
   }
 
-  private normalize(path: string): string {
-    let p = path.replace(/\\/g, '/'); // normalize backslashes
-    if (!p.startsWith('/')) p = '/' + p; // ensure leading root
-    if (p.endsWith('/') && p !== '/') p = p.slice(0, -1); // prevent trailing slashes
+  stat(path: string): { size: number } {
+    const data = this.read(path);
+    return { size: data.byteLength };
+  }
+
+  /** Normalizes paths to /style format (absolute, no trailing slash unless root) */
+  static normalize(path: string): string {
+    let p = path.replace(/\\/g, '/');
+    if (!p.startsWith('/')) p = '/' + p;
+    while (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
     return p;
+  }
+
+  private normalize(path: string): string {
+    return VFS.normalize(path);
   }
 
   /**
