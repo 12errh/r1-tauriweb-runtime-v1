@@ -1,2 +1,8 @@
-// @r1/apis — All Tauri API implementations (fs, event, dialog, os, clipboard, store…)
-export {};
+export { FsPlugin } from './fs';
+export { EventPlugin } from './event';
+export { CorePlugin } from './core';
+export { StorePlugin } from './store';
+export { OsPlugin } from './os';
+export { HttpPlugin } from './http';
+export { PathPlugin } from './path_util';
+export { MainBridgePlugin } from './main_bridge';

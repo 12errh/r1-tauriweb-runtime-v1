@@ -21,3 +21,16 @@ export interface KernelResponse {
   /** The error string. Undefined on success. */
   error?: string;
 }
+
+/**
+ * Represents a request from Worker back to Main Thread to execute a restricted Web API.
+ */
+export interface MainThreadCall {
+  id: string;
+  type: 'MAIN_THREAD_CALL';
+  payload: {
+    api: string;
+    method: string;
+    args: any;
+  };
+}

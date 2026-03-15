@@ -2,12 +2,52 @@ import { Router } from './router';
 import { VFS } from './vfs';
 import { WasmOrchestrator } from './wasm-orchestrator';
 import type { KernelRequest } from './protocol';
+import { 
+  FsPlugin, 
+  EventPlugin, 
+  CorePlugin, 
+  StorePlugin, 
+  OsPlugin, 
+  HttpPlugin, 
+  PathPlugin,
+  MainBridgePlugin 
+} from '@r1/apis';
 
 const router = new Router();
 const vfs = new VFS();
-const wasmOrchestrator = new WasmOrchestrator(vfs, (event, payload) => {
+
+/** Matches MAIN_THREAD_RESPONSE back to calls */
+const pendingMainCalls = new Map<string, { resolve: (val: any) => void, reject: (err: any) => void }>();
+
+async function onMainThreadCall(api: string, method: string, args: any): Promise<any> {
+    const id = Math.random().toString(36).substring(2, 15);
+    return new Promise((resolve, reject) => {
+        pendingMainCalls.set(id, { resolve, reject });
+        self.postMessage({ type: 'MAIN_THREAD_CALL', id, payload: { api, method, args } });
+    });
+}
+
+const wasmOrchestrator = new WasmOrchestrator(vfs, router, (event, payload) => {
   self.postMessage({ type: 'EVENT_EMIT', payload: { event, payload } });
 });
+
+// Modular Architecture: Plug in standard Tauri APIs
+router.use(new FsPlugin(vfs));
+router.use(new CorePlugin());
+router.use(new StorePlugin(vfs));
+router.use(new OsPlugin());
+router.use(new HttpPlugin());
+router.use(new PathPlugin());
+
+// Main Thread Bridged APIs
+router.use(new MainBridgePlugin('dialog', onMainThreadCall));
+router.use(new MainBridgePlugin('clipboard', onMainThreadCall));
+router.use(new MainBridgePlugin('notification', onMainThreadCall));
+router.use(new MainBridgePlugin('shell', onMainThreadCall));
+
+router.use(new EventPlugin((event, payload) => {
+  self.postMessage({ type: 'EVENT_EMIT', payload: { event, payload } });
+}));
 
 // Ensure VFS is initialised strictly before it handles anything
 // In Phase 8, this will be part of a proper Boot sequence
@@ -16,9 +56,13 @@ let vfsReady = vfs.init();
 // 1.5 - PING handler as the first smoke test
 router.register('PING', async () => ({ pong: true, ts: Date.now() }));
 
-// 2.5 - IPC_INVOKE stub handler (will be replaced by full WASM router in Phase 8)
+// 2.5 - IPC_INVOKE handler: Now routes to the hierarchical plugin:command
 router.register('IPC_INVOKE', async (payload: any) => {
-  return `[stub] called: ${payload.command}`;
+  const { command, args } = payload;
+  return router.handle({ id: 'internal', type: command, payload: args }).then(res => {
+    if (res.error) throw new Error(res.error);
+    return res.payload;
+  });
 });
 
 // 3.6 - VFS Routing Endpoints
@@ -71,14 +115,26 @@ router.register('WASM_UNLOAD', async ({ name }) => {
 });
 
 // Receive message from main thread, route it, and post response back
-self.onmessage = async (event: MessageEvent<KernelRequest>) => {
-  const request = event.data;
-  if (!request || !request.id || typeof request.type !== 'string') {
+self.onmessage = async (event: MessageEvent<KernelRequest | { type: string, id: string, payload: any, error?: string }>) => {
+  const data = event.data;
+  if (!data || !data.id || typeof data.type !== 'string') {
     console.error('[R1 Kernel] Received malformed message:', event.data);
     return;
   }
+
+  // Handle responses from the main thread (for MAIN_THREAD_CALL)
+  if (data.type === 'MAIN_THREAD_RESPONSE') {
+    const response = data as { id: string, payload: any, error?: string };
+    const pending = pendingMainCalls.get(response.id);
+    if (pending) {
+      pendingMainCalls.delete(response.id);
+      if (response.error) pending.reject(new Error(response.error));
+      else pending.resolve(response.payload);
+    }
+    return;
+  }
   
-  const response = await router.handle(request);
+  const response = await router.handle(data as KernelRequest);
   self.postMessage(response);
 };
 

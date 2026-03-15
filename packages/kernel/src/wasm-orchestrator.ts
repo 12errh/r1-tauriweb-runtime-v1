@@ -1,5 +1,6 @@
 import { VFS } from './vfs';
 import { WasiShim } from './wasi-shim';
+import type { Router } from './router';
 
 interface WasmModule {
   instance?: WebAssembly.Instance;
@@ -15,10 +16,12 @@ interface WasmModule {
 export class WasmOrchestrator {
   private modules: Map<string, WasmModule> = new Map();
   private vfs: VFS;
+  private router: Router;
   private onEvent: (event: string, payload: any) => void;
 
-  constructor(vfs: VFS, onEvent: (event: string, payload: any) => void) {
+  constructor(vfs: VFS, router: Router, onEvent: (event: string, payload: any) => void) {
     this.vfs = vfs;
+    this.router = router;
     this.onEvent = onEvent;
   }
 
@@ -91,6 +94,7 @@ export class WasmOrchestrator {
         }
 
         this.modules.set(name, { exports: jsModule, wasi });
+        this.registerModuleCommands(name, jsModule);
 
       } else {
         // Phase 4 & 6: Raw WASI compilation payloads
@@ -118,9 +122,28 @@ export class WasmOrchestrator {
           exports: instance.exports,
           wasi
         });
+
+        this.registerModuleCommands(name, instance.exports);
       }
     } catch (error) {
        throw new Error(`[WasmOrchestrator] Failed to load module '${name}': ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Auto-discovers exported functions and registers them in the kernel router.
+   */
+  private registerModuleCommands(moduleName: string, exports: any) {
+    for (const [fnName, func] of Object.entries(exports)) {
+      if (typeof func === 'function' && !fnName.startsWith('__') && fnName !== 'default') {
+        const fullCmdName = `${moduleName}:${fnName}`;
+        this.router.register(fullCmdName, async (payload: any) => {
+          // If payload is an array, assume positional arguments. 
+          // If it's a single value/object, wrap it.
+          const args = Array.isArray(payload) ? payload : [payload];
+          return this.callFunction(moduleName, fnName, args);
+        });
+      }
     }
   }
 

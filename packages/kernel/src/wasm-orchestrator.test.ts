@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WasmOrchestrator } from './wasm-orchestrator';
 import { VFS } from './vfs';
+import { Router } from './router';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -8,9 +9,11 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   let wasmBgBytes: ArrayBuffer;
   let originalFetch: any;
   let vfs: VFS;
+  let router: Router;
 
   beforeEach(async () => {
     vfs = new VFS();
+    router = new Router();
     // Mock VFS init to avoid OPFS issues in Node
     (vfs as any).isInit = true;
 
@@ -44,7 +47,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   });
 
   it('1. Two .wasm modules loaded simultaneously under different names are isolated', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     
     // Load two completely independent WASM memory bounds
     await orchestrator.loadModule('my-app-1', '/test-module.wasm');
@@ -59,7 +62,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   });
 
   it('2. Calling a function on an unloaded/non-existent module returns a clean error', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     
     expect(() => orchestrator.callFunction('ghost-app', 'add', [1, 2]))
       .toThrowError("[WasmOrchestrator] Module 'ghost-app' is not loaded.");
@@ -71,7 +74,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   });
 
   it('3. A WASM panic is caught and returned as an error string without crashing the thread', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     await orchestrator.loadModule('my-app', '/test-module.wasm');
 
     // The Rust `force_panic` triggers a memory trap 'unreachable' execution.
@@ -81,7 +84,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   });
 
   it('4. unloadModule does not affect other loaded modules', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     
     await orchestrator.loadModule('app-A', '/test-module.wasm');
     await orchestrator.loadModule('app-B', '/test-module.wasm');
@@ -100,7 +103,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
 
   // --- Phase 5 Tests ---
   it('5. A nested JS object round-trips through Rust via Serde without data loss', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     
     // Instead of instantiating raw WebAssembly, let's mock testing evaluation pointing exactly to the `.js` 
     // generated glue via absolute path native ESM loading.
@@ -116,7 +119,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
   });
 
   it('6. Missing required fields return a clean error from Rust, not a panic', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     const jsUrl = resolve(__dirname, '../../../tests/fixtures/wasm/test-module.js');
     await orchestrator.loadModule('serde-app', jsUrl);
 
@@ -129,7 +132,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
 
   // --- Phase 6 Tests ---
   it('7. WASI: Rust can write to a file via std::fs (redirected to VFS)', async () => {
-    const orchestrator = new WasmOrchestrator(vfs, () => {});
+    const orchestrator = new WasmOrchestrator(vfs, router, () => {});
     await orchestrator.loadModule('wasi-app', '/test-wasi.wasm');
 
     // Call the un-mangled test function
@@ -149,7 +152,7 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
         capturedPayload = payload;
     };
 
-    const orchestrator = new WasmOrchestrator(vfs, onEvent);
+    const orchestrator = new WasmOrchestrator(vfs, router, onEvent);
     await orchestrator.loadModule('wasi-app', '/test-wasi.wasm');
 
     orchestrator.callFunction('wasi-app', 'test_emit', []);

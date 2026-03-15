@@ -3,9 +3,15 @@ import type { KernelRequest, KernelResponse } from './protocol';
 /** A function that handles a specific message type in the Worker */
 export type KernelHandler = (payload: any) => Promise<unknown>;
 
+/** Interface for Kernel Plugins */
+export interface KernelPlugin {
+  name: string;
+  getCommands(): Map<string, KernelHandler>;
+}
+
 /**
- * Routes incoming KernelRequests to the appropriate registered handler
- * and returns a standard KernelResponse envelope.
+ * Routes incoming KernelRequests to the appropriate registered handler.
+ * Supports hierarchical naming (e.g., 'fs:read_file') and plugins.
  */
 export class Router {
   private handlers = new Map<string, KernelHandler>();
@@ -21,11 +27,22 @@ export class Router {
   }
 
   /**
+   * Register a plugin, adding all its commands to the router prefixing them with plugin name.
+   */
+  use(plugin: KernelPlugin): void {
+    const commands = plugin.getCommands();
+    for (const [cmd, handler] of commands) {
+      this.register(`${plugin.name}:${cmd}`, handler);
+    }
+  }
+
+  /**
    * Process an incoming request, route it to the handler, and return a response.
    * Guaranteed to never throw; it always returns a KernelResponse envelope.
    */
   async handle(request: KernelRequest): Promise<KernelResponse> {
-    const handler = this.handlers.get(request.type);
+    // Exact match or fallback for backward compatibility
+    let handler = this.handlers.get(request.type);
 
     if (!handler) {
       return {

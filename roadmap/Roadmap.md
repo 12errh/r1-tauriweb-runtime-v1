@@ -835,16 +835,16 @@ All other APIs run in the Kernel Worker.
 
 #### Tier 1 — Core (all required before moving on)
 
-- [ ] **8.1 — `fs` plugin.**
+- [x] **8.1 — `fs` plugin.**
   `read_file`, `write_file`, `read_text_file`, `write_text_file`, `exists`,
   `remove_file`, `create_dir`, `read_dir`, `rename`, `copy_file`.
   All proxy to the VFS from Phase 3.
 
-- [ ] **8.2 — `event` plugin.**
+- [x] **8.2 — `event` plugin.**
   `emit`, `emit_to`, `listen`, `unlisten`.
   Proxies to the EventBus from Phase 7.
 
-- [ ] **8.3 — `core` plugin.**
+- [x] **8.3 — `core` plugin.**
   `get_app_info` — returns app name, version, Tauri version injected at build time.
 
 #### Tier 2 — Standard

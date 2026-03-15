@@ -29,6 +29,13 @@ export class KernelProxy {
         return;
       }
 
+      // Check if this is a request to execute a Main Thread API (Worker -> Main)
+      if (data && 'type' in data && data.type === 'MAIN_THREAD_CALL') {
+        const { api, method, args } = (data as any).payload;
+        this.handleMainThreadCall((data as any).id, api, method, args);
+        return;
+      }
+
       this.handleResponse(data as KernelResponse);
     };
 
@@ -88,6 +95,39 @@ export class KernelProxy {
     } else {
       pending.resolve(response.payload);
     }
+  }
+
+  /**
+   * Dispatches a call to real Web APIs on the main thread.
+   */
+  private async handleMainThreadCall(id: string, api: string, method: string, args: any) {
+    let result: any;
+    let error: string | undefined;
+
+    try {
+      if (api === 'dialog') {
+        if (method === 'message') alert(args.message);
+        else if (method === 'confirm') result = confirm(args.message);
+        else if (method === 'ask') result = confirm(args.message);
+      } else if (api === 'clipboard') {
+        if (method === 'write_text') await navigator.clipboard.writeText(args.text);
+        else if (method === 'read_text') result = await navigator.clipboard.readText();
+      } else if (api === 'notification') {
+        if (method === 'request_permission') result = await Notification.requestPermission();
+        else if (method === 'notify') new Notification(args.title, args.options);
+      } else if (api === 'shell') {
+        if (method === 'open') window.open(args.url, '_blank');
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+
+    this.worker.postMessage({
+      type: 'MAIN_THREAD_RESPONSE',
+      id,
+      payload: result,
+      error
+    });
   }
 
   public terminate() {
