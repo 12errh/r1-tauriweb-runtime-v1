@@ -9,12 +9,14 @@
   "exports": {
     ".": "./src/index.ts",
     "./tauri": "./src/tauri/index.ts",
+    "./core": "./src/tauri/index.ts",
     "./event": "./src/event/index.ts",
-    "./fs": "./src/fs/index.ts",
+    "./fs": "./src/fs.ts",
     "./dialog": "./src/dialog/index.ts",
-    "./os": "./src/os/index.ts",
+    "./os": "./src/os.ts",
     "./clipboard": "./src/clipboard/index.ts",
-    "./window": "./src/window/index.ts"
+    "./path": "./src/path_util.ts",
+    "./window": "./src/window.ts"
   },
   "scripts": {
     "build": "vite build",

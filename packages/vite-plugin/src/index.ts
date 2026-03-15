@@ -1,8 +1,11 @@
 import { Plugin, ResolvedConfig } from 'vite';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import * as esbuild from 'esbuild';
+
+const _dirname = dirname(fileURLToPath(import.meta.url));
 
 export interface R1PluginOptions {
   rustSrc?: string; // Default: 'src-tauri'
@@ -103,7 +106,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
 
     async generateBundle() {
       // 1. Bundle and emit the Service Worker
-      const swEntry = options.swSrc || resolve(__dirname, '../../sw/src/index.ts');
+      const swEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
       if (existsSync(swEntry)) {
         console.log(`[R1] Bundling Service Worker from ${swEntry}...`);
         const result = await esbuild.build({
@@ -123,7 +126,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       }
 
       // 2. Bundle and emit the Kernel Worker (sw.js)
-      const kernelEntry = resolve(__dirname, '../../kernel/src/kernel.worker.ts');
+      const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
       if (existsSync(kernelEntry)) {
         console.log(`[R1] Bundling Kernel Worker from ${kernelEntry}...`);
         const result = await esbuild.build({
@@ -180,7 +183,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url === '/r1-sw.js') {
-          const swEntry = options.swSrc || resolve(__dirname, '../../sw/src/index.ts');
+          const swEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
           if (existsSync(swEntry)) {
              const result = await esbuild.build({ 
                entryPoints: [swEntry], 
@@ -196,7 +199,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
           }
         }
         if (req.url === '/sw.js') {
-          const kernelEntry = resolve(__dirname, '../../kernel/src/kernel.worker.ts');
+          const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
           if (existsSync(kernelEntry)) {
              const result = await esbuild.build({ 
                entryPoints: [kernelEntry], 

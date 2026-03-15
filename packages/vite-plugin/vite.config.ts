@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['vite', 'fs', 'path', 'child_process', 'crypto', 'esbuild'],
+      external: ['vite', 'fs', 'path', 'url', 'child_process', 'crypto', 'esbuild'],
       output: {
         globals: {
           vite: 'Vite'

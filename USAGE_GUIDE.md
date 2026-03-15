@@ -14,7 +14,8 @@ my-project/
 ├── src-tauri/         # Your Rust backend
 │   ├── src/
 │   │   └── lib.rs     # Rust logic (WASM entry)
-│   └── Cargo.toml     # Rust dependencies
+│   ├── Cargo.toml     # Rust dependencies
+│   └── build.rs       # Build script (Requires gating!)
 ├── index.html         # Main entry
 ├── package.json       # JS dependencies
 └── vite.config.ts     # Build configuration
@@ -30,17 +31,20 @@ Since the R1 packages aren't on NPM yet, you should point your configurations to
 ```typescript
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { r1Plugin } from '@r1/vite-plugin'; // If using workspace
+import { r1Plugin } from '@r1/vite-plugin'; 
 
 export default defineConfig({
   plugins: [
     react(),
     r1Plugin({
-      rustSrc: './src-tauri' // Points to your Rust code
+      rustSrc: './src-tauri' 
     })
   ]
 });
 ```
+
+> [!IMPORTANT]
+> Since the R1 Runtime replaces `@tauri-apps/api`, the plugin automatically patches your imports during build. You don't need to change `import { invoke } from '@tauri-apps/api/core'`.
 
 ---
 
@@ -81,6 +85,54 @@ pub fn say_hello(payload: &str) -> String {
     
     // 3. Return as JSON
     serde_json::to_string(&res).unwrap()
+}
+```
+
+---
+
+## 3.5. Making Existing Tauri Apps "Safe for WASM"
+
+The standard `tauri` crate cannot compile to WASM because it depends on native OS features. To keep your app working for both Desktop and Web, use these patterns.
+
+### A. Conditional `Cargo.toml`
+Move native-only dependencies to a target-specific block:
+
+```toml
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tauri = { version = "2", features = [] }
+```
+
+### B. Safe `build.rs`
+The `tauri-build` script will panic during WASM compilation. You MUST gate it:
+
+```rust
+fn main() {
+    // Check the target environment variable
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target.contains("wasm32") {
+        return;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    tauri_build::build();
+}
+```
+
+### C. Conditional `lib.rs`
+Gate your native entry points:
+
+```rust
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![greet])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
