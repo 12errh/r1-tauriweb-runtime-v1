@@ -3,24 +3,27 @@ import { WasmOrchestrator } from './wasm-orchestrator';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-describe('Phase 4: WasmOrchestrator + Module Registry', () => {
-  let wasmBytes: ArrayBuffer;
+describe('Phase 4 & 5: WasmOrchestrator + Module Registry', () => {
+  let wasmBgBytes: ArrayBuffer;
   let originalFetch: any;
 
   beforeEach(() => {
-    // We are running tests in Node instead of a browser, so we need to bridge `fetch`
-    // to load the local .wasm file off the exact disk boundary.
-    const wasmPath = resolve(__dirname, '../../../tests/fixtures/wasm/test-module.wasm');
-    const buffer = readFileSync(wasmPath);
-    // Node Buffer to strict ArrayBuffer
-    wasmBytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-
     originalFetch = globalThis.fetch;
     globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
-      if (url === '/test-module.wasm') {
+      let fileName = '';
+      if (url.includes('test-module_bg.wasm')) {
+        fileName = 'test-module_bg.wasm';
+      } else if (url.includes('test-module.wasm')) {
+        fileName = 'test-module.wasm';
+      }
+
+      if (fileName) {
+        const wasmPath = resolve(__dirname, `../../../tests/fixtures/wasm/${fileName}`);
+        const buffer = readFileSync(wasmPath);
+        const bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
         return {
           ok: true,
-          arrayBuffer: async () => wasmBytes,
+          arrayBuffer: async () => bytes,
         };
       }
       return { ok: false, status: 404 };
@@ -85,5 +88,34 @@ describe('Phase 4: WasmOrchestrator + Module Registry', () => {
     // Check B is 100% fine
     const resB = orchestrator.callFunction('app-B', 'add', [3, 4]);
     expect(resB).toBe(7);
+  });
+
+  // --- Phase 5 Tests ---
+  it('5. A nested JS object round-trips through Rust via Serde without data loss', async () => {
+    const orchestrator = new WasmOrchestrator();
+    
+    // Instead of instantiating raw WebAssembly, let's mock testing evaluation pointing exactly to the `.js` 
+    // generated glue via absolute path native ESM loading.
+    const jsUrl = resolve(__dirname, '../../../tests/fixtures/wasm/test-module.js');
+    await orchestrator.loadModule('serde-app', jsUrl);
+
+    const payload = { name: 'Alice', count: 5 };
+    
+    // Call the rust `echo_object` wrapped through stringify parsing natively
+    const result = orchestrator.callFunction('serde-app', 'echo_object', [payload]);
+
+    expect(result).toEqual({ name: 'Alice', count: 5, doubled: 10 });
+  });
+
+  it('6. Missing required fields return a clean error from Rust, not a panic', async () => {
+    const orchestrator = new WasmOrchestrator();
+    const jsUrl = resolve(__dirname, '../../../tests/fixtures/wasm/test-module.js');
+    await orchestrator.loadModule('serde-app', jsUrl);
+
+    // Call passing an object missing the 'count' literal evaluation correctly translating down
+    const invalidPayload = { name: 'Alice' }; // 'count' is missing missing bounds
+
+    expect(() => orchestrator.callFunction('serde-app', 'echo_object', [invalidPayload]))
+      .toThrowError('Missing required fields or malformed JSON');
   });
 });

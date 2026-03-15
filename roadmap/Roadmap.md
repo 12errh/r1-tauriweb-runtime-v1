@@ -337,11 +337,11 @@ Developer app:   receives: 'Hello, Alice!'
 
 ### Tasks
 
-- [ ] **2.1 — Create `packages/core/src/ipc-bridge.ts`.**
+- [x] **2.1 — Create `packages/core/src/ipc-bridge.ts`.**
   Export a function `installIpcBridge(kernelProxy: KernelProxy): void`.
   This function patches both globals.
 
-- [ ] **2.2 — Patch Tauri v2 (`window.__TAURI_INTERNALS__`).**
+- [x] **2.2 — Patch Tauri v2 (`window.__TAURI_INTERNALS__`).**
   ```typescript
   (window as any).__TAURI_INTERNALS__ = {
     invoke: async (command: string, args: unknown) => {
@@ -356,19 +356,19 @@ Developer app:   receives: 'Hello, Alice!'
   };
   ```
 
-- [ ] **2.3 — Patch Tauri v1 (`window.__TAURI_IPC__`).**
+- [x] **2.3 — Patch Tauri v1 (`window.__TAURI_IPC__`).**
   Tauri v1 uses a different message format with `cmd` and `callback`/`error`
   numeric IDs (from `transformCallback`). Parse this format and translate it
   to the same `IPC_INVOKE` message the router handles.
 
-- [ ] **2.4 — Build the callback registry.**
+- [x] **2.4 — Build the callback registry.**
   Create `packages/core/src/callback-registry.ts`. This holds a
   `Map<number, Function>`. `register(fn, once)` stores the callback and returns
   a unique numeric ID. `trigger(id, payload)` calls the callback.
   If `once` is true, the callback is removed after the first call.
   This is what makes Tauri's promise-based `invoke` work under the hood.
 
-- [ ] **2.5 — Register `IPC_INVOKE` stub handler in the Kernel Worker.**
+- [x] **2.5 — Register `IPC_INVOKE` stub handler in the Kernel Worker.**
   For now, the handler just echoes back the command name as a test:
   ```typescript
   router.register('IPC_INVOKE', async ({ command, args }) => {
@@ -377,7 +377,7 @@ Developer app:   receives: 'Hello, Alice!'
   ```
   This will be replaced with real dispatch in Phase 8.
 
-- [ ] **2.6 — Create `R1Runtime` class in `packages/core/src/runtime.ts`.**
+- [x] **2.6 — Create `R1Runtime` class in `packages/core/src/runtime.ts`.**
   The single entry point for all of R1:
   ```typescript
   export class R1Runtime {
@@ -391,17 +391,17 @@ Developer app:   receives: 'Hello, Alice!'
   ```
   For now, `boot()` just spawns the Worker and installs the IPC bridge.
 
-- [ ] **2.7 — Write the smoke test.**
+- [x] **2.7 — Write the smoke test.**
   - Call `await invoke('test_command', { value: 42 })`
   - Assert the response contains `[stub] called: test_command`
   - Confirm no errors appear in the console
 
 ### Exit Criteria
-- [ ] `invoke('any_command')` from the developer's app reaches the Kernel Worker.
-- [ ] Both Tauri v1 and v2 `invoke` formats are handled.
-- [ ] A failed command (handler throws) rejects the `invoke` promise with a
+- [x] `invoke('any_command')` from the developer's app reaches the Kernel Worker.
+- [x] Both Tauri v1 and v2 `invoke` formats are handled.
+- [x] A failed command (handler throws) rejects the `invoke` promise with a
   clean error, not an unhandled rejection.
-- [ ] The `transformCallback` implementation correctly handles `once: true`.
+- [x] The `transformCallback` implementation correctly handles `once: true`.
 
 ---
 
@@ -434,19 +434,19 @@ VFS.read('/app/settings.json')
 
 ### Tasks
 
-- [ ] **3.1 — Create `packages/kernel/src/vfs.ts`.**
+- [x] **3.1 — Create `packages/kernel/src/vfs.ts`.**
   Export a `VFS` class. It is only ever instantiated inside the Kernel Worker.
 
-- [ ] **3.2 — Implement the memory cache layer.**
+- [x] **3.2 — Implement the memory cache layer.**
   Private `cache: Map<string, Uint8Array>`. This is the fast path for reads.
   All reads check the cache first.
 
-- [ ] **3.3 — Implement OPFS initialisation.**
+- [x] **3.3 — Implement OPFS initialisation.**
   `async init(): Promise<void>` calls `navigator.storage.getDirectory()` to
   get the OPFS root. Stores the handle privately. Must be called once before
   any other VFS operation.
 
-- [ ] **3.4 — Implement the core VFS operations.**
+- [x] **3.4 — Implement the core VFS operations.**
   All methods are `async`. All paths are POSIX-style strings (`/app/data.json`).
 
   | Method | Signature | Behaviour |
@@ -460,12 +460,12 @@ VFS.read('/app/settings.json')
   | `readText` | `(path) → string` | `read()` then decode as UTF-8 |
   | `writeText` | `(path, text) → void` | Encode UTF-8 then `write()` |
 
-- [ ] **3.5 — Implement OPFS path resolution.**
+- [x] **3.5 — Implement OPFS path resolution.**
   OPFS uses nested directory handles, not string paths. Build a private helper
   `resolvePath(path: string): Promise<FileSystemFileHandle>` that walks the
   path segments to find or create the correct handle.
 
-- [ ] **3.6 — Register VFS handlers in the Kernel Router.**
+- [x] **3.6 — Register VFS handlers in the Kernel Router.**
   ```
   'VFS_READ'   → { path } → { data: number[] }
   'VFS_WRITE'  → { path, data: number[] } → {}
@@ -474,17 +474,17 @@ VFS.read('/app/settings.json')
   'VFS_LIST'   → { dir }  → { paths: string[] }
   ```
 
-- [ ] **3.7 — Write the smoke test.**
+- [x] **3.7 — Write the smoke test.**
   - Write a string to `/test/hello.txt` — read it back — assert content matches
   - Delete it — assert `exists` returns false
   - Write a nested path `/test/deep/nested/file.txt` — assert it works
   - Confirm the file persists after reinitialising the VFS (simulates refresh)
 
 ### Exit Criteria
-- [ ] Files written survive VFS reinitialisation.
-- [ ] Nested directory paths are created automatically on write.
-- [ ] Reading a non-existent path returns a clean error, not a crash.
-- [ ] All 8 VFS operations work correctly.
+- [x] Files written survive VFS reinitialisation.
+- [x] Nested directory paths are created automatically on write.
+- [x] Reading a non-existent path returns a clean error, not a crash.
+- [x] All 8 VFS operations work correctly.
 
 ---
 
@@ -496,10 +496,10 @@ VFS.read('/app/settings.json')
 
 ### Tasks
 
-- [ ] **4.1 — Create `packages/kernel/src/wasm-orchestrator.ts`.**
+- [x] **4.1 — Create `packages/kernel/src/wasm-orchestrator.ts`.**
   Export a `WasmOrchestrator` class. Instantiated once inside the Kernel Worker.
 
-- [ ] **4.2 — Implement the Module Registry.**
+- [x] **4.2 — Implement the Module Registry.**
   ```typescript
   interface WasmModule {
     instance: WebAssembly.Instance;
@@ -508,14 +508,14 @@ VFS.read('/app/settings.json')
   private modules: Map<string, WasmModule> = new Map();
   ```
 
-- [ ] **4.3 — Implement `loadModule(name, url)`.**
+- [x] **4.3 — Implement `loadModule(name, url)`.**
   1. Fetch the `.wasm` binary from `url`
   2. Build the `importObject` (empty for now — WASI comes in Phase 6)
   3. Call `WebAssembly.instantiate(bytes, importObject)`
   4. Store in the Module Registry under `name`
   5. If a module with that name already exists, unload it first
 
-- [ ] **4.4 — Implement `callFunction(moduleName, fnName, args)`.**
+- [x] **4.4 — Implement `callFunction(moduleName, fnName, args)`.**
   1. Look up module in registry — throw clean error if not found
   2. Look up function in `module.exports` — throw clean error if not found
   3. Wrap the call in `try/catch` — convert any WASM panic to a clean error string
@@ -523,17 +523,17 @@ VFS.read('/app/settings.json')
   5. For object args: `JSON.stringify` → call → `JSON.parse`
   6. Return the result
 
-- [ ] **4.5 — Implement `unloadModule(name)`.**
+- [x] **4.5 — Implement `unloadModule(name)`.**
   Remove from the registry. Log a warning if the module does not exist.
 
-- [ ] **4.6 — Register WASM handlers in the Kernel Router.**
+- [x] **4.6 — Register WASM handlers in the Kernel Router.**
   ```
   'WASM_LOAD'   → { name, url } → {}
   'WASM_CALL'   → { module, fn, args } → { result }
   'WASM_UNLOAD' → { name } → {}
   ```
 
-- [ ] **4.7 — Compile the test fixture.**
+- [x] **4.7 — Compile the test fixture.**
   Create `tests/fixtures/rust/test-module/src/lib.rs`:
   ```rust
   #[no_mangle]
@@ -545,7 +545,7 @@ VFS.read('/app/settings.json')
   Compile with `wasm-pack build --target web`.
   Commit the `.wasm` output to `tests/fixtures/wasm/test-module.wasm`.
 
-- [ ] **4.8 — Write the smoke test.**
+- [x] **4.8 — Write the smoke test.**
   - Load `test-module.wasm` — call `add(3,4)` → assert `7`
   - Call `multiply(3,4)` → assert `12`
   - Call a non-existent function — assert clean error returned
@@ -554,10 +554,10 @@ VFS.read('/app/settings.json')
   - Assert second module still works
 
 ### Exit Criteria
-- [ ] Two `.wasm` modules loaded simultaneously under different names.
-- [ ] Calling a function on an unloaded module returns a clean error.
-- [ ] A WASM panic is caught and returned as an error string.
-- [ ] `unloadModule` does not affect other loaded modules.
+- [x] Two `.wasm` modules loaded simultaneously under different names.
+- [x] Calling a function on an unloaded module returns a clean error.
+- [x] A WASM panic is caught and returned as an error string.
+- [x] `unloadModule` does not affect other loaded modules.
 
 ---
 
@@ -643,10 +643,10 @@ pub fn my_command(payload: &str) -> String
   - Call with malformed JSON — assert clean error string, no crash
 
 ### Exit Criteria
-- [ ] A nested JS object round-trips through Rust and back without data loss.
-- [ ] Missing required fields return a clean error, not a WASM panic.
-- [ ] The `wasm-template` compiles with `wasm-pack build` with zero warnings.
-- [ ] Error responses use the `{ error: string }` envelope correctly.
+- [x] A nested JS object round-trips through Rust and back without data loss.
+- [x] Missing required fields return a clean error, not a WASM panic.
+- [x] The `wasm-template` compiles with `wasm-pack build` with zero warnings.
+- [x] Error responses use the `{ error: string }` envelope correctly.
 
 ---
 
