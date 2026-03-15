@@ -1,6 +1,8 @@
 use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 
+mod r1;
+
 #[no_mangle]
 pub fn add(a: i32, b: i32) -> i32 {
     a + b
@@ -84,4 +86,9 @@ pub extern "C" fn test_wasi_write() -> i32 {
         Ok(_) => 1,
         Err(_) => 0,
     }
+}
+
+#[no_mangle]
+pub extern "C" fn test_emit() {
+    r1::emit("test-event", r#"{"data": "rust says hi"}"#);
 }

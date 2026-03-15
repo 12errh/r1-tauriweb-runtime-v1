@@ -770,11 +770,11 @@ Developers call: `r1::emit("download-progress", r#"{ "percent": 75 }"#);`
 
 ### Tasks
 
-- [ ] **7.1 — Implement `readUtf8(instance, ptr, len)` helper.**
+- [x] **7.1 — Implement `readUtf8(instance, ptr, len)` helper.**
   Reads a UTF-8 string from the WASM linear memory buffer using
   `instance.exports.memory` and `TextDecoder`.
 
-- [ ] **7.2 — Build the `EventBus` in `packages/core/src/event-bus.ts`.**
+- [x] **7.2 — Build the `EventBus` in `packages/core/src/event-bus.ts`.**
   ```typescript
   export class EventBus {
     on(event: string, handler: Function): () => void   // returns unlisten fn
@@ -784,15 +784,15 @@ Developers call: `r1::emit("download-progress", r#"{ "percent": 75 }"#);`
   }
   ```
 
-- [ ] **7.3 — Add `env.r1_emit` to `WasmOrchestrator.loadModule`.**
+- [x] **7.3 — Add `env.r1_emit` to `WasmOrchestrator.loadModule`.**
   Added to the `importObject` alongside the WASI shim.
   The callback calls `this.eventBus.emit(name, JSON.parse(payload))`.
 
-- [ ] **7.4 — Add `src/r1.rs` to the wasm-template.**
+- [x] **7.4 — Add `src/r1.rs` to the wasm-template.**
   Contains the `extern "C"` declaration and safe `emit()` wrapper.
   Zero raw pointer work required from the developer.
 
-- [ ] **7.5 — Expose Tauri-compatible `listen()` in the IPC bridge.**
+- [x] **7.5 — Expose Tauri-compatible `listen()` in the IPC bridge.**
   ```typescript
   (window as any).__TAURI_INTERNALS__.listen =
     (event, handler) => Promise.resolve(eventBus.on(event, handler));

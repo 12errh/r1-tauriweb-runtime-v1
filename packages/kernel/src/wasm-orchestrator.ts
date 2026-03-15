@@ -15,9 +15,16 @@ interface WasmModule {
 export class WasmOrchestrator {
   private modules: Map<string, WasmModule> = new Map();
   private vfs: VFS;
+  private onEvent: (event: string, payload: any) => void;
 
-  constructor(vfs: VFS) {
+  constructor(vfs: VFS, onEvent: (event: string, payload: any) => void) {
     this.vfs = vfs;
+    this.onEvent = onEvent;
+  }
+
+  private readString(memory: WebAssembly.Memory, ptr: number, len: number): string {
+    const buffer = new Uint8Array(memory.buffer, ptr, len);
+    return new TextDecoder().decode(buffer);
   }
 
   /**
@@ -33,27 +40,52 @@ export class WasmOrchestrator {
 
     try {
       const wasi = new WasiShim(this.vfs);
+      
+      const createEnv = (instanceGetter: () => WebAssembly.Instance | undefined) => ({
+        r1_emit: (namePtr: number, nameLen: number, payloadPtr: number, payloadLen: number) => {
+          const instance = instanceGetter();
+          if (!instance) return;
+          const memory = instance.exports.memory as WebAssembly.Memory;
+          const eventName = this.readString(memory, namePtr, nameLen);
+          const payloadString = this.readString(memory, payloadPtr, payloadLen);
+          
+          let payload;
+          try {
+            payload = JSON.parse(payloadString);
+          } catch {
+            payload = payloadString;
+          }
+          this.onEvent(eventName, payload);
+        }
+      });
 
       if (url.endsWith('.js')) {
         // Phase 5: Advanced `wasm-bindgen` JS glue module
-        // Import the glue module dynamically
         const jsModule = await import(/* @vite-ignore */ url);
         
-        // The WASM binary is natively placed as _bg.wasm adjacent to the bindings file
         const wasmUrl = url.replace('.js', '_bg.wasm');
         const response = await fetch(wasmUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${wasmUrl}`);
         const buffer = await response.arrayBuffer();
 
-        // Instantiate the module seamlessly
-        // wasm-bindgen handles its own imports, but we can override or merge them if needed.
-        // For Phase 6, we need to ensure wasm-bindgen uses our WASI shim if target is WASI.
-        // wasm-pack build --target web doesn't use WASI by default.
-        // wasm-pack build --target wasm32-wasi is different.
+        // For wasm-bindgen, we might need to satisfy its imports.
+        // Usually, wasm-bindgen's load script handles imports.
+        // But if we want to inject OUR imports into it, we might need to wrap the instantiation.
+        // However, standard wasm-bindgen (target web) doesn't use extern "C" imports directly easily 
+        // without some glue. 
+        // For Phase 7, we'll focus on the raw WASM case and assume wasm-bindgen can use it too 
+        // if we merge the import objects.
         
-        // If we use `wasm32-wasi`, we might need a different loader or merge imports.
-        // For now, let's focus on the raw WASM case first as described in Phase 6.4.
-        const wasmInstance = await jsModule.default(buffer);
+        let instanceRef: WebAssembly.Instance | undefined;
+        const imports = {
+            ...wasi.getImports(),
+            env: createEnv(() => instanceRef)
+        };
+
+        // Note: jsModule.default usually takes (buffer, imports)
+        const wasmInstance = await jsModule.default(buffer, imports);
+        instanceRef = wasmInstance; // capturing for the closure
+
         if (wasmInstance && wasmInstance.memory) {
             wasi.setMemory(wasmInstance.memory);
         }
@@ -65,18 +97,25 @@ export class WasmOrchestrator {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${url}`);
 
-        const importObject = wasi.getImports();
+        let instanceRef: WebAssembly.Instance | undefined;
+        const importObject = {
+            ...wasi.getImports(),
+            env: createEnv(() => instanceRef)
+        };
+
         const buffer = await response.arrayBuffer();
         const result = await WebAssembly.instantiate(buffer, importObject);
 
         const instance = result.instance;
+        instanceRef = instance;
+
         if (instance.exports.memory instanceof WebAssembly.Memory) {
             wasi.setMemory(instance.exports.memory);
         }
 
         this.modules.set(name, {
-          instance: result.instance,
-          exports: result.instance.exports,
+          instance: instance,
+          exports: instance.exports,
           wasi
         });
       }

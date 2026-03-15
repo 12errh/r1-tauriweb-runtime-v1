@@ -1,4 +1,5 @@
 import type { KernelRequest, KernelResponse } from '@r1/kernel';
+import { EventBus } from './event-bus';
 
 /** Let's wait up to 30s before considering the worker dead/stuck. */
 const REQUEST_TIMEOUT_MS = 30000;
@@ -9,6 +10,7 @@ const REQUEST_TIMEOUT_MS = 30000;
  */
 export class KernelProxy {
   private worker: Worker;
+  public eventBus = new EventBus();
   private requests = new Map<
     string,
     { resolve: (p: any) => void; reject: (e: any) => void; timer: ReturnType<typeof setTimeout> }
@@ -17,8 +19,17 @@ export class KernelProxy {
   constructor(workerUrl: string | URL) {
     this.worker = new Worker(workerUrl, { type: 'module' });
 
-    this.worker.onmessage = (event: MessageEvent<KernelResponse>) => {
-      this.handleResponse(event.data);
+    this.worker.onmessage = (event: MessageEvent<KernelResponse | { type: string, payload: any }>) => {
+      const data = event.data;
+      
+      // Check if this is an out-of-band event emission (e.g. from Rust)
+      if (data && 'type' in data && data.type === 'EVENT_EMIT') {
+        const { event: eventName, payload } = data.payload as { event: string, payload: any };
+        this.eventBus.emit(eventName, payload);
+        return;
+      }
+
+      this.handleResponse(data as KernelResponse);
     };
 
     this.worker.onerror = (error: ErrorEvent) => {

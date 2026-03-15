@@ -32,6 +32,20 @@ export function installIpcBridge(kernelProxy: KernelProxy): void {
      */
     transformCallback: (callback: Function, once = false) => {
       return callbacks.register(callback, once);
+    },
+
+    /**
+     * listen() for global events.
+     */
+    listen: (event: string, handler: Function) => {
+        return Promise.resolve(kernelProxy.eventBus.on(event, handler));
+    },
+
+    /**
+     * once() for global events.
+     */
+    once: (event: string, handler: Function) => {
+        return Promise.resolve(kernelProxy.eventBus.once(event, handler));
     }
   };
 
