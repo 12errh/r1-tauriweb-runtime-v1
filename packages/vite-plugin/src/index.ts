@@ -25,6 +25,16 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     const cargoPath = resolve(config?.root || process.cwd(), rustSrc, 'Cargo.toml');
     if (existsSync(cargoPath)) {
       const content = readFileSync(cargoPath, 'utf8');
+      
+      // Try to find [lib] name first
+      const libMatch = content.match(/\[lib\][^]*?name\s*=\s*"([^"]+)"/);
+      if (libMatch) return libMatch[1].replace(/-/g, '_');
+
+      // Fallback to [package] name
+      const pkgMatch = content.match(/\[package\][^]*?name\s*=\s*"([^"]+)"/);
+      if (pkgMatch) return pkgMatch[1].replace(/-/g, '_');
+
+      // Broad fallback
       const match = content.match(/name\s*=\s*"([^"]+)"/);
       if (match) return match[1].replace(/-/g, '_');
     }

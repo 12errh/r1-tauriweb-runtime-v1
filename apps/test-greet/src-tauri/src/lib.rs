@@ -9,7 +9,8 @@ struct GreetArgs {
 #[wasm_bindgen]
 pub fn greet(payload: &str) -> String {
     let args: GreetArgs = serde_json::from_str(payload).unwrap_or_else(|_| GreetArgs { name: "Guest".into() });
-    format!("Hello, {}! You've been greeted from Rust (via R1)!", args.name)
+    let message = format!("Hello, {}! You've been greeted from Rust (via R1)!", args.name);
+    serde_json::to_string(&message).unwrap_or_else(|_| "\"Error\"".into())
 }
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/

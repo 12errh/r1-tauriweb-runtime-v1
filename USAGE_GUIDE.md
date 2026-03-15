@@ -83,10 +83,14 @@ pub fn say_hello(payload: &str) -> String {
         message: format!("Hello, {}! This is Rust speaking.", args.name)
     };
     
-    // 3. Return as JSON
-    serde_json::to_string(&res).unwrap()
+    // 3. Return as JSON String (MANDATORY)
+    // Failure to return valid JSON will cause a "WASM Panic"
+    serde_json::to_string(&res).unwrap_or_else(|_| "null".into())
 }
 ```
+
+> [!WARNING]
+> **The JSON Return Rule**: Every Rust function exported via `wasm-bindgen` MUST return a valid JSON string. Even if you just want to return a string, use `serde_json::to_string(&my_string)`.
 
 ---
 

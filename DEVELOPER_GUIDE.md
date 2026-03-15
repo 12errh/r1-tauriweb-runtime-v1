@@ -59,8 +59,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub fn process_data(payload: &str) -> String {
     // payload is the JSON string from JS
-    // return a JSON string back to JS
-    format!(r#"{{"ok": "Processed {}"}}"#, payload)
+    // You MUST return a JSON string back to JS
+    let response = format!("Processed {}", payload);
+    serde_json::to_string(&response).unwrap()
 }
 ```
 
