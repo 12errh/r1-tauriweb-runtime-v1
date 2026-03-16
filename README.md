@@ -6,7 +6,7 @@
 [![Tests](https://img.shields.io/badge/tests-31%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://resplendent-arithmetic-aee148.netlify.app/)
 
-**[Live Demo](https://resplendent-arithmetic-aee148.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
+**[Live Demo](https://r1-todo-demo.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
 ---
 
