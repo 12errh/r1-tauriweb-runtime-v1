@@ -36,7 +36,7 @@ import { r1Plugin } from '@r1/vite-plugin';
 export default defineConfig({
   plugins: [
     react(),
-    r1Plugin({
+    r1Plugin({ 
       rustSrc: './src-tauri' 
     })
   ]

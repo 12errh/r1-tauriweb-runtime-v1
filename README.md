@@ -32,6 +32,7 @@ r1-tauriweb-runtime/
 ## 🛠️ Getting Started
 
 We have provided detailed guides to help you start building:
+- 🚀 **[GETTING_STARTED.md](./GETTING_STARTED.md)**: **The 5-Minute Quick Start Migration Guide.**
 - 📖 **[USAGE_GUIDE.md](./USAGE_GUIDE.md)**: A step-by-step tutorial for your first app.
 - 🏗️ **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**: Deep technical architecture and limitations.
 
