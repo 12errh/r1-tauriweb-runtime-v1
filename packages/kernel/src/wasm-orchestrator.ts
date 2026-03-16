@@ -295,16 +295,19 @@ export class WasmOrchestrator {
   private parseResponse(response: any): any {
     if (typeof response !== 'string') return response;
     
+    let parsed;
     try {
-      const parsed = JSON.parse(response);
-      if (parsed.error !== undefined) {
-        throw new Error(parsed.error);
-      }
-      return parsed.ok !== undefined ? parsed.ok : parsed;
+      parsed = JSON.parse(response);
     } catch (e) {
       // If it's a raw string or failed to parse, return as-is
       return response;
     }
+
+    if (parsed && typeof parsed === 'object' && parsed.error !== undefined) {
+      throw new Error(parsed.error);
+    }
+    
+    return (parsed && typeof parsed === 'object' && parsed.ok !== undefined) ? parsed.ok : parsed;
   }
 
   /**
