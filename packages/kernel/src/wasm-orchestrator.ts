@@ -80,21 +80,24 @@ export class WasmOrchestrator {
         // if we merge the import objects.
         
         let instanceRef: WebAssembly.Instance | undefined;
-        const imports = {
+        
+        const r1Imports = {
             ...wasi.getImports(),
             env: createEnv(() => instanceRef)
         };
 
-        // Note: jsModule.default (wasm-bindgen init) takes an options object or the buffer.
-        // To suppress deprecation warnings, we pass the object format.
-        const wasmInstance = await jsModule.default({ module_or_path: buffer, ...imports });
-        instanceRef = wasmInstance; // capturing for the closure
+        // wasm-bindgen init returns the exports object.
+        // Importantly, we must call it to initialize the module's internal `wasm` variable.
+        const wasmExports = await jsModule.default(buffer, r1Imports);
+        instanceRef = { exports: wasmExports } as WebAssembly.Instance;
 
-        if (wasmInstance && wasmInstance.memory) {
-            wasi.setMemory(wasmInstance.memory);
+        if (wasmExports.memory instanceof WebAssembly.Memory) {
+            wasi.setMemory(wasmExports.memory);
         }
 
-        this.modules.set(name, { exports: jsModule, wasi });
+        // We store the jsModule as 'exports' because we want to call the WRAPPER functions (like echo_object),
+        // not the raw wasm functions (like wasm.echo_object).
+        this.modules.set(name, { exports: jsModule, wasi, instance: instanceRef });
         this.registerModuleCommands(name, jsModule);
 
       } else {
@@ -102,16 +105,55 @@ export class WasmOrchestrator {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${url}`);
 
+        const buffer = await response.arrayBuffer();
+        
+        // First, compile the module to inspect its imports
+        const module = await WebAssembly.compile(buffer);
+        const imports = WebAssembly.Module.imports(module);
+        
         let instanceRef: WebAssembly.Instance | undefined;
-        const importObject = {
+        
+        // Create import object with all necessary imports
+        const importObject: any = {
             ...wasi.getImports(),
             env: createEnv(() => instanceRef)
         };
+        
+        // Add wasm-bindgen imports dynamically based on what the module needs
+        for (const imp of imports) {
+          if (imp.module.endsWith('_bg.js') || imp.module.startsWith('./')) {
+            // Ensure the module object exists
+            if (!importObject[imp.module]) {
+              importObject[imp.module] = {};
+            }
+            
+            // Provide stub implementations based on import kind
+            if (imp.kind === 'function') {
+              if (imp.name.startsWith('__wbindgen_')) {
+                importObject[imp.module][imp.name] = (...args: any[]) => {
+                  if (imp.name === '__wbindgen_throw') {
+                    throw new Error('WASM panic');
+                  }
+                  return 0;
+                };
+              } else if (imp.name.startsWith('__wbg_')) {
+                importObject[imp.module][imp.name] = (...args: any[]) => {
+                  console.log(`[WASM] Called ${imp.name}`);
+                  return 0;
+                };
+              } else {
+                importObject[imp.module][imp.name] = (...args: any[]) => {
+                  console.log(`[WASM] Called ${imp.module}.${imp.name}`);
+                  return 0;
+                };
+              }
+            }
+          }
+        }
 
-        const buffer = await response.arrayBuffer();
-        const result = await WebAssembly.instantiate(buffer, importObject);
+        const result = await WebAssembly.instantiate(module, importObject);
 
-        const instance = result.instance;
+        const instance = result;
         instanceRef = instance;
 
         if (instance.exports.memory instanceof WebAssembly.Memory) {
@@ -123,6 +165,11 @@ export class WasmOrchestrator {
           exports: instance.exports,
           wasi
         });
+
+        // Call __wbindgen_start if it exists (initializes wasm-bindgen runtime)
+        if (instance.exports.__wbindgen_start) {
+          (instance.exports.__wbindgen_start as Function)();
+        }
 
         this.registerModuleCommands(name, instance.exports);
       }
@@ -164,26 +211,99 @@ export class WasmOrchestrator {
     if (typeof func !== 'function') throw new Error(`[WasmOrchestrator] Function '${fnName}' not exported by '${moduleName}'.`);
 
     try {
-      // JSON Contract Rule: If the first argument is an Object (not an array/primitive),
-      // stringify it inherently and unpack the '{ ok, error }' response securely.
+      // For wasm-bindgen functions, the first argument is a string and the return is a pointer pair
       if (args.length === 1 && typeof args[0] === 'object' && !Array.isArray(args[0]) && args[0] !== null) {
         const jsonString = JSON.stringify(args[0]);
-        const responseString = (func as Function)(jsonString);
         
-        let parsed;
-        try {
-          parsed = JSON.parse(responseString);
-        } catch (e) {
-          throw new Error(`Invalid JSON syntax returned from WASM: ${responseString}`);
-        }
+        // Check if this is a wasm-bindgen module (has __wbindgen_malloc)
+        const isWasmBindgen = '__wbindgen_malloc' in wasm.exports;
+        
+        console.log('[WasmOrchestrator] Calling function:', fnName);
+        console.log('[WasmOrchestrator] Is wasm-bindgen:', isWasmBindgen);
+        
+        if (isWasmBindgen) {
+          // wasm-bindgen string handling
+          
+          // 1. Allocate memory for the input string
+          const encoder = new TextEncoder();
+          const encoded = encoder.encode(jsonString);
+          
+          // Allocate memory in WASM
+          const malloc = wasm.exports.__wbindgen_malloc as Function;
+          const ptr = malloc(encoded.length, 1);
+          
+          // Write string to WASM memory
+          const memory = wasm.exports.memory as WebAssembly.Memory;
+          const memoryArray = new Uint8Array(memory.buffer);
+          memoryArray.set(encoded, ptr);
+          
+          // Call the function with pointer and length
+          const result = (func as Function)(ptr, encoded.length);
+          
+          // wasm-bindgen returns [ptr, len] directly as a multi-value return
+          let resultPtr: number;
+          let resultLen: number;
+          
+          if (Array.isArray(result)) {
+            // Multi-value return: [ptr, len]
+            [resultPtr, resultLen] = result;
+          } else {
+            // Single value return: pointer to [ptr, len] pair
+            const dataView = new DataView(memory.buffer);
+            resultPtr = dataView.getUint32(result, true);
+            resultLen = dataView.getUint32(result + 4, true);
+          }
+          
+          const resultBytes = new Uint8Array(memory.buffer, resultPtr, resultLen);
+          const resultString = new TextDecoder().decode(resultBytes);
+          
+          // Free the input memory
+          const free = wasm.exports.__wbindgen_free as Function;
+          free(ptr, encoded.length, 1);
+          
+          // Parse the result - the Rust function already returns a JSON string
+          let parsed;
+          try {
+            parsed = JSON.parse(resultString);
+          } catch (e) {
+            // If it's not JSON, return the string as-is
+            return resultString;
+          }
 
-        if (parsed.error !== undefined) {
-          throw new Error(parsed.error);
+          // If parsed is a string, it's the final result (already unwrapped by Rust)
+          if (typeof parsed === 'string') {
+            return parsed;
+          }
+
+          // If it's an object, check for error/ok pattern
+          if (parsed.error !== undefined) {
+            throw new Error(parsed.error);
+          }
+          
+          return parsed.ok !== undefined ? parsed.ok : parsed;
+        } else {
+          // Non-wasm-bindgen: original JSON contract
+          console.log('[WasmOrchestrator] Using non-wasm-bindgen path');
+          const response = (func as Function)(jsonString);
+          
+          if (typeof response === 'string') {
+            let parsed;
+            try {
+              parsed = JSON.parse(response);
+            } catch (e) {
+              // If it's a raw string, return it
+              return response;
+            }
+
+            if (parsed.error !== undefined) {
+              throw new Error(parsed.error);
+            }
+            
+            return parsed.ok !== undefined ? parsed.ok : parsed;
+          }
+          
+          return response;
         }
-        
-        // If the response follows the { ok: ... } pattern, return the value.
-        // Otherwise, return the whole parsed object (transparent bridge).
-        return parsed.ok !== undefined ? parsed.ok : parsed;
       }
 
       // Raw array / primitives evaluation mapping (Phase 4)

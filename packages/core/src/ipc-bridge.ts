@@ -78,4 +78,33 @@ export function installIpcBridge(kernelProxy: KernelProxy): void {
       }
     }
   };
+
+  // --------------------------------------------------------------------------
+  // GLOBAL OBJECT INJECTIONS
+  // --------------------------------------------------------------------------
+
+  // Tauri v2 structure
+  (window as any).__TAURI__ = (window as any).__TAURI__ || {};
+  (window as any).__TAURI__.window = (window as any).__TAURI__.window || {};
+  
+  // Create a minimal WebviewWindow-like object for the global appWindow
+  const appWindowStub = {
+    label: 'main',
+    setTitle: (title: string) => (window as any).__TAURI_INTERNALS__.invoke('window:set_title', { label: 'main', title }),
+    minimize: () => (window as any).__TAURI_INTERNALS__.invoke('window:minimize', { label: 'main' }),
+    maximize: () => (window as any).__TAURI_INTERNALS__.invoke('window:maximize', { label: 'main' }),
+    unmaximize: () => (window as any).__TAURI_INTERNALS__.invoke('window:unmaximize', { label: 'main' }),
+    close: () => (window as any).__TAURI_INTERNALS__.invoke('window:close', { label: 'main' }),
+    setFocus: () => (window as any).__TAURI_INTERNALS__.invoke('window:focus', { label: 'main' }),
+  };
+
+  (window as any).__TAURI__.window.appWindow = appWindowStub;
+  (window as any).__TAURI_INTERNALS__.appWindow = appWindowStub;
+
+  // Polyfill convertFileSrc (used for loading local assets into <img> tags)
+  // In the browser/service-worker runtime, we just return the path as-is
+  // and the Service Worker intercepts it.
+  (window as any).__TAURI__.core = (window as any).__TAURI__.core || {};
+  (window as any).__TAURI__.core.convertFileSrc = (path: string) => path;
+  (window as any).__TAURI_INTERNALS__.convertFileSrc = (path: string) => path;
 }

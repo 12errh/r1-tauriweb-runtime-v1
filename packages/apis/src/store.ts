@@ -73,3 +73,68 @@ export class StorePlugin implements KernelPlugin {
     return commands;
   }
 }
+
+// ─── Direct JS exports (used by @tauri-apps/plugin-store imports) ─────────────
+
+/**
+ * A client-side proxy for the Store plugin.
+ * Every method invokes the kernel equivalent.
+ */
+export class Store {
+  path: string;
+
+  constructor(path: string) {
+    this.path = path;
+  }
+
+  async set(key: string, value: any): Promise<void> {
+    return (window as any).__TAURI_INTERNALS__.invoke('store:set', { name: this.path, key, value });
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    return (window as any).__TAURI_INTERNALS__.invoke('store:get', { name: this.path, key });
+  }
+
+  async has(key: string): Promise<boolean> {
+    return (window as any).__TAURI_INTERNALS__.invoke('store:has', { name: this.path, key });
+  }
+
+  async delete(key: string): Promise<boolean> {
+    await (window as any).__TAURI_INTERNALS__.invoke('store:delete', { name: this.path, key });
+    return true;
+  }
+
+  async clear(): Promise<void> {
+    const keys = await this.keys();
+    for (const key of keys) {
+      await this.delete(key);
+    }
+  }
+
+  async keys(): Promise<string[]> {
+    return (window as any).__TAURI_INTERNALS__.invoke('store:keys', { name: this.path });
+  }
+
+  async values(): Promise<any[]> {
+    const keys = await this.keys();
+    const values = [];
+    for (const key of keys) {
+      values.push(await this.get(key));
+    }
+    return values;
+  }
+
+  async entries<T>(): Promise<Array<[string, T]>> {
+    const keys = await this.keys();
+    const entries: Array<[string, T]> = [];
+    for (const key of keys) {
+      entries.push([key, await this.get<T>(key) as T]);
+    }
+    return entries;
+  }
+
+  async save(): Promise<void> {
+    // In our implementation, every set() is already persisted to VFS.
+    return Promise.resolve();
+  }
+}

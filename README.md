@@ -103,8 +103,14 @@ v0.1 established the core runtime architecture and proved the concept works:
   - `read_dir` kernel command verified
   - 5 new tests added, all passing
 
+- ✅ **Phase 3 Complete** — Fixed `path_util.ts` Path API
+  - Implemented POSIX-compliant `relative()` function
+  - Added VFS directory aliases (`config`, `data`, `cache`, `log`)
+  - Improved robustness for `basename()`, `join()`, and `resolve()`
+  - All 27 path-related functions exported as top-level named exports
+  - 5 new tests added, all passing
+
 **Next up:**
-- Phase 3: Fix `path_util.ts` — already has exports, verify completeness
 - Phase 4-7: Fix remaining API modules (event, window, dialog, clipboard, os, store)
 - Phase 8: Update barrel exports in `index.ts`
 - Phase 9-10: End-to-end testing with real apps

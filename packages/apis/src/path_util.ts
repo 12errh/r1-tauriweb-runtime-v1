@@ -3,20 +3,61 @@ import { KernelPlugin, KernelHandler } from '@r1/kernel';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function posixJoin(...parts: string[]): string {
+  // Filters out empty strings and joins with /
   return parts
+    .filter(p => p !== '')
     .join('/')
-    .replace(/\/+/g, '/')
-    .replace(/\/$/, '') || '/';
+    .replace(/\/+/g, '/');
 }
 
 function posixNormalize(path: string): string {
+  if (path === '') return '.';
+  const isAbsolute = path.startsWith('/');
+  const trailingSlash = path.endsWith('/') && path !== '/';
+  
   const parts = path.split('/');
   const result: string[] = [];
+  
   for (const p of parts) {
-    if (p === '..') result.pop();
-    else if (p !== '.') result.push(p);
+    if (p === '..') {
+      if (result.length > 0 && result[result.length - 1] !== '..') {
+        result.pop();
+      } else if (!isAbsolute) {
+        result.push('..');
+      }
+    } else if (p !== '.' && p !== '') {
+      result.push(p);
+    }
   }
-  return result.join('/') || '/';
+  
+  let normalized = result.join('/');
+  if (isAbsolute) normalized = '/' + normalized;
+  if (normalized === '' && !isAbsolute) normalized = '.';
+  if (trailingSlash && !normalized.endsWith('/')) normalized += '/';
+  
+  return normalized || '/';
+}
+
+function posixRelative(from: string, to: string): string {
+  const fromParts = posixNormalize(from).split('/').filter(p => p !== '');
+  const toParts = posixNormalize(to).split('/').filter(p => p !== '');
+  
+  let commonLength = 0;
+  const minLength = Math.min(fromParts.length, toParts.length);
+  
+  for (let i = 0; i < minLength; i++) {
+    if (fromParts[i] !== toParts[i]) break;
+    commonLength++;
+  }
+  
+  const upCount = fromParts.length - commonLength;
+  const downParts = toParts.slice(commonLength);
+  
+  const result = [];
+  for (let i = 0; i < upCount; i++) result.push('..');
+  result.push(...downParts);
+  
+  return result.join('/') || '.';
 }
 
 // ─── VFS "special directory" roots ──────────────────────────────────────────
@@ -40,6 +81,10 @@ const VFS_DIRS: Record<string, string> = {
   temp: '/tmp',
   resource: '/app/resources',
   runtime: '/tmp/runtime',
+  config: '/app/config',
+  data: '/app/data',
+  cache: '/app/cache',
+  log: '/app/logs',
 };
 
 // ─── Plugin ──────────────────────────────────────────────────────────────────
@@ -57,8 +102,16 @@ export class PathPlugin implements KernelPlugin {
     });
 
     commands.set('resolve', async (payload: { pathSegments: string[] }) => {
-      const joined = posixJoin(...payload.pathSegments);
-      return posixNormalize(joined);
+      let resolved = '';
+      for (const seg of payload.pathSegments) {
+        if (seg.startsWith('/')) resolved = seg;
+        else resolved = posixJoin(resolved, seg);
+      }
+      return posixNormalize(resolved);
+    });
+
+    commands.set('relative', async (payload: { from: string; to: string }) => {
+      return posixRelative(payload.from, payload.to);
     });
 
     commands.set('normalize', async (payload: { path: string }) => {
@@ -66,7 +119,11 @@ export class PathPlugin implements KernelPlugin {
     });
 
     commands.set('basename', async (payload: { path: string; ext?: string }) => {
-      let base = payload.path.split('/').pop() || '';
+      // Remove trailing slash if present
+      const p = payload.path.endsWith('/') && payload.path.length > 1 
+        ? payload.path.slice(0, -1) 
+        : payload.path;
+      let base = p.split('/').pop() || '';
       if (payload.ext && base.endsWith(payload.ext)) {
         base = base.slice(0, -payload.ext.length);
       }
@@ -124,9 +181,20 @@ export const videoDir = () => Promise.resolve(VFS_DIRS.video);
 export const audioDir = () => Promise.resolve(VFS_DIRS.audio);
 export const tempDir = () => Promise.resolve(VFS_DIRS.temp);
 export const resourceDir = () => Promise.resolve(VFS_DIRS.resource);
+export const runtimeDir = () => Promise.resolve(VFS_DIRS.runtime);
+export const configDir = () => Promise.resolve(VFS_DIRS.config);
+export const dataDir = () => Promise.resolve(VFS_DIRS.data);
+export const cacheDir = () => Promise.resolve(VFS_DIRS.cache);
+export const logDir = () => Promise.resolve(VFS_DIRS.log);
 
-export const resolve = (...paths: string[]) =>
-  Promise.resolve(posixNormalize(posixJoin(...paths)));
+export const resolve = (...paths: string[]) => {
+  let resolved = '';
+  for (const seg of paths) {
+    if (seg.startsWith('/')) resolved = seg;
+    else resolved = posixJoin(resolved, seg);
+  }
+  return Promise.resolve(posixNormalize(resolved));
+};
 
 export const normalize = (path: string) =>
   Promise.resolve(posixNormalize(path));
@@ -134,8 +202,12 @@ export const normalize = (path: string) =>
 export const join = (...paths: string[]) =>
   Promise.resolve(posixJoin(...paths));
 
+export const relative = (from: string, to: string) =>
+  Promise.resolve(posixRelative(from, to));
+
 export const basename = (path: string, ext?: string) => {
-  let base = path.split('/').pop() || '';
+  const p = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
+  let base = p.split('/').pop() || '';
   if (ext && base.endsWith(ext)) base = base.slice(0, -ext.length);
   return Promise.resolve(base);
 };

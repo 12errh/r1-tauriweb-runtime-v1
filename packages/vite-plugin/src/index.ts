@@ -188,7 +188,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         console.log('[R1] Booting Runtime...');
         const r1 = new R1Runtime();
         r1.boot({ 
-          wasmPath: '/wasm/${wasmName}_bg.wasm' 
+          wasmPath: '/wasm/${wasmName}.js' 
         }).then(() => {
           console.log('[R1] Boot complete.');
           window.dispatchEvent(new Event('r1:ready'));
@@ -256,7 +256,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
             console.log('[R1] Booting Runtime...');
             const r1 = new R1Runtime();
             r1.boot({ 
-              wasmPath: '/wasm/${wasmName}_bg.wasm' 
+              wasmPath: '/wasm/${wasmName}.js' 
             }).then(() => {
               console.log('[R1] Boot complete.');
               window.dispatchEvent(new Event('r1:ready'));

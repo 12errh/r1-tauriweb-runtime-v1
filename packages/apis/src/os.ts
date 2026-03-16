@@ -24,3 +24,13 @@ export class OsPlugin implements KernelPlugin {
     return commands;
   }
 }
+
+// ─── Direct JS exports (used by @tauri-apps/api/os imports) ───────────────────
+
+export const platform = () => (window as any).__TAURI_INTERNALS__.invoke('os:platform');
+export const arch     = () => (window as any).__TAURI_INTERNALS__.invoke('os:arch');
+export const version  = () => (window as any).__TAURI_INTERNALS__.invoke('os:version');
+export const locale   = () => (window as any).__TAURI_INTERNALS__.invoke('os:locale');
+export const hostname = () => (window as any).__TAURI_INTERNALS__.invoke('os:hostname');
+
+export type Platform = 'linux' | 'macos' | 'windows' | 'ios' | 'android';

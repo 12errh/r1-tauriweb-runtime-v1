@@ -41,7 +41,7 @@ describe('Phase 2: IPC Bridge (Patching Tauri globals)', () => {
 
   it('1. invoke(command) reaches the Kernel Worker and returns response (Tauri v2)', async () => {
     const runtime = new R1Runtime();
-    await runtime.boot('fake.js');
+    await runtime.boot({ workerUrl: 'fake.js' });
 
     const tauri = (window as any).__TAURI_INTERNALS__;
     expect(tauri).toBeDefined();
@@ -52,7 +52,7 @@ describe('Phase 2: IPC Bridge (Patching Tauri globals)', () => {
 
   it('2. Both Tauri v1 and v2 formats are handled correctly (Tauri v1 test)', async () => {
     const runtime = new R1Runtime();
-    await runtime.boot('fake.js');
+    await runtime.boot({ workerUrl: 'fake.js' });
 
     const tauriIpc = (window as any).__TAURI_IPC__;
     expect(typeof tauriIpc).toBe('function');
@@ -77,7 +77,7 @@ describe('Phase 2: IPC Bridge (Patching Tauri globals)', () => {
 
   it('3. Failed commands reject the Promise with clean error (Tauri v2)', async () => {
     const runtime = new R1Runtime();
-    await runtime.boot('fake.js');
+    await runtime.boot({ workerUrl: 'fake.js' });
 
     const tauri = (window as any).__TAURI_INTERNALS__;
     await expect(tauri.invoke('fail_command', {})).rejects.toThrow('Simulated error for fail_command');
@@ -101,5 +101,15 @@ describe('Phase 2: IPC Bridge (Patching Tauri globals)', () => {
     // Trigger again -- shouldn't call because once: true deleted it
     callbacks.trigger(id, 'second call');
     expect(myCb).toHaveBeenCalledTimes(1);
+  });
+
+  it('5. Global injections (appWindow, convertFileSrc) are present', async () => {
+    const runtime = new R1Runtime();
+    await runtime.boot({ workerUrl: 'fake.js' });
+    
+    expect((window as any).__TAURI__.window.appWindow).toBeDefined();
+    expect((window as any).__TAURI_INTERNALS__.appWindow).toBeDefined();
+    expect((window as any).__TAURI__.core.convertFileSrc).toBeDefined();
+    expect((window as any).__TAURI__.core.convertFileSrc('/test.png')).toBe('/test.png');
   });
 });
