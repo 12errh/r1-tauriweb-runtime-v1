@@ -3,7 +3,7 @@
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-36%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-41%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://resplendent-arithmetic-aee148.netlify.app/)
 [![Version](https://img.shields.io/badge/version-v0.2--dev-yellow.svg)](#)
 
@@ -60,7 +60,7 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| 36/36 unit tests passing | ✅ |
+| 41/41 unit tests passing | ✅ |
 
 ---
 
@@ -96,9 +96,14 @@ v0.1 established the core runtime architecture and proved the concept works:
   - Added comprehensive import map covering all 14 Tauri API paths
   - Patcher handles sub-paths correctly (e.g., `@tauri-apps/api/fs` → `@r1/apis/fs`)
   - 5 new tests added, all passing
+- ✅ **Phase 2 Complete** — Fixed `fs.ts` filesystem API
+  - Implemented VFS singleton with promise lock to prevent race conditions
+  - All 11 filesystem functions exported as top-level named exports
+  - `FileEntry` interface exported
+  - `read_dir` kernel command verified
+  - 5 new tests added, all passing
 
 **Next up:**
-- Phase 2: Fix `fs.ts` — add direct exports + VFS race condition fix
 - Phase 3: Fix `path_util.ts` — already has exports, verify completeness
 - Phase 4-7: Fix remaining API modules (event, window, dialog, clipboard, os, store)
 - Phase 8: Update barrel exports in `index.ts`

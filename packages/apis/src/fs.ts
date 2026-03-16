@@ -84,13 +84,19 @@ export class FsPlugin implements KernelPlugin {
 // These named exports must exist here so the import resolves.
 
 let _vfs: VFS | null = null;
+let _initPromise: Promise<VFS> | null = null;
 
 async function getVfs(): Promise<VFS> {
-  if (!_vfs) {
-    _vfs = new VFS();
-    await _vfs.init();
+  if (_vfs) return _vfs;
+  if (!_initPromise) {
+    _initPromise = (async () => {
+      const instance = new VFS();
+      await instance.init();
+      _vfs = instance;
+      return instance;
+    })();
   }
-  return _vfs;
+  return _initPromise;
 }
 
 export interface FileEntry {
