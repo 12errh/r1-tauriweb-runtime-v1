@@ -220,100 +220,65 @@ export class WasmOrchestrator {
     if (typeof func !== 'function') throw new Error(`[WasmOrchestrator] Function '${fnName}' not exported by '${moduleName}'.`);
 
     try {
-      // For wasm-bindgen functions, the first argument is a string and the return is a pointer pair
+      // Logic for handling complex JSON-based contract (one object argument)
       if (args.length === 1 && typeof args[0] === 'object' && !Array.isArray(args[0]) && args[0] !== null) {
         const jsonString = JSON.stringify(args[0]);
         
-        // Check if this is a wasm-bindgen module.
-        // It could be in the glue exports OR in the raw wasm instance exports.
-        const isWasmBindgen = ('__wbindgen_malloc' in wasm.exports) || 
-                              (wasm.instance && '__wbindgen_malloc' in wasm.instance.exports);
+        const hasInstance = !!wasm.instance;
+        const instanceExports = hasInstance ? wasm.instance!.exports : wasm.exports;
+        const glue = wasm.exports;
+        const isGlue = hasInstance && glue !== instanceExports;
+        
+        const isWasmBindgen = ('__wbindgen_malloc' in instanceExports);
         
         console.log(`[WasmOrchestrator] Calling function: ${fnName}`);
-        console.log(`[WasmOrchestrator] Is wasm-bindgen: ${!!isWasmBindgen}`);
+        console.log(`[WasmOrchestrator] Is glue: ${isGlue}, Is wasm-bindgen: ${isWasmBindgen}`);
         
-        if (isWasmBindgen) {
-          // wasm-bindgen string handling
+        if (isGlue) {
+          // Case 1: JS Glue available. Let the glue handle string conversion.
+          // Note: We pass the JSON string because the Rust #[wasm_bindgen] expects &str.
+          const response = (func as Function)(jsonString);
+          return this.parseResponse(response);
           
-          // 1. Allocate memory for the input string
+        } else if (isWasmBindgen) {
+          // Case 2: Raw wasm-bindgen module (no glue). Manual pointer dance.
+          const malloc = instanceExports.__wbindgen_malloc as Function;
+          const free = instanceExports.__wbindgen_free as Function;
+          const memory = instanceExports.memory as WebAssembly.Memory;
+
           const encoder = new TextEncoder();
           const encoded = encoder.encode(jsonString);
-          
-          // Allocate memory in WASM
-          const malloc = wasm.exports.__wbindgen_malloc as Function;
           const ptr = malloc(encoded.length, 1);
           
-          // Write string to WASM memory
-          const memory = wasm.exports.memory as WebAssembly.Memory;
           const memoryArray = new Uint8Array(memory.buffer);
           memoryArray.set(encoded, ptr);
           
-          // Call the function with pointer and length
-          const result = (func as Function)(ptr, encoded.length);
-          
-          // wasm-bindgen returns [ptr, len] directly as a multi-value return
-          let resultPtr: number;
-          let resultLen: number;
-          
-          if (Array.isArray(result)) {
-            // Multi-value return: [ptr, len]
-            [resultPtr, resultLen] = result;
-          } else {
-            // Single value return: pointer to [ptr, len] pair
-            const dataView = new DataView(memory.buffer);
-            resultPtr = dataView.getUint32(result, true);
-            resultLen = dataView.getUint32(result + 4, true);
-          }
-          
-          const resultBytes = new Uint8Array(memory.buffer, resultPtr, resultLen);
-          const resultString = new TextDecoder().decode(resultBytes);
-          
-          // Free the input memory
-          const free = wasm.exports.__wbindgen_free as Function;
-          free(ptr, encoded.length, 1);
-          
-          // Parse the result - the Rust function already returns a JSON string
-          let parsed;
           try {
-            parsed = JSON.parse(resultString);
-          } catch (e) {
-            // If it's not JSON, return the string as-is
-            return resultString;
-          }
-
-          // If parsed is a string, it's the final result (already unwrapped by Rust)
-          if (typeof parsed === 'string') {
-            return parsed;
-          }
-
-          // If it's an object, check for error/ok pattern
-          if (parsed.error !== undefined) {
-            throw new Error(parsed.error);
-          }
-          
-          return parsed.ok !== undefined ? parsed.ok : parsed;
-        } else {
-          // Non-wasm-bindgen: original JSON contract
-          console.log('[WasmOrchestrator] Using non-wasm-bindgen path');
-          const response = (func as Function)(jsonString);
-          
-          if (typeof response === 'string') {
-            let parsed;
-            try {
-              parsed = JSON.parse(response);
-            } catch (e) {
-              // If it's a raw string, return it
-              return response;
-            }
-
-            if (parsed.error !== undefined) {
-              throw new Error(parsed.error);
+            const result = (func as Function)(ptr, encoded.length);
+            
+            let resultPtr: number;
+            let resultLen: number;
+            
+            if (Array.isArray(result)) {
+              [resultPtr, resultLen] = result;
+            } else {
+              const dataView = new DataView(memory.buffer);
+              resultPtr = dataView.getUint32(result, true);
+              resultLen = dataView.getUint32(result + 4, true);
             }
             
-            return parsed.ok !== undefined ? parsed.ok : parsed;
+            const resultBytes = new Uint8Array(memory.buffer, resultPtr, resultLen);
+            const resultString = new TextDecoder().decode(resultBytes);
+            
+            return this.parseResponse(resultString);
+          } finally {
+            free(ptr, encoded.length, 1);
           }
-          
-          return response;
+        } else {
+          // Case 3: Custom JSON contract (simple JSON in/out)
+          console.log('[WasmOrchestrator] Using fallback JSON string path');
+          const response = (func as Function)(jsonString);
+          return this.parseResponse(response);
         }
       }
 
@@ -324,6 +289,21 @@ export class WasmOrchestrator {
       // Wrapping this cleanly means the entire Kernel thread doesn't destruct wildly.
       const msg = e instanceof Error ? e.message : String(e);
       throw new Error(`[WasmOrchestrator] WASM Panic in ${moduleName}::${fnName}: ${msg}`);
+    }
+  }
+
+  private parseResponse(response: any): any {
+    if (typeof response !== 'string') return response;
+    
+    try {
+      const parsed = JSON.parse(response);
+      if (parsed.error !== undefined) {
+        throw new Error(parsed.error);
+      }
+      return parsed.ok !== undefined ? parsed.ok : parsed;
+    } catch (e) {
+      // If it's a raw string or failed to parse, return as-is
+      return response;
     }
   }
 
