@@ -62,6 +62,13 @@ export async function emit(
   return (window as any).__TAURI_INTERNALS__.invoke('event:emit', { event, payload });
 }
 
+export async function unlisten(
+  event: string,
+  eventId: number
+): Promise<void> {
+  return (window as any).__TAURI_INTERNALS__.unlisten(event, eventId);
+}
+
 /**
  * TauriEvent enum — commonly used constants
  */

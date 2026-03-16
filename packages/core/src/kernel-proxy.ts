@@ -26,7 +26,16 @@ export class KernelProxy {
       // Check if this is an out-of-band event emission (e.g. from Rust)
       if (data && 'type' in data && data.type === 'EVENT_EMIT') {
         const { event: eventName, payload } = data.payload as { event: string, payload: any };
-        this.eventBus.emit(eventName, payload);
+        
+        // Wrap in Tauri-compatible Event object
+        const wrappedEvent = {
+          event: eventName,
+          windowLabel: 'main', // Default label
+          id: Math.floor(Math.random() * 1000000), // Unique delivery ID
+          payload
+        };
+        
+        this.eventBus.emit(eventName, wrappedEvent);
         return;
       }
 

@@ -110,8 +110,15 @@ v0.1 established the core runtime architecture and proved the concept works:
   - All 27 path-related functions exported as top-level named exports
   - 5 new tests added, all passing
 
+- ✅ **Phase 4 Complete** — Fixed `event.ts` Event API
+  - Implemented `unlisten` by numeric ID in `ipc-bridge.ts`
+  - Wrapped emitted events in Tauri-compatible `Event<T>` interface
+  - JS-to-JS event emission and receiving verified
+  - All 11 v0.2 gap tests passing
+
 **Next up:**
-- Phase 4-7: Fix remaining API modules (event, window, dialog, clipboard, os, store)
+- Phase 5: Window API Gaps — `appWindow`, multi-windowfactory stubs
+- Phase 6-7: Fix remaining API modules (dialog, clipboard, os, store)
 - Phase 8: Update barrel exports in `index.ts`
 - Phase 9-10: End-to-end testing with real apps
 

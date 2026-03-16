@@ -12,6 +12,10 @@ export function installIpcBridge(kernelProxy: KernelProxy): void {
   // (We'll use this in Phase 7 for events, or we route them back via the proxy resolving)
   (window as any).__R1_CALLBACKS__ = callbacks;
 
+  // Numeric ID registry for unlisten functions
+  const eventListeners = new Map<number, { event: string, unlisten: () => void }>();
+  let nextListenerId = 1;
+
   // --------------------------------------------------------------------------
   // TAURI v2 BRIDGE
   // --------------------------------------------------------------------------
@@ -38,14 +42,43 @@ export function installIpcBridge(kernelProxy: KernelProxy): void {
      * listen() for global events.
      */
     listen: (event: string, handler: Function) => {
-        return Promise.resolve(kernelProxy.eventBus.on(event, handler));
+      const id = nextListenerId++;
+      const unlisten = kernelProxy.eventBus.on(event, handler);
+      eventListeners.set(id, { event, unlisten });
+      
+      const unlistenWrapper = () => {
+        unlisten();
+        eventListeners.delete(id);
+      };
+      // Tauri v2 returns a Promise<UnlistenFn>
+      return Promise.resolve(unlistenWrapper);
     },
 
     /**
      * once() for global events.
      */
     once: (event: string, handler: Function) => {
-        return Promise.resolve(kernelProxy.eventBus.once(event, handler));
+      const id = nextListenerId++;
+      const unlisten = kernelProxy.eventBus.once(event, handler);
+      eventListeners.set(id, { event, unlisten });
+      
+      const unlistenWrapper = () => {
+        unlisten();
+        eventListeners.delete(id);
+      };
+      return Promise.resolve(unlistenWrapper);
+    },
+
+    /**
+     * unlisten() by numeric ID (Tauri v1 style).
+     */
+    unlisten: (event: string, id: number) => {
+      const entry = eventListeners.get(id);
+      if (entry && entry.event === event) {
+        entry.unlisten();
+        eventListeners.delete(id);
+      }
+      return Promise.resolve();
     }
   };
 

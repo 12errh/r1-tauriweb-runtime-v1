@@ -88,7 +88,14 @@ export class WasmOrchestrator {
 
         // wasm-bindgen init returns the exports object.
         // Importantly, we must call it to initialize the module's internal `wasm` variable.
-        const wasmExports = await jsModule.default(buffer, r1Imports);
+        // Modern wasm-bindgen (0.2.84+) prefers as object, but we'll try to be compatible.
+        let wasmExports;
+        try {
+            wasmExports = await jsModule.default({ module_or_path: buffer, ...r1Imports });
+        } catch (e) {
+            // Fallback for older glue
+            wasmExports = await jsModule.default(buffer, r1Imports);
+        }
         instanceRef = { exports: wasmExports } as WebAssembly.Instance;
 
         if (wasmExports.memory instanceof WebAssembly.Memory) {
@@ -182,11 +189,13 @@ export class WasmOrchestrator {
    * Auto-discovers exported functions and registers them in the kernel router.
    */
   private registerModuleCommands(moduleName: string, exports: any) {
-    // Module namespace objects might not work well with Object.entries in some environments
-    const keys = Object.keys(exports).concat(Object.getOwnPropertyNames(exports));
-    const uniqueKeys = Array.from(new Set(keys));
+    // Module namespace objects might not work well with Object.keys.
+    // We use Reflect.ownKeys to get all properties including non-enumerable ones.
+    const keys = Reflect.ownKeys(exports);
     
-    for (const fnName of uniqueKeys) {
+    for (const fnKey of keys) {
+      if (typeof fnKey !== 'string') continue;
+      const fnName = fnKey;
       const func = exports[fnName];
       if (typeof func === 'function' && !fnName.startsWith('__') && fnName !== 'default') {
         const fullCmdName = `${moduleName}:${fnName}`;
@@ -215,11 +224,13 @@ export class WasmOrchestrator {
       if (args.length === 1 && typeof args[0] === 'object' && !Array.isArray(args[0]) && args[0] !== null) {
         const jsonString = JSON.stringify(args[0]);
         
-        // Check if this is a wasm-bindgen module (has __wbindgen_malloc)
-        const isWasmBindgen = '__wbindgen_malloc' in wasm.exports;
+        // Check if this is a wasm-bindgen module.
+        // It could be in the glue exports OR in the raw wasm instance exports.
+        const isWasmBindgen = ('__wbindgen_malloc' in wasm.exports) || 
+                              (wasm.instance && '__wbindgen_malloc' in wasm.instance.exports);
         
-        console.log('[WasmOrchestrator] Calling function:', fnName);
-        console.log('[WasmOrchestrator] Is wasm-bindgen:', isWasmBindgen);
+        console.log(`[WasmOrchestrator] Calling function: ${fnName}`);
+        console.log(`[WasmOrchestrator] Is wasm-bindgen: ${!!isWasmBindgen}`);
         
         if (isWasmBindgen) {
           // wasm-bindgen string handling
