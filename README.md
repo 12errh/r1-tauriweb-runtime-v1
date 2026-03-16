@@ -1,72 +1,142 @@
 # R1 TauriWeb Runtime
 
-> Build native-grade Tauri applications that run entirely in the browser.
+> Run your Tauri app in the browser. No server. No installer. Just a URL.
 
-R1 is a high-performance runtime that bridges the gap between native Tauri and the Web. It allows you to take your existing Tauri application structure (Rust backend + React/Vue/Svelte frontend) and deploy it to a standard web browser without a server-side backend.
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-31%20passed-brightgreen.svg)](#)
+[![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://resplendent-arithmetic-aee148.netlify.app/)
 
-## 🚀 Key Features
+**[Live Demo](https://resplendent-arithmetic-aee148.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
-- 🏎️ **WASM Backend**: Run your Rust logic in a dedicated Web Worker via WebAssembly.
-- 📂 **Virtual Filesystem (VFS)**: Persistent file storage using the Origin Private File System (OPFS), mapping standard Rust `std::fs` calls to the browser.
-- 🪟 **Virtual Window Manager**: A native-feeling windowing system with macOS, Windows 11, and Linux themes.
-- 📡 **IPC Bridge**: Drop-in compatibility with `@tauri-apps/api/tauri`'s `invoke` command.
-- ⚡ **Vite Plugin**: Automatic Rust compilation (`wasm-pack`) and runtime injection via `@r1/vite-plugin`.
-- 🛡️ **Isolation**: Kernel-level separation between UI and Backend for maximum stability.
+---
 
-## 📦 Project Structure
+## What is R1?
 
-```text
+R1 is a browser-native runtime for Tauri applications. You write a standard Tauri app — Rust backend, React/Vue/Svelte frontend — and R1 runs it entirely in the browser.
+
+The developer adds one line to `vite.config.ts`. The end user visits a URL. That's it.
+
+```
+Your Tauri App  →  npm run build  →  Static folder  →  Deploy anywhere
+                   (R1 compiles                         Vercel / Netlify /
+                    Rust → WASM                         GitHub Pages)
+                    automatically)
+```
+
+---
+
+## How It Works
+
+The browser can't run a native Rust binary. R1 solves this with a layered architecture:
+
+- **Rust → WASM** — the R1 Vite plugin compiles your `src-tauri/` directory to WebAssembly automatically during `npm run build`
+- **Kernel Worker** — all WASM execution runs in a dedicated Web Worker, so the UI thread is never blocked
+- **WASI Shim** — intercepts `std::fs` calls from Rust and redirects them to the browser's Origin Private File System (OPFS). Your Rust file I/O works unchanged
+- **IPC Bridge** — patches `window.__TAURI_INTERNALS__` so your existing `invoke()` calls work with zero frontend code changes
+- **Event Bridge** — Rust can emit events back to JavaScript via `listen()` just like in native Tauri
+- **Service Worker** — intercepts `asset://` URLs and serves files from the virtual filesystem
+
+```
+Your Frontend (React)
+      ↓ invoke('command', args)
+IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
+                    ↕                    ↕
+                   VFS              WASI Shim
+                (OPFS)           (std::fs → OPFS)
+```
+
+---
+
+## Features
+
+| Feature | Status |
+|---|---|
+| `invoke()` — Tauri v1 and v2 compatible | ✅ |
+| `std::fs` read/write from Rust | ✅ |
+| Rust → JS event bridge (`emit` / `listen`) | ✅ |
+| Persistent storage across page refreshes | ✅ |
+| Virtual Window Manager (macOS, Windows 11, Linux) | ✅ |
+| Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
+| WASM panic isolation | ✅ |
+| Automatic Rust compilation via Vite plugin | ✅ |
+| 31/31 unit tests passing | ✅ |
+
+---
+
+## Quick Start
+
+### Run the Todo Demo
+
+```bash
+git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
+cd r1-tauriweb-runtime-v1
+npm install
+npm run build
+cd apps/todo-demo
+npm run dev
+```
+
+Open **http://localhost:5173** — the todo app is running entirely in the browser with its Rust backend executing as WASM.
+
+### Build Your Own App
+
+See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step guide to creating your first R1 app from scratch.
+
+---
+
+## Project Structure
+
+```
 r1-tauriweb-runtime/
 ├── packages/
-│   ├── kernel/      # The OS for the browser (Worker-side)
-│   ├── core/        # Main thread runtime and IPC bridge
-│   ├── apis/        # Standard Tauri API implementations (FS, Dialog, etc.)
-│   ├── sw/          # Service Worker for asset interception
-│   ├── window/      # Virtual Windowing system & UI components
-│   └── vite-plugin/ # Developer experience & Build automation
-└── apps/
-    ├── todo-demo/   # Fully functional Todo application (POC)
-    └── demo/        # Showcase and technical tests
+│   ├── kernel/       — Kernel Worker: WASM execution, VFS, WASI shim
+│   ├── core/         — Main thread: IPC bridge, EventBus, R1Runtime
+│   ├── apis/         — Tauri API implementations (fs, event, dialog…)
+│   ├── sw/           — Service Worker: asset:// protocol
+│   ├── window/       — Virtual Window Manager + OS themes
+│   └── vite-plugin/  — Build tooling: Rust → WASM, import patching
+├── apps/
+│   ├── todo-demo/    — Complete Tauri todo app running in the browser
+│   └── demo/         — Technical showcase and API tests
+└── tests/
+    └── fixtures/     — Pre-compiled .wasm test binaries
 ```
 
-## 🛠️ Getting Started
+---
 
-We have provided detailed guides to help you start building:
-- 🚀 **[GETTING_STARTED.md](./GETTING_STARTED.md)**: **The 5-Minute Quick Start Migration Guide.**
-- 📖 **[USAGE_GUIDE.md](./USAGE_GUIDE.md)**: A step-by-step tutorial for your first app.
-- 🏗️ **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**: Deep technical architecture and limitations.
+## Documentation
 
-### Quick Start (Running the Todo Demo)
+| Document | What's in it |
+|---|---|
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | Create and run your first R1 app from scratch |
+| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | Detailed reference for all R1 features and APIs |
+| [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) | Internal architecture, package internals, contributing |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to report bugs and submit pull requests |
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+---
 
-2. **Build the entire workspace**:
-   ```bash
-   npm run build
-   ```
+## Limitations
 
-3. **Run the demo**:
-   ```bash
-   cd apps/todo-demo
-   npm run dev
-   ```
+R1 is at v0.1. It works well for simple to medium complexity Tauri apps. Things that don't work:
 
-## 📜 Architecture
+- Spawning child processes (`shell::execute`) — not possible in a browser sandbox
+- System tray, global shortcuts — not browser concepts
+- Raw sockets and Unix signals — not available in WASM
+- Apps that depend on native OS libraries that can't compile to WASM
 
-R1 uses a "Kernel-Worker" architecture. The UI runs on the main thread, while the Rust logic and VFS operations run in a dedicated Web Worker. Communication happens over a high-speed IPC bridge that mimics Tauri's native protocol.
+See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the complete limitations list.
 
-```mermaid
-graph TD
-    UI[Frontend / React] <--> IPC[IPC Bridge]
-    IPC <--> Kernel[Kernel Worker]
-    Kernel <--> WASM[Rust Logic]
-    Kernel <--> VFS[Origin Private FS]
-    SW[Service Worker] <--> VFS
-```
+---
 
-## 🛡️ License
+## Roadmap
+
+- `npx r1 sync` — CLI that automatically patches existing Tauri apps to work with R1
+- `#[r1::command]` macro — write standard `#[tauri::command]` functions with no JSON contract required
+- npm publishing — install R1 without cloning
+- Deeper WASI syscall coverage
+
+---
+
+## License
 
 MIT © 2026 R1 Runtime Team
