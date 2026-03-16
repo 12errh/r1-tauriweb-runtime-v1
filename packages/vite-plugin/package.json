@@ -20,14 +20,16 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "esbuild": "^0.20.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^1.0.0"
   },
   "peerDependencies": {
     "vite": "^5.0.0"

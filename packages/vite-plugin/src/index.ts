@@ -85,13 +85,39 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       if (!id.match(/\.(js|ts|jsx|tsx)$/)) return null;
       if (id.includes('node_modules')) return null;
 
-      // Replace @tauri-apps/api with @r1/apis
-      // Handles both: import { invoke } from '@tauri-apps/api/tauri'
-      // and: import * as tauri from '@tauri-apps/api'
-      if (code.includes('@tauri-apps/api')) {
-        const newCode = code.replace(/['"]@tauri-apps\/api(\/[^'"]*)?['"]/g, (match) => {
-          return match.replace('@tauri-apps/api', '@r1/apis');
-        });
+      // Import map for Tauri API paths to R1 equivalents
+      const importMap: Record<string, string> = {
+        '@tauri-apps/api/core':         '@r1/apis/core',
+        '@tauri-apps/api/tauri':        '@r1/apis/core',
+        '@tauri-apps/api/fs':           '@r1/apis/fs',
+        '@tauri-apps/api/path':         '@r1/apis/path',
+        '@tauri-apps/api/event':        '@r1/apis/event',
+        '@tauri-apps/api/window':       '@r1/apis/window',
+        '@tauri-apps/api/dialog':       '@r1/apis/dialog',
+        '@tauri-apps/api/clipboard':    '@r1/apis/clipboard',
+        '@tauri-apps/api/notification': '@r1/apis/notification',
+        '@tauri-apps/api/os':           '@r1/apis/os',
+        '@tauri-apps/api/shell':        '@r1/apis/shell',
+        '@tauri-apps/api/http':         '@r1/apis/http',
+        '@tauri-apps/api/store':        '@r1/apis/store',
+        '@tauri-apps/plugin-store':     '@r1/apis/store',
+        '@tauri-apps/api':              '@r1/apis',
+      };
+
+      // Check if code contains any Tauri imports
+      if (code.includes('@tauri-apps/api') || code.includes('@tauri-apps/plugin-store')) {
+        let newCode = code;
+        
+        // Sort keys by length (longest first) to match sub-paths before bare imports
+        const sortedKeys = Object.keys(importMap).sort((a, b) => b.length - a.length);
+        
+        for (const tauriPath of sortedKeys) {
+          const r1Path = importMap[tauriPath];
+          // Match both single and double quotes
+          const regex = new RegExp(`(['"])${tauriPath.replace(/\//g, '\\/')}\\1`, 'g');
+          newCode = newCode.replace(regex, `$1${r1Path}$1`);
+        }
+        
         return {
           code: newCode,
           map: null
@@ -162,7 +188,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         console.log('[R1] Booting Runtime...');
         const r1 = new R1Runtime();
         r1.boot({ 
-          wasmPath: '/wasm/${wasmName}.js' 
+          wasmPath: '/wasm/${wasmName}_bg.wasm' 
         }).then(() => {
           console.log('[R1] Boot complete.');
           window.dispatchEvent(new Event('r1:ready'));
@@ -230,7 +256,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
             console.log('[R1] Booting Runtime...');
             const r1 = new R1Runtime();
             r1.boot({ 
-              wasmPath: '/wasm/${wasmName}.js' 
+              wasmPath: '/wasm/${wasmName}_bg.wasm' 
             }).then(() => {
               console.log('[R1] Boot complete.');
               window.dispatchEvent(new Event('r1:ready'));

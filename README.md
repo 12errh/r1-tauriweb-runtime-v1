@@ -3,8 +3,9 @@
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-31%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-36%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://resplendent-arithmetic-aee148.netlify.app/)
+[![Version](https://img.shields.io/badge/version-v0.2--dev-yellow.svg)](#)
 
 **[Live Demo](https://r1-todo-demo.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -59,7 +60,51 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| 31/31 unit tests passing | ✅ |
+| 36/36 unit tests passing | ✅ |
+
+---
+
+## Development Status
+
+### ✅ v0.1 Complete (January 2026)
+
+v0.1 established the core runtime architecture and proved the concept works:
+
+- Kernel Worker with WASM execution and VFS
+- IPC Bridge for Tauri v1 and v2 compatibility
+- WASI shim redirecting `std::fs` to OPFS
+- Event bridge for Rust → JS communication
+- Virtual Window Manager with OS themes
+- Tauri API plugins (fs, event, store, os, path)
+- Vite plugin for automatic Rust → WASM compilation
+- Todo demo app running in browser
+- 31 unit tests covering all core functionality
+
+**What worked:** The todo demo app runs perfectly in the browser with full file persistence.
+
+**What we learned:** Testing with `file-browser-tauri` revealed systematic gaps in the direct-export layer. Apps using `import { readDir } from '@tauri-apps/api/fs'` failed at build time because the vite-plugin wasn't patching sub-path imports, and the API modules only exported plugin classes, not top-level functions.
+
+### 🚧 v0.2 In Progress (Current)
+
+**Goal:** Close the "direct export gap" so any simple-to-medium Tauri app builds and runs with zero runtime errors.
+
+**Progress so far:**
+
+- ✅ **Phase 0 Complete** — Codebase audit identified all missing exports
+- ✅ **Phase 1 Complete** — Fixed vite-plugin WASM path bug and import patcher
+  - Changed WASM loading from `.js` to `_bg.wasm`
+  - Added comprehensive import map covering all 14 Tauri API paths
+  - Patcher handles sub-paths correctly (e.g., `@tauri-apps/api/fs` → `@r1/apis/fs`)
+  - 5 new tests added, all passing
+
+**Next up:**
+- Phase 2: Fix `fs.ts` — add direct exports + VFS race condition fix
+- Phase 3: Fix `path_util.ts` — already has exports, verify completeness
+- Phase 4-7: Fix remaining API modules (event, window, dialog, clipboard, os, store)
+- Phase 8: Update barrel exports in `index.ts`
+- Phase 9-10: End-to-end testing with real apps
+
+See [roadmap/v0.2 roadmap.md](./roadmap/v0.2%20roadmap.md) for the complete v0.2 plan.
 
 ---
 
@@ -130,10 +175,13 @@ See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the complete limitations list
 
 ## Roadmap
 
+### v0.3 and Beyond
+
 - `npx r1 sync` — CLI that automatically patches existing Tauri apps to work with R1
 - `#[r1::command]` macro — write standard `#[tauri::command]` functions with no JSON contract required
 - npm publishing — install R1 without cloning
-- Deeper WASI syscall coverage
+- Test with 3+ real open source Tauri apps
+- Deeper WASI syscall coverage based on real app needs
 
 ---
 
