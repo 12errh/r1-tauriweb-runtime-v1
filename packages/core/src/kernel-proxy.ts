@@ -130,6 +130,15 @@ export class KernelProxy {
         else if (method === 'notify') new Notification(args.title, args.options);
       } else if (api === 'shell') {
         if (method === 'open') window.open(args.url, '_blank');
+      } else if (api === 'os') {
+        if (method === 'platform') result = (navigator as any).platform || 'unknown';
+        else if (method === 'arch') result = 'x64'; // Default for browser
+        else if (method === 'version') result = navigator.userAgent;
+        else if (method === 'type') result = 'Browser';
+      } else if (api === 'path') {
+        if (method === 'home_dir') result = '/home';
+        else if (method === 'app_data_dir') result = '/app_data';
+        else if (method === 'resolve') result = args.paths.join('/'); 
       } else if (api === 'window') {
         const wm = WindowManager.getInstance();
         const winId = args.id || 'main';

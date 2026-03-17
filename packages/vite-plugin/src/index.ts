@@ -11,6 +11,7 @@ export interface R1PluginOptions {
   rustSrc?: string; // Default: 'src-tauri'
   wasmOut?: string; // Default: 'public/wasm'
   swSrc?: string;   // Optional override for Service Worker source
+  manualBoot?: boolean; // If true, disable automatic injection of r1-boot.js
 }
 
 export function r1Plugin(options: R1PluginOptions = {}): Plugin {
@@ -128,12 +129,13 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     },
 
     async transformIndexHtml(html: string) {
+      if (options.manualBoot) return html;
       return {
         html,
         tags: [
           {
             tag: 'script',
-            attrs: { type: 'module', src: '/r1-boot.js' },
+            attrs: { type: 'module', src: '/r1-boot.js', id: 'r1-boot' },
             injectTo: 'head-prepend'
           }
         ]
@@ -217,68 +219,101 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     },
 
     configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        if (req.url === '/r1-sw.js') {
-          const swEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
-          if (existsSync(swEntry)) {
-             const result = await esbuild.build({ 
-               entryPoints: [swEntry], 
-               bundle: true, 
-               write: false, 
-               format: 'iife',
-               loader: { '.css': 'empty' }
-             });
-            res.setHeader('Content-Type', 'application/javascript');
-            res.setHeader('Service-Worker-Allowed', '/');
-            res.end(result.outputFiles![0].text);
-            return;
+      // Use unshift to ensure R1 middleware is at the very top of the stack
+      server.middlewares.stack.unshift({
+        route: '',
+        handle: (req: any, res: any, next: any) => {
+          const url = req.url || '';
+          const rawPathname = url.split('?')[0].split('#')[0];
+          
+          // Identify virtual files strictly but independently of base path prefixes
+          const isR1 = rawPathname.endsWith('/r1-sw.js') || 
+                       rawPathname.endsWith('/sw.js') || 
+                       rawPathname.endsWith('/r1-boot.js');
+
+          if (!isR1) {
+            return next();
           }
+
+          // We are handling this request. Strictly DO NOT call next() after this point.
+          (async () => {
+            try {
+              console.log(`[R1 Plugin] Intercepting: ${rawPathname}`);
+
+              let content = '';
+              if (rawPathname.endsWith('/r1-sw.js') || rawPathname.endsWith('/sw.js')) {
+                const entry = rawPathname.endsWith('/r1-sw.js')
+                  ? (options.swSrc || resolve(_dirname, '../../sw/src/index.ts'))
+                  : resolve(_dirname, '../../kernel/src/kernel.worker.ts');
+
+                if (!existsSync(entry)) {
+                  console.warn(`[R1 Plugin] Source not found: ${entry}`);
+                  res.statusCode = 404;
+                  return res.end(`console.error("[R1 Plugin] Source not found for ${rawPathname}");`);
+                }
+
+                const result = await esbuild.build({
+                  entryPoints: [entry],
+                  bundle: true,
+                  write: false,
+                  format: 'iife',
+                  target: 'es2020',
+                  minify: false,
+                  loader: { '.css': 'empty', '.wasm': 'binary' },
+                  define: { 'process.env.NODE_ENV': '"development"' }
+                });
+                content = result.outputFiles[0].text;
+              } else if (rawPathname.endsWith('/r1-boot.js')) {
+                const wasmName = getWasmName();
+                const bootScript = `
+                  import { R1Runtime } from '@r1/core';
+                  if (!window.__R1_BOOT_STATUS__) {
+                    const r1 = new R1Runtime();
+                    r1.boot({ 
+                      wasmPath: '/wasm/${wasmName}.js' 
+                    }).then(() => {
+                      window.dispatchEvent(new Event('r1:ready'));
+                    }).catch(err => {
+                      console.error('[R1] Boot failed:', err);
+                      window.dispatchEvent(new CustomEvent('r1:error', { detail: err.message }));
+                    });
+                  }
+                `;
+
+                const result = await esbuild.build({
+                  stdin: {
+                    contents: bootScript,
+                    resolveDir: resolve(_dirname, '..'),
+                    loader: 'ts'
+                  },
+                  bundle: true,
+                  write: false,
+                  format: 'esm',
+                  target: 'es2020',
+                  minify: false,
+                  loader: { '.css': 'empty' },
+                  define: { 'process.env.NODE_ENV': '"development"' }
+                });
+                content = result.outputFiles[0].text;
+              }
+
+              res.setHeader('Content-Type', 'application/javascript');
+              res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+              if (rawPathname.endsWith('/r1-sw.js')) {
+                res.setHeader('Service-Worker-Allowed', '/');
+              }
+              res.end(content);
+            } catch (err) {
+              console.error(`[R1 Plugin] Error serving ${rawPathname}:`, err);
+              if (!res.headersSent) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/javascript');
+                res.end(`console.error("[R1 Plugin] Failed to build ${rawPathname}: ${String(err).replace(/"/g, "'")}");`);
+              }
+            }
+          })();
         }
-        if (req.url === '/sw.js') {
-          const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
-          if (existsSync(kernelEntry)) {
-             const result = await esbuild.build({ 
-               entryPoints: [kernelEntry], 
-               bundle: true, 
-               write: false, 
-               format: 'iife',
-               loader: { '.css': 'empty' }
-             });
-            res.setHeader('Content-Type', 'application/javascript');
-            res.end(result.outputFiles![0].text);
-            return;
-          }
-        }
-        if (req.url === '/r1-boot.js') {
-          const wasmName = getWasmName();
-          const bootScript = `
-            import { R1Runtime } from '@r1/core';
-            console.log('[R1] Booting Runtime...');
-            const r1 = new R1Runtime();
-            r1.boot({ 
-              wasmPath: '/wasm/${wasmName}.js' 
-            }).then(() => {
-              console.log('[R1] Boot complete.');
-              window.dispatchEvent(new Event('r1:ready'));
-            });
-          `;
-          const result = await esbuild.build({
-            stdin: {
-              contents: bootScript,
-              resolveDir: process.cwd(),
-              loader: 'ts'
-            },
-            bundle: true,
-            write: false,
-            format: 'esm',
-            loader: { '.css': 'empty' }
-          });
-          res.setHeader('Content-Type', 'application/javascript');
-          res.end(result.outputFiles![0].text);
-          return;
-        }
-        next();
-      });
+      } as any);
     }
   };
 }

@@ -29,6 +29,8 @@ describe('Phase 2: IPC Bridge (Patching Tauri globals)', () => {
     delete (window as any).__TAURI_INTERNALS__;
     delete (window as any).__TAURI_IPC__;
     delete (window as any).__R1_CALLBACKS__;
+    delete (window as any).__R1_BOOT_STATUS__;
+    R1Runtime.__TEST_RESET__();
 
     originalWorker = globalThis.Worker;
     globalThis.Worker = MockWorker as any;

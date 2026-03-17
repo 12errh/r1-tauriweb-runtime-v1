@@ -44,6 +44,17 @@ export class WasmOrchestrator {
     try {
       const wasi = new WasiShim(this.vfs);
       
+      // Provide the newly expected global emit function for wasm-bindgen
+      (globalThis as any).__R1_EMIT__ = (eventName: string, payloadString: string) => {
+          let payload;
+          try {
+            payload = JSON.parse(payloadString);
+          } catch {
+            payload = payloadString;
+          }
+          this.onEvent(eventName, payload);
+      };
+
       const createEnv = (instanceGetter: () => WebAssembly.Instance | undefined) => ({
         r1_emit: (namePtr: number, nameLen: number, payloadPtr: number, payloadLen: number) => {
           const instance = instanceGetter();
