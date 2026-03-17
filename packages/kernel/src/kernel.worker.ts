@@ -36,7 +36,7 @@ const wasmOrchestrator = new WasmOrchestrator(vfs, router, (event, payload) => {
 router.use(new FsPlugin(vfs));
 router.use(new CorePlugin());
 router.use(new StorePlugin(vfs));
-router.use(new OsPlugin());
+router.use(new OsPlugin(onMainThreadCall));
 router.use(new HttpPlugin());
 router.use(new PathPlugin());
 router.use(new WindowPlugin(onMainThreadCall));

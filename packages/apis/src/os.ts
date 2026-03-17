@@ -2,24 +2,21 @@ import { KernelPlugin, KernelHandler } from '@r1/kernel';
 
 export class OsPlugin implements KernelPlugin {
   name = 'os';
+  private onMainThreadCall: (api: string, method: string, args: any) => Promise<any>;
+
+  constructor(onMainThreadCall: (api: string, method: string, args: any) => Promise<any>) {
+    this.onMainThreadCall = onMainThreadCall;
+  }
 
   getCommands(): Map<string, KernelHandler> {
     const commands = new Map<string, KernelHandler>();
 
-    // Simulated OS values, can be made configurable later
-    const info = {
-      platform: 'windows',
-      arch: 'x86_64',
-      version: '10.0.19045',
-      locale: 'en-US',
-      hostname: 'r1-virtual-machine'
-    };
-
-    commands.set('platform', async () => info.platform);
-    commands.set('arch', async () => info.arch);
-    commands.set('version', async () => info.version);
-    commands.set('locale', async () => info.locale);
-    commands.set('hostname', async () => info.hostname);
+    commands.set('platform', async (args) => this.onMainThreadCall('os', 'platform', args));
+    commands.set('arch', async (args) => this.onMainThreadCall('os', 'arch', args));
+    commands.set('version', async (args) => this.onMainThreadCall('os', 'version', args));
+    commands.set('locale', async (args) => this.onMainThreadCall('os', 'locale', args));
+    commands.set('hostname', async (args) => this.onMainThreadCall('os', 'hostname', args));
+    commands.set('type', async (args) => this.onMainThreadCall('os', 'type', args));
 
     return commands;
   }

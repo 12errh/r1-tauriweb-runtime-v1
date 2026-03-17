@@ -28,7 +28,10 @@ describe('Phase 8: Modular Router & Plugins', () => {
         events.push({ event, payload });
     }));
     router.use(new StorePlugin(vfs));
-    router.use(new OsPlugin());
+    router.use(new OsPlugin(async (api, method) => {
+        if (api === 'os' && method === 'platform') return 'mock-windows';
+        return null;
+    }));
     router.use(new PathPlugin());
   });
 
@@ -76,9 +79,9 @@ describe('Phase 8: Modular Router & Plugins', () => {
     expect(JSON.parse(content)).toEqual({ theme: 'dark' });
   });
 
-  it('4. OsPlugin returns simulated values', async () => {
+  it('4. OsPlugin returns bridged values from main thread', async () => {
     const res = await router.handle({ id: 'o1', type: 'os:platform', payload: {} });
-    expect(res.payload).toBe('windows');
+    expect(res.payload).toBe('mock-windows');
   });
 
   it('5. PathPlugin provides path utilities', async () => {
