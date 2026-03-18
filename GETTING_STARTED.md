@@ -25,7 +25,7 @@ Make sure these are installed before starting. Each link goes to the official in
 Verify everything is ready:
 ```bash
 node --version       # Should print v18 or higher
-rustc --version      # Should print rustc 1.70 or higher
+rustc --version      # Should print rustc 1.75 or higher
 wasm-pack --version  # Should print wasm-pack 0.12 or higher
 ```
 
@@ -161,7 +161,8 @@ Replace the entire contents with this:
 
 ```rust
 fn main() {
-
+    // Standard Tauri build logic is bypassed for WASM targets 
+    // to prevent native build dependencies from interfering.
 }
 ```
 
@@ -337,10 +338,13 @@ cargo install wasm-pack
 ```
 
 **Build fails with `error: failed to run custom build command for tauri-build`**
-Your `build.rs` does not have the WASM guard from Step 5b. Replace it with the version shown above.
+Your `build.rs` does not have the empty `main` block from Step 5b. When building for WASM, `tauri-build` must not run its default logic because it checks for native C++ compiler tools that aren't needed for R1.
+
+**`Error: [WasmOrchestrator] Function '...' not exported`**
+Check your `src-tauri/src/lib.rs`. Ensure the function has the `#[wasm_bindgen]` attribute and handles input/output as JSON strings. Also, verify that the `[lib]` name in `Cargo.toml` uses underscores, not hyphens.
 
 **App loads but Greet button does nothing**
-Open DevTools → Console and look for errors. The most common cause is the `[lib] name` in `Cargo.toml` containing hyphens instead of underscores.
+Check the browser console. The most common cause is the `[lib] name` in `Cargo.toml` containing hyphens instead of underscores (e.g., `my-app` instead of `my_app`).
 
 **Page shows blank / R1 not booting**
 Press `Ctrl+F5` to force a hard refresh. The Service Worker needs a clean registration on first load.
