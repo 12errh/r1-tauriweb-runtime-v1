@@ -61,9 +61,8 @@ Everything in this package runs inside a Web Worker, never on the main thread.
 
 **`WasmOrchestrator`** manages the WASM lifecycle:
 - Loads `.wasm` binaries by name and URL
-- Maintains a `Map<string, WasmModule>` — the Module Registry
-- Calls exported Rust functions using the JSON contract
 - Catches WASM panics before they kill the Worker
+- Supports 63 unit tests across the monorepo
 
 **`VFS`** (Virtual File System) provides persistent browser storage:
 - Reads come from an in-memory cache — microsecond access
@@ -382,7 +381,7 @@ Pre-compile your WASM test binary and commit it to `tests/fixtures/wasm/`. Never
 
 ## Roadmap
 
-R1 is at v0.1. The following are planned for upcoming versions:
+R1 is at v0.2-stable. The following are planned for upcoming versions:
 
 - **`npx r1 sync`** — a CLI that automatically patches `Cargo.toml`, `build.rs`, and `lib.rs` in existing Tauri apps
 - **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required
@@ -392,11 +391,9 @@ R1 is at v0.1. The following are planned for upcoming versions:
 
 ---
 
-## Contributing
-
 The most valuable contributions right now are:
 
-1. **Test R1 with your own Tauri app** and open an issue describing what broke. This is more valuable than any code contribution at this stage.
+1. **Test R1 with your own Tauri app** and open an issue describing what broke. R1 v0.2 supports complex APIs, so we need real-world stress tests.
 2. **WASI shim additions** — if a syscall returns `ERRNO_NOSYS` that you need, adding it to `packages/kernel/src/wasi-shim.ts` is well-scoped and testable.
 3. **API plugin completeness** — if a `@tauri-apps/api` command returns wrong data or is missing, `packages/apis/src/` is the place to add it.
 

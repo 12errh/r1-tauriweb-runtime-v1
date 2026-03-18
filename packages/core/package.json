@@ -1,6 +1,6 @@
 {
   "name": "@r1/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Main thread runtime for R1, providing the IPC bridge and boot synchronization.",
   "type": "module",
   "author": "R1 Runtime Team",
@@ -14,6 +14,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@r1/apis": "^0.1.0"
+    "@r1/`apis": "^0.2.0"
   }
 }

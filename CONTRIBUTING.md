@@ -1,6 +1,6 @@
 # Contributing to R1 TauriWeb Runtime
 
-R1 is at v0.1 and the most valuable thing you can do right now is **test it with your own Tauri app** and report what breaks. That feedback directly shapes the next version more than any code contribution.
+R1 is at v0.2-stable and the most valuable thing you can do right now is **test it with your own Tauri app** and report what breaks. v0.2 added support for all major Tauri APIs (Fs, Event, Store, Dialog, etc.).
 
 That said, all contributions are welcome — bug fixes, new API implementations, WASI shim additions, and documentation improvements.
 
@@ -31,7 +31,7 @@ npm install
 # 3. Build all packages
 npm run build
 
-# 4. Run the test suite — all 31 should pass
+# 4. Run the test suite — all 63 should pass
 npm test
 
 # 5. Start the demo app to verify everything works

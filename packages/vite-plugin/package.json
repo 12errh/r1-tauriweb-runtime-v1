@@ -1,6 +1,6 @@
 {
   "name": "@r1/vite-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The official Vite plugin for R1, automating Rust compilation and runtime injection.",
   "type": "module",
   "author": "R1 Runtime Team",

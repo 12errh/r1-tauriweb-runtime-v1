@@ -1,6 +1,6 @@
 {
   "name": "@r1/apis",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Standardized Tauri API shims for the R1 Runtime (FS, Dialog, Event, etc.)",
   "type": "module",
   "author": "R1 Runtime Team",
