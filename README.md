@@ -116,8 +116,13 @@ v0.1 established the core runtime architecture and proved the concept works:
   - JS-to-JS event emission and receiving verified
   - All 11 v0.2 gap tests passing
 
+- ✅ **Phase 5 Complete** — Fixed `window.ts` Window API
+  - Exported `appWindow` and injected it into global Tauri internals
+  - Added explicit Vite and tsconfig path aliases for `@r1/apis/*` sub-paths to resolve build errors
+  - Downgraded `@tauri-apps/api` in `file-browser-tauri` to v1 format to pass typescript verification
+  - Verified 100% of the 58 tests across all workspaces pass successfully
+
 **Next up:**
-- Phase 5: Window API Gaps — `appWindow`, multi-windowfactory stubs
 - Phase 6-7: Fix remaining API modules (dialog, clipboard, os, store)
 - Phase 8: Update barrel exports in `index.ts`
 - Phase 9-10: End-to-end testing with real apps
