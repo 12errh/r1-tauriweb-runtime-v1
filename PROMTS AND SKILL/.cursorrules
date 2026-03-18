@@ -1,0 +1,68 @@
+# R1 TauriWeb Runtime — Cursor Rules
+
+## What This Project Is
+
+R1 is a browser-native runtime for Tauri apps. It compiles Rust backends to
+WebAssembly and runs them in the browser. The developer adds one line to
+vite.config.ts and deploys a static folder — end users get the full Tauri
+app at a URL with no installer.
+
+## Before Making Any Change
+
+Read `.agent/skills/R1_SKILL.md` completely. It contains the architecture,
+the Rust JSON contract, supported APIs, and every known error pattern.
+Do not make changes based on assumptions — always check the skill file first.
+
+## The 3 Rules That Matter Most
+
+1. WASM never runs on the main thread. All execution goes through the Kernel Worker.
+2. All JS↔WASM data travels as JSON strings. No raw pointers, no raw types.
+3. Every edit to packages/* requires rebuilding R1 before the app sees the change:
+   `cd r1-tauriweb-runtime-v1 && npm run build`
+
+## Never Do These Things
+
+- Never change `@tauri-apps/api` import statements in the frontend
+  (the Vite plugin rewrites them automatically)
+- Never change `invoke()` calls in the frontend
+  (the IPC bridge routes them automatically)
+- Never add SQLite to a Rust backend (not supported until v0.3)
+- Never load `app.js` — always load `app_bg.wasm` (the binary)
+- Never use `.unwrap()` in WASM functions without error handling
+
+## Package Boundaries
+
+- `@r1/kernel` must never import from `@r1/core`
+- `@r1/core` must never import from `@r1/apis`
+- `@r1/apis` imports from `@r1/kernel` for VFS access only
+- `@r1/vite-plugin` has no runtime imports — build tooling only
+
+## When Adding a New API
+
+Every API module needs TWO things:
+1. A `KernelPlugin` class with `getCommands()` — handles `invoke()` calls
+2. Top-level named exports — handles `import { fn } from '@tauri-apps/api/x'`
+
+Missing either one will cause either runtime errors or build-time errors.
+Use `packages/apis/src/fs.ts` as the template for both patterns.
+
+## Rust JSON Contract
+
+Every `#[wasm_bindgen]` function must:
+- Take `payload: &str` as input
+- Return `String` as output
+- Use `serde_json::from_str` to decode input
+- Use `serde_json::to_string` to encode output
+- Return `{ "error": "message" }` on failure — never panic
+
+## Build Verification
+
+A successful R1 build produces:
+```
+[R1] Found Rust source at ./src-tauri. Building WASM...
+[INFO]: :-) Done in Xs
+✓ built in Xs
+```
+
+The `dist/` folder must contain `sw.js`, `r1-boot.js`, and `wasm/<app>_bg.wasm`.
+The browser console on load must show `[R1] Boot complete.`

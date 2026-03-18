@@ -155,6 +155,25 @@ See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the complete limitations list
 
 ---
 
+## 🤖 AI-First Development
+
+R1 is designed to be built and maintained with AI agents. We provide a set of specialized prompts and a technical "Skill" file that allows any code-aware AI (Cursor, Claude, Copilot) to understand R1's architecture and apply changes with 100% accuracy.
+
+### AI Prompts & Skills
+
+All AI resources are located in the `PROMTS AND SKILL/` directory:
+
+| Resource | Description | Usage Guide |
+|---|---|---|
+| [R1_SKILL.md](./PROMTS%20AND%20SKILL/R1_SKILL.md) | **The Master Skill**. Technical knowledge base. | Agents should read this FIRST for any task. |
+| [MIGRATE_APP.md](./PROMTS%20AND%20SKILL/MIGRATE_APP.md) | **Migration Prompt**. Ports existing Tauri apps. | Paste into AI chat to automate v0.2 setup. |
+| [NEW_APP.md](./PROMTS%20AND%20SKILL/NEW_APP.md) | **Scaffold Prompt**. Builds new R1 apps. | Paste and describe your app idea. |
+| [DEBUG.md](./PROMTS%20AND%20SKILL/DEBUG.md) | **Troubleshooting Prompt**. Fixes build/runtime errors. | Paste and attach your error logs. |
+| [AI_GUIDE.md](./PROMTS%20AND%20SKILL/AI_GUIDE.md) | **General Guide**. Best practices for AI workflow. | Read to understand the AI-native workflow. |
+| [.cursorrules](./PROMTS%20AND%20SKILL/.cursorrules) | **Cursor Config**. Optimises Cursor IDE behavior. | Place in root or reference for Cursor. |
+
+---
+
 ## Roadmap
 
 ### v0.3 and Beyond
