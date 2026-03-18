@@ -137,4 +137,14 @@ export class Store {
     // In our implementation, every set() is already persisted to VFS.
     return Promise.resolve();
   }
+
+  async load(): Promise<void> {
+    // In our implementation, every method automatically interacts dynamically with getStore.
+    return Promise.resolve();
+  }
+
+  async length(): Promise<number> {
+    const k = await this.keys();
+    return k.length;
+  }
 }
