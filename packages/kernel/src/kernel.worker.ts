@@ -2,16 +2,16 @@ import { Router } from './router';
 import { VFS } from './vfs';
 import { WasmOrchestrator } from './wasm-orchestrator';
 import type { KernelRequest } from './protocol';
-import { 
-  FsPlugin, 
-  EventPlugin, 
-  CorePlugin, 
-  StorePlugin, 
-  OsPlugin, 
-  HttpPlugin, 
+import {
+  FsPlugin,
+  EventPlugin,
+  CorePlugin,
+  StorePlugin,
+  OsPlugin,
+  HttpPlugin,
   PathPlugin,
   MainBridgePlugin,
-  WindowPlugin 
+  WindowPlugin
 } from '@r1/apis';
 
 const router = new Router();
@@ -21,11 +21,11 @@ const vfs = new VFS();
 const pendingMainCalls = new Map<string, { resolve: (val: any) => void, reject: (err: any) => void }>();
 
 async function onMainThreadCall(api: string, method: string, args: any): Promise<any> {
-    const id = Math.random().toString(36).substring(2, 15);
-    return new Promise((resolve, reject) => {
-        pendingMainCalls.set(id, { resolve, reject });
-        self.postMessage({ type: 'MAIN_THREAD_CALL', id, payload: { api, method, args } });
-    });
+  const id = Math.random().toString(36).substring(2, 15);
+  return new Promise((resolve, reject) => {
+    pendingMainCalls.set(id, { resolve, reject });
+    self.postMessage({ type: 'MAIN_THREAD_CALL', id, payload: { api, method, args } });
+  });
 }
 
 const wasmOrchestrator = new WasmOrchestrator(vfs, router, (event, payload) => {
@@ -61,7 +61,7 @@ router.register('PING', async () => ({ pong: true, ts: Date.now() }));
 // 2.5 - IPC_INVOKE handler: Now routes to the hierarchical plugin:command
 router.register('IPC_INVOKE', async (payload: any) => {
   const { command, args } = payload;
-  
+
   // 1. Try routing via plugins first
   const response = await router.handle({ id: 'internal', type: command, payload: args });
   if (!response.error) return response.payload;
@@ -72,7 +72,7 @@ router.register('IPC_INVOKE', async (payload: any) => {
     // If command has no colon, assume 'main:' prefix for the primary app WASM
     const finalCmd = command.includes(':') ? command : `main:${command}`;
     const [module, fn] = finalCmd.split(':');
-    
+
     // Wrap args in an array if it's not one, as callFunction expects positional args
     const wasmArgs = Array.isArray(args) ? args : [args];
     return await wasmOrchestrator.callFunction(module, fn, wasmArgs);
@@ -153,10 +153,10 @@ self.onmessage = async (event: MessageEvent<KernelRequest | { type: string, id: 
     }
     return;
   }
-  
+
   // Ensure VFS is ready before handling any FS-related command
   await vfsReady;
-  
+
   const response = await router.handle(data as KernelRequest);
   self.postMessage(response);
 };
