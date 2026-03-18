@@ -132,8 +132,13 @@ v0.1 established the core runtime architecture and proved the concept works:
   - Generated dynamic `.os` architectural resolutions via standard DOM inspection
   - Built `Store.load()` arrays and `Command.execute()` shell stubs satisfying missing type compilations flawlessly
 
+- ✅ **Phase 8 Complete** — Fixed Barrel Exports (`index.ts`)
+  - `index.ts` now re-exports all plugin classes and direct function exports
+  - `core.ts` extended with `invoke`, `transformCallback`, and `convertFileSrc`
+  - Resolved `open()` name conflict between `dialog` and `shell` by using aliased exports
+  - Build and typecheck pass with zero errors; all 63 tests still passing
+
 **Next up:**
-- Phase 8: Update barrel exports in `index.ts`
 - Phase 9-10: End-to-end testing with real apps
 
 See [roadmap/v0.2 roadmap.md](./roadmap/v0.2%20roadmap.md) for the complete v0.2 plan.
