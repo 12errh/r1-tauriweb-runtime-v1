@@ -3,9 +3,10 @@
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-41%20passed-brightgreen.svg)](#)
-[![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://resplendent-arithmetic-aee148.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.2--dev-yellow.svg)](#)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-63%20passed-brightgreen.svg)](#)
+[![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://r1-todo-demo.netlify.app/)
+[![Version](https://img.shields.io/badge/version-v0.2--stable-green.svg)](#)
 
 **[Live Demo](https://r1-todo-demo.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -55,93 +56,37 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | `invoke()` — Tauri v1 and v2 compatible | ✅ |
 | `std::fs` read/write from Rust | ✅ |
 | Rust → JS event bridge (`emit` / `listen`) | ✅ |
-| Persistent storage across page refreshes | ✅ |
-| Virtual Window Manager (macOS, Windows 11, Linux) | ✅ |
+| Persistent storage (OPFS) across page refreshes | ✅ |
+| Virtual Window Manager (macOS, Windows 11 themes) | ✅ |
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| 41/41 unit tests passing | ✅ |
+| 63/63 unit tests passing | ✅ |
 
 ---
 
 ## Development Status
 
-### ✅ v0.1 Complete (January 2026)
+### ✅ v0.2 Complete (March 2026)
 
-v0.1 established the core runtime architecture and proved the concept works:
+v0.2 solidified the API layer and enabled complex Tauri applications to run with zero manual code changes.
 
-- Kernel Worker with WASM execution and VFS
-- IPC Bridge for Tauri v1 and v2 compatibility
-- WASI shim redirecting `std::fs` to OPFS
-- Event bridge for Rust → JS communication
-- Virtual Window Manager with OS themes
-- Tauri API plugins (fs, event, store, os, path)
-- Vite plugin for automatic Rust → WASM compilation
-- Todo demo app running in browser
-- 31 unit tests covering all core functionality
+- **Phase 0-8 (Core APIs)**: Completed full implementations of `fs`, `path`, `event`, `window`, `dialog`, `clipboard`, `os`, and `store`.
+- **Barrel Exports**: Implemented a robust direct-export layer allowing standard imports like `import { readDir } from '@tauri-apps/api/fs'`.
+- **Vite Plugin**: Advanced patcher handles all 14 Tauri API paths and sub-paths.
+- **E2E Testing**: Verified with `file-browser-tauri` and `test-greet` scaffolds.
+- **Improved Onboarding**: Updated `GETTING_STARTED.md` with build optimization and troubleshooting.
+- **Stability**: 63 unit tests passing total (2x original coverage).
 
-**What worked:** The todo demo app runs perfectly in the browser with full file persistence.
+### 🚧 v0.3 Roadmap (Next)
 
-**What we learned:** Testing with `file-browser-tauri` revealed systematic gaps in the direct-export layer. Apps using `import { readDir } from '@tauri-apps/api/fs'` failed at build time because the vite-plugin wasn't patching sub-path imports, and the API modules only exported plugin classes, not top-level functions.
+**Goal:** Automate the remaining manual setup steps and move to NPM publishing.
 
-### 🚧 v0.2 In Progress (Current)
+- `npx r1 sync` — CLI tool that automatically patches any existing Tauri app.
+- `#[r1::command]` — Rust macro to eliminate JSON contract boilerplate.
+- NPM Publishing — Install R1 packages without local cloning.
+- Support for 3 more real-world open source Tauri apps.
 
-**Goal:** Close the "direct export gap" so any simple-to-medium Tauri app builds and runs with zero runtime errors.
-
-**Progress so far:**
-
-- ✅ **Phase 0 Complete** — Codebase audit identified all missing exports
-- ✅ **Phase 1 Complete** — Fixed vite-plugin WASM path bug and import patcher
-  - Changed WASM loading from `.js` to `_bg.wasm`
-  - Added comprehensive import map covering all 14 Tauri API paths
-  - Patcher handles sub-paths correctly (e.g., `@tauri-apps/api/fs` → `@r1/apis/fs`)
-  - 5 new tests added, all passing
-- ✅ **Phase 2 Complete** — Fixed `fs.ts` filesystem API
-  - Implemented VFS singleton with promise lock to prevent race conditions
-  - All 11 filesystem functions exported as top-level named exports
-  - `FileEntry` interface exported
-  - `read_dir` kernel command verified
-  - 5 new tests added, all passing
-
-- ✅ **Phase 3 Complete** — Fixed `path_util.ts` Path API
-  - Implemented POSIX-compliant `relative()` function
-  - Added VFS directory aliases (`config`, `data`, `cache`, `log`)
-  - Improved robustness for `basename()`, `join()`, and `resolve()`
-  - All 27 path-related functions exported as top-level named exports
-  - 5 new tests added, all passing
-
-- ✅ **Phase 4 Complete** — Fixed `event.ts` Event API
-  - Implemented `unlisten` by numeric ID in `ipc-bridge.ts`
-  - Wrapped emitted events in Tauri-compatible `Event<T>` interface
-  - JS-to-JS event emission and receiving verified
-  - All 11 v0.2 gap tests passing
-
-- ✅ **Phase 5 Complete** — Fixed `window.ts` Window API
-  - Exported `appWindow` and injected it into global Tauri internals
-  - Added explicit Vite and tsconfig path aliases for `@r1/apis/*` sub-paths to resolve build errors
-  - Downgraded `@tauri-apps/api` in `file-browser-tauri` to v1 format to pass typescript verification
-  - Verified 100% of the 58 tests across all workspaces pass successfully
-
-- ✅ **Phase 6 Complete** — Fixed `dialog.ts` Dialog API
-  - Implemented `open()` utilizing hidden file `<input>` elements
-  - Implemented `message()`, `ask()`, and `confirm()` using full OS-styled DOM modals
-  - Workspace successfully built resolving 100% of newly added tests (12 testing suites)
-
-- ✅ **Phase 7 Complete** — Fixed remaining APIs (clipboard, os, store, shell, notification)
-  - Implemented secure `navigator.clipboard` hooks with standard HTTP fallbacks
-  - Generated dynamic `.os` architectural resolutions via standard DOM inspection
-  - Built `Store.load()` arrays and `Command.execute()` shell stubs satisfying missing type compilations flawlessly
-
-- ✅ **Phase 8 Complete** — Fixed Barrel Exports (`index.ts`)
-  - `index.ts` now re-exports all plugin classes and direct function exports
-  - `core.ts` extended with `invoke`, `transformCallback`, and `convertFileSrc`
-  - Resolved `open()` name conflict between `dialog` and `shell` by using aliased exports
-  - Build and typecheck pass with zero errors; all 63 tests still passing
-
-**Next up:**
-- Phase 9-10: End-to-end testing with real apps
-
-See [roadmap/v0.2 roadmap.md](./roadmap/v0.2%20roadmap.md) for the complete v0.2 plan.
 
 ---
 
