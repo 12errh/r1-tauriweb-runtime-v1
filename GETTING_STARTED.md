@@ -161,15 +161,7 @@ Replace the entire contents with this:
 
 ```rust
 fn main() {
-    // Prevents a panic when compiling to WASM
-    // (tauri-build only works for native desktop targets)
-    let target = std::env::var("TARGET").unwrap_or_default();
-    if target.contains("wasm32") {
-        return;
-    }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    tauri_build::build();
 }
 ```
 
