@@ -1,5 +1,6 @@
 import type { KernelProxy } from './kernel-proxy';
 import { CallbackRegistry } from './callback-registry';
+import { appWindow } from '@r1/apis/window';
 
 /**
  * Patches the browser `window` to intercept Tauri frontend library calls
@@ -120,19 +121,10 @@ export function installIpcBridge(kernelProxy: KernelProxy): void {
   (window as any).__TAURI__ = (window as any).__TAURI__ || {};
   (window as any).__TAURI__.window = (window as any).__TAURI__.window || {};
   
-  // Create a minimal WebviewWindow-like object for the global appWindow
-  const appWindowStub = {
-    label: 'main',
-    setTitle: (title: string) => (window as any).__TAURI_INTERNALS__.invoke('window:set_title', { label: 'main', title }),
-    minimize: () => (window as any).__TAURI_INTERNALS__.invoke('window:minimize', { label: 'main' }),
-    maximize: () => (window as any).__TAURI_INTERNALS__.invoke('window:maximize', { label: 'main' }),
-    unmaximize: () => (window as any).__TAURI_INTERNALS__.invoke('window:unmaximize', { label: 'main' }),
-    close: () => (window as any).__TAURI_INTERNALS__.invoke('window:close', { label: 'main' }),
-    setFocus: () => (window as any).__TAURI_INTERNALS__.invoke('window:focus', { label: 'main' }),
-  };
-
-  (window as any).__TAURI__.window.appWindow = appWindowStub;
-  (window as any).__TAURI_INTERNALS__.appWindow = appWindowStub;
+  // Make appWindow available globally so apps that access it
+  // via window.__TAURI_INTERNALS__ also work
+  (window as any).__TAURI_INTERNALS__.appWindow = appWindow;
+  (window as any).__TAURI__.window = { appWindow };
 
   // Polyfill convertFileSrc (used for loading local assets into <img> tags)
   // In the browser/service-worker runtime, we just return the path as-is

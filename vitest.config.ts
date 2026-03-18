@@ -20,6 +20,7 @@ export default defineConfig({
     alias: {
       '@r1/core': resolve(__dirname, 'packages/core/src/index.ts'),
       '@r1/kernel': resolve(__dirname, 'packages/kernel/src/index.ts'),
+      '@r1/apis/window': resolve(__dirname, 'packages/apis/src/window.ts'),
       '@r1/apis': resolve(__dirname, 'packages/apis/src/index.ts'),
       '@r1/window': resolve(__dirname, 'packages/window/src/index.ts'),
       '@r1/sw': resolve(__dirname, 'packages/sw/src/index.ts'),

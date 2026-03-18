@@ -5,6 +5,7 @@
     "paths": {
       "@r1/core": ["./packages/core/src/index.ts"],
       "@r1/kernel": ["./packages/kernel/src/index.ts"],
+      "@r1/apis/window": ["./packages/apis/src/window.ts"],
       "@r1/apis": ["./packages/apis/src/index.ts"],
       "@r1/window": ["./packages/window/src/index.ts"],
       "@r1/sw": ["./packages/sw/src/index.ts"],

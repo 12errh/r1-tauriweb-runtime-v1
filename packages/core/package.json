@@ -12,5 +12,8 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@r1/apis": "^0.1.0"
   }
 }
