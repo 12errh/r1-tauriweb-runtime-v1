@@ -6,7 +6,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-63%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://r1-todo-demo.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.2--stable-green.svg)](#)
+[![Version](https://img.shields.io/badge/version-v0.3--dev-blue.svg)](#)
 
 **[Live Demo](https://r1-todo-demo.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -37,14 +37,15 @@ The browser can't run a native Rust binary. R1 solves this with a layered archit
 - **IPC Bridge** — patches `window.__TAURI_INTERNALS__` so your existing `invoke()` calls work with zero frontend code changes
 - **Event Bridge** — Rust can emit events back to JavaScript via `listen()` just like in native Tauri
 - **Service Worker** — intercepts `asset://` URLs and serves files from the virtual filesystem
+- **Persistence Layer** — automatically requests persistent storage from the browser and monitors storage quotas to prevent data loss.
 
 ```
 Your Frontend (React)
       ↓ invoke('command', args)
 IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
-                    ↕                    ↕
-                   VFS              WASI Shim
-                (OPFS)           (std::fs → OPFS)
+                     ↕                    ↕
+                    VFS              WASI Shim
+                 (OPFS)           (std::fs → OPFS)
 ```
 
 ---
@@ -56,11 +57,12 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | `invoke()` — Tauri v1 and v2 compatible | ✅ |
 | `std::fs` read/write from Rust | ✅ |
 | Rust → JS event bridge (`emit` / `listen`) | ✅ |
-| Persistent storage (OPFS) across page refreshes | ✅ |
+| Persistent storage (OPFS) + Data Loss Prevention | ✅ |
 | Virtual Window Manager (macOS, Windows 11 themes) | ✅ |
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
+| SQLite Support (rusqlite) | 🚧 |
 | 63/63 unit tests passing | ✅ |
 
 ---
@@ -78,13 +80,17 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 - **Improved Onboarding**: Updated `GETTING_STARTED.md` with build optimization and troubleshooting.
 - **Stability**: 63 unit tests passing total (2x original coverage).
 
-### 🚧 v0.3 Roadmap (Next)
+### 🚀 v0.3 In Progress (Current)
 
-**Goal:** Automate the remaining manual setup steps and move to NPM publishing.
+**Goal:** Automate migration, enable SQLite, and Move to NPM publishing.
 
-- `npx r1 sync` — CLI tool that automatically patches any existing Tauri app.
-- `#[r1::command]` — Rust macro to eliminate JSON contract boilerplate.
-- NPM Publishing — Install R1 packages without local cloning.
+- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Phase 1-2).
+- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring.
+- **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4).
+- **#[r1::command]** — Rust macro to eliminate JSON contract boilerplate.
+- **NPM Publishing** — Moving from local clones to `@r1` package imports.
+- **Enterprise Support** — Internal test suite with 3+ real-world open source Tauri apps.
+t local cloning.
 - Support for 3 more real-world open source Tauri apps.
 
 

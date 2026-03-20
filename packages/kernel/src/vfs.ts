@@ -19,6 +19,9 @@ export class VFS {
       this.rootHandle = await navigator.storage.getDirectory();
       await this.scanDirectory(this.rootHandle, '/');
       this.isInit = true;
+
+      // After init, check quota and warn if running low
+      await this.checkStorageQuota();
     } catch (e) {
       console.error('[R1 VFS] Failed to initialize OPFS. Falling back to memory-only mode.', e);
       // We will still work (in RAM), but writes won't persist across reloads.
@@ -149,6 +152,58 @@ export class VFS {
   // ------------------------------------------------------------------------
   // PRIVATE INTERNALS
   // ------------------------------------------------------------------------
+
+  private async checkStorageQuota(): Promise<void> {
+    if (!navigator.storage?.estimate) return;
+
+    try {
+      const { usage, quota } = await navigator.storage.estimate();
+      if (usage === undefined || quota === undefined) return;
+
+      const percentUsed = Math.round((usage / quota) * 100);
+      const usedMB = Math.round(usage / 1024 / 1024);
+      const quotaMB = Math.round(quota / 1024 / 1024);
+
+      console.log(`[R1 VFS] Storage: ${usedMB}MB used of ${quotaMB}MB (${percentUsed}%)`);
+
+      if (percentUsed > 90) {
+        console.error(
+          `[R1 VFS] CRITICAL: Storage ${percentUsed}% full (${usedMB}MB / ${quotaMB}MB). ` +
+          'Data writes may fail. User must free storage.'
+        );
+      } else if (percentUsed > 75) {
+        console.warn(
+          `[R1 VFS] WARNING: Storage ${percentUsed}% full (${usedMB}MB / ${quotaMB}MB).`
+        );
+      }
+    } catch (err) {
+      // Non-critical — silently ignore
+    }
+  }
+
+  // Also expose quota info publicly so the UI can show it
+  async getStorageInfo(): Promise<{
+    usedBytes: number;
+    quotaBytes: number;
+    percentUsed: number;
+    isPersisted: boolean;
+  } | null> {
+    try {
+      const [estimate, isPersisted] = await Promise.all([
+        navigator.storage.estimate(),
+        navigator.storage.persisted(),
+      ]);
+
+      return {
+        usedBytes: estimate.usage ?? 0,
+        quotaBytes: estimate.quota ?? 0,
+        percentUsed: Math.round(((estimate.usage ?? 0) / (estimate.quota ?? 1)) * 100),
+        isPersisted,
+      };
+    } catch {
+      return null;
+    }
+  }
 
   private assertInit() {
     if (!this.isInit) throw new Error('[R1 VFS] Cannot perform operations: VFS is not initialized. Call init() first.');

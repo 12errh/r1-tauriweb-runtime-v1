@@ -135,4 +135,51 @@ export class WindowManager {
           this.container.appendChild(overlay);
       });
   }
+
+  // Call this after R1Runtime.boot() completes
+  async showStorageWarningIfNeeded(): Promise<void> {
+    if (!navigator.storage?.persisted) return;
+
+    const isPersisted = await navigator.storage.persisted();
+    if (isPersisted) return; // All good, no banner needed
+
+    // Create the warning banner
+    const banner = document.createElement('div');
+    banner.id = 'r1-storage-warning';
+    banner.innerHTML = `
+      <span>
+        ⚠ Your data may not persist long-term.
+        <strong>Bookmark this page</strong> or
+        <strong>install it as an app</strong> for reliable storage.
+      </span>
+      <button onclick="document.getElementById('r1-storage-warning').remove()">
+        ✕
+      </button>
+    `;
+    banner.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999999;
+      background: #f59e0b;
+      color: #1c1917;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    `;
+
+    document.body.prepend(banner);
+  }
+}
+
+// Automatically check for storage persistence when the runtime is ready
+if (typeof window !== 'undefined') {
+  window.addEventListener('r1:ready', () => {
+    WindowManager.getInstance().showStorageWarningIfNeeded();
+  });
 }

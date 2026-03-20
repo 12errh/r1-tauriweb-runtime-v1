@@ -119,6 +119,11 @@ router.register('VFS_LIST', async ({ dir }) => {
   return { paths: ObjectPaths };
 });
 
+router.register('VFS_STORAGE_INFO', async () => {
+  await vfsReady;
+  return vfs.getStorageInfo();
+});
+
 // 4.6 - WasmOrchestrator Routing Endpoints
 router.register('WASM_LOAD', async ({ name, url }) => {
   await wasmOrchestrator.loadModule(name, url);

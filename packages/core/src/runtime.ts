@@ -10,6 +10,11 @@ export class R1Runtime {
    * @param options - Boot options including WASM and Worker paths.
    */
   async boot(options: { wasmPath?: string, workerUrl?: string, swUrl?: string } = {}): Promise<void> {
+    // Step 1 — Request persistent storage
+    // Without this, the browser can silently delete OPFS data when
+    // the device runs low on storage. This call prevents eviction.
+    await this.requestPersistentStorage();
+
     const { wasmPath, workerUrl = '/sw.js', swUrl = '/r1-sw.js' } = options;
     
     // Check if another instance (possibly from a duplicated module) is already booting
@@ -77,6 +82,35 @@ export class R1Runtime {
     const proxy = this.kernelProxy || (window as any).__R1_KERNEL_PROXY__;
     if (!proxy) throw new Error('[R1] Runtime not booted.');
     return proxy;
+  }
+
+  private async requestPersistentStorage(): Promise<void> {
+    if (!navigator.storage) return;
+
+    try {
+      // Check if already persisted
+      const alreadyPersisted = await navigator.storage.persisted();
+      if (alreadyPersisted) {
+        console.log('[R1] Storage: persistent ✓');
+        return;
+      }
+
+      // Request persistence
+      const granted = await navigator.storage.persist();
+
+      if (granted) {
+        console.log('[R1] Storage: persistent ✓');
+      } else {
+        console.warn(
+          '[R1] Storage: best-effort only. ' +
+          'Data may be cleared by the browser when storage is low. ' +
+          'Bookmark this page or install it as a PWA for reliable storage.'
+        );
+      }
+    } catch (err) {
+      // Silently fail — browser may not support the API
+      console.warn('[R1] Storage: persistence API not available', err);
+    }
   }
 
   /** @internal FOR TESTING ONLY */
