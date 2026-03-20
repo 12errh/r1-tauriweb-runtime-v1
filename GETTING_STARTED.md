@@ -8,7 +8,7 @@
 
 By the end of this guide you will have a working app with a Rust backend running as WebAssembly in the browser. The same code structure works as a native Tauri desktop app too — R1 is fully compatible.
 
-**Live example of what this produces**: https://r1-todo-demo.netlify.app/
+**Live example of what this produces**: https://todo-demo-by-r1-runtime.netlify.app/
 
 ---
 
