@@ -39,6 +39,17 @@ The browser can't run a native Rust binary. R1 solves this with a layered archit
 - **Service Worker** — intercepts `asset://` URLs and serves files from the virtual filesystem
 - **Persistence Layer** — automatically requests persistent storage from the browser and monitors storage quotas to prevent data loss.
 
+### WASI & SQLite
+R1 supports the WASI `snapshot_preview1` ABI, enabling standard Rust crates like `rusqlite` (with `bundled` feature) to run in the web.
+
+```rust
+// Example: Using SQLite in R1 (compiled to wasm32-wasip1)
+let conn = Connection::open("/app/data/prod.db")?;
+conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)", [])?;
+```
+
+The runtime handles `fd_seek`, `fd_tell`, `fd_sync`, and `path_rename` to ensure database integrity.
+
 ```
 Your Frontend (React)
       ↓ invoke('command', args)
@@ -62,8 +73,8 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| SQLite Support (rusqlite) — Phase 1 Syscalls | ✅ |
-| 67/67 unit tests passing | ✅ |
+| SQLite Support (rusqlite) — Done | ✅ |
+| 71/71 unit tests passing | ✅ |
 
 ---
 
@@ -84,7 +95,7 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 
 **Goal:** Automate migration, enable SQLite, and Move to NPM publishing.
 
-- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Phase 1 Complete ✅).
+- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Done ✅).
 - **Data Loss Prevention** — Automated storage persistence requests and quota monitoring.
 - **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4).
 - **#[r1::command]** — Rust macro to eliminate JSON contract boilerplate.
@@ -122,7 +133,7 @@ See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step g
 ```
 r1-tauriweb-runtime/
 ├── packages/
-│   ├── kernel/       — Kernel Worker: WASM execution, VFS, WASI shim
+│   ├── kernel/       —**71/71 Tests Passing** (Core Kernel, IPC, VFS, WASI Shim)
 │   ├── core/         — Main thread: IPC bridge, EventBus, R1Runtime
 │   ├── apis/         — Tauri API implementations (fs, event, dialog…)
 │   ├── sw/           — Service Worker: asset:// protocol
