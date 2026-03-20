@@ -312,15 +312,32 @@ export default function App() {
   // ── EVENTS ─────────────────────────────────────────────────────────────────
   const eventsSubscribe = async () => {
     if (!r1.current) return;
-    if (unlistenRef.current) { unlistenRef.current(); unlistenRef.current = null; setListenActive(false); return; }
+    if (unlistenRef.current) {
+      unlistenRef.current();
+      unlistenRef.current = null;
+      setListenActive(false);
+      return;
+    }
+    
     eLog('info', 'Subscribing to "download-progress" events...');
-    const unlisten = (window as any).__TAURI_INTERNALS__?.listen('download-progress', (e: any) => {
-      eLog('ok', `event: download-progress → ${JSON.stringify(e)}`);
-    });
-    unlistenRef.current = unlisten ?? null;
-    setListenActive(true);
-    eLog('ok', 'Subscribed. Waiting for Rust emissions...');
-    toast('Event listener active', 'success');
+    try {
+      const listen = (window as any).__TAURI_INTERNALS__?.listen;
+      if (!listen) {
+        eLog('err', 'Tauri Internals not found');
+        return;
+      }
+
+      const unlisten = await listen('download-progress', (e: any) => {
+        eLog('ok', `event: download-progress → ${JSON.stringify(e)}`);
+      });
+
+      unlistenRef.current = unlisten;
+      setListenActive(true);
+      eLog('ok', 'Subscribed. Waiting for Rust emissions...');
+      toast('Event listener active', 'success');
+    } catch (e: any) {
+      eLog('err', `Subscription failed: ${e.message}`);
+    }
   };
 
   const emitTestEvent = () => {

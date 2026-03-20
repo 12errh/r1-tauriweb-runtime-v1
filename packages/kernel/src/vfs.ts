@@ -22,6 +22,11 @@ export class VFS {
 
       // After init, check quota and warn if running low
       await this.checkStorageQuota();
+
+      // Ensure some standard directories exist so exists() returns true even if empty
+      // We don't need to await these as they just prime the cache/OPFS parents
+      this.mkdir('/demo').catch(() => {});
+      this.mkdir('/.r1-store').catch(() => {});
     } catch (e) {
       console.error('[R1 VFS] Failed to initialize OPFS. Falling back to memory-only mode.', e);
       // We will still work (in RAM), but writes won't persist across reloads.
@@ -34,10 +39,19 @@ export class VFS {
   // Operations below resolve instantly using the in-memory Map layer.
   // ------------------------------------------------------------------------
 
-  /** Check if a file exists */
+  /** Check if a file or directory exists in the virtual filesystem */
   exists(path: string): boolean {
     this.assertInit();
-    return this.cache.has(VFS.normalize(path));
+    const p = VFS.normalize(path);
+    if (this.cache.has(p)) return true;
+
+    // Check if it's a directory (is it a prefix of any cached file?)
+    const dirPrefix = p === '/' ? p : `${p}/`;
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(dirPrefix)) return true;
+    }
+
+    return false;
   }
 
   /** Read bytes instantly from cache. Throws if not found. */

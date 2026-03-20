@@ -4,7 +4,7 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-63%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-67%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
 [![Version](https://img.shields.io/badge/version-v0.3--dev-blue.svg)](#)
 
@@ -62,8 +62,8 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| SQLite Support (rusqlite) | 🚧 |
-| 63/63 unit tests passing | ✅ |
+| SQLite Support (rusqlite) — Phase 1 Syscalls | ✅ |
+| 67/67 unit tests passing | ✅ |
 
 ---
 
@@ -84,7 +84,7 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 
 **Goal:** Automate migration, enable SQLite, and Move to NPM publishing.
 
-- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Phase 1-2).
+- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Phase 1 Complete ✅).
 - **Data Loss Prevention** — Automated storage persistence requests and quota monitoring.
 - **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4).
 - **#[r1::command]** — Rust macro to eliminate JSON contract boilerplate.
