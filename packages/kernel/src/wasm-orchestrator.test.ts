@@ -26,15 +26,17 @@ describe('Phase 4, 5 & 6: WasmOrchestrator + WASI Shim', () => {
         fileName = 'test-module.wasm';
       } else if (url.includes('test-wasi.wasm')) {
         fileName = 'test-wasi.wasm';
+      } else if (url.includes('test-module.js')) {
+        fileName = 'test-module.js';
       }
 
       if (fileName) {
         const wasmPath = resolve(__dirname, `../../../tests/fixtures/wasm/${fileName}`);
         const buffer = readFileSync(wasmPath);
-        const bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
         return {
           ok: true,
-          arrayBuffer: async () => bytes,
+          arrayBuffer: async () => buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
+          text: async () => buffer.toString('utf-8'),
         };
       }
       return { ok: false, status: 404 };

@@ -21,6 +21,9 @@ export class WasiShim {
   private fds: Map<number, { path: string; pos: number }> = new Map();
   private nextFd = 3;
   private memory?: WebAssembly.Memory;
+  private heapStart: number = 0;
+  private heapPtr: number = 0;
+  private heapLimit: number = 0;
 
   constructor(vfs: VFS) {
     this.vfs = vfs;
@@ -38,6 +41,12 @@ export class WasiShim {
 
   setMemory(memory: WebAssembly.Memory) {
     this.memory = memory;
+    // Initialize heap at the current end of memory to avoid conflicts
+    const initialPages = memory.grow(0); // get current size
+    this.heapStart = initialPages * 64 * 1024;
+    this.heapPtr = this.heapStart;
+    this.heapLimit = this.heapStart;
+    console.log(`[WasiShim] Heap initialized at 0x${this.heapStart.toString(16)}`);
   }
 
   getImports(): WebAssembly.Imports {
@@ -88,7 +97,7 @@ export class WasiShim {
         fd_fdstat_set_flags: () => ERRNO_NOSYS,
         fd_fdstat_set_rights: () => ERRNO_NOSYS,
         fd_filestat_get: this.fd_filestat_get.bind(this),
-        fd_filestat_set_size: () => ERRNO_NOSYS,
+        fd_filestat_set_size: this.fd_filestat_set_size.bind(this),
         fd_filestat_set_times: () => ERRNO_NOSYS,
         fd_pread: () => ERRNO_NOSYS,
         fd_pwrite: () => ERRNO_NOSYS,
@@ -96,7 +105,7 @@ export class WasiShim {
         fd_renumber: () => ERRNO_NOSYS,
         fd_sync: this.fd_sync.bind(this),
         fd_tell: this.fd_tell.bind(this),
-        path_create_directory: () => ERRNO_NOSYS,
+        path_create_directory: this.path_create_directory.bind(this),
         path_filestat_get: this.path_filestat_get.bind(this),
         path_filestat_set_times: () => ERRNO_NOSYS,
         path_link: () => ERRNO_NOSYS,
@@ -116,6 +125,25 @@ export class WasiShim {
         sock_recv: () => ERRNO_NOSYS,
         sock_send: () => ERRNO_NOSYS,
         sock_shutdown: () => ERRNO_NOSYS,
+        // --- C Standard Library Helpers (Commonly requested by C-dependent libs in 'env') ---
+        strcmp: this.strcmp.bind(this),
+        strlen: this.strlen.bind(this),
+        memmove: this.memmove.bind(this),
+        memset: this.memset.bind(this),
+        memcpy: this.memcpy.bind(this),
+        memcmp: this.memcmp.bind(this),
+        strncmp: this.strncmp.bind(this),
+        strcspn: this.strcspn.bind(this),
+        strspn: this.strspn.bind(this),
+        strrchr: this.strrchr.bind(this),
+        memchr: this.memchr.bind(this),
+        localtime_r: this.localtime_r.bind(this),
+        malloc: (size: number) => {
+          console.warn("[WasiShim] C code tried to call imported malloc. This should be resolved by Rust instead.");
+          return 0;
+        },
+        free: (ptr: number) => {},
+        realloc: (ptr: number, size: number) => 0,
       }
     };
   }
@@ -295,6 +323,29 @@ export class WasiShim {
     }
   }
 
+  private fd_filestat_set_size(fd: number, size: bigint): number {
+    const file = this.fds.get(fd);
+    if (!file) return ERRNO_BADF;
+    
+    try {
+        let existing: Uint8Array;
+        try {
+            existing = this.vfs.read(file.path);
+        } catch {
+            existing = new Uint8Array(0);
+        }
+
+        const newSize = Number(size);
+        const newData = new Uint8Array(newSize);
+        newData.set(existing.subarray(0, Math.min(existing.length, newSize)));
+        
+        this.vfs.write(file.path, newData).catch(e => console.error(`[WasiShim] fd_filestat_set_size write failed`, e));
+        return ERRNO_SUCCESS;
+    } catch (e) {
+        return ERRNO_INVAL;
+    }
+  }
+
   private fd_sync(fd: number): number {
     const file = this.fds.get(fd);
     if (!file) return ERRNO_BADF;
@@ -374,6 +425,16 @@ export class WasiShim {
     if (oflags & O_CREAT) {
         const fd = this.nextFd++;
         this.fds.set(fd, { path, pos: 0 });
+        
+        // Ensure parent directories exist
+        const parts = path.split('/');
+        for(let i=2; i<parts.length; i++){
+            const subpath = parts.slice(0, i).join('/');
+            if(subpath && !this.vfs.exists(subpath)){
+                this.vfs.writeText(subpath + '/.keep', "").catch(() => {});
+            }
+        }
+
         // We initialize the file in VFS if it doesn't exist
         this.vfs.writeText(path, "").catch(e => console.error(`[WasiShim] Failed to create ${path}`, e));
         view.setUint32(opened_fd_ptr, fd, true);
@@ -381,6 +442,199 @@ export class WasiShim {
     }
 
     return ERRNO_BADF;
+  }
+
+  private path_create_directory(dirfd: number, path_ptr: number, path_len: number): number {
+    if (!this.memory) return ERRNO_INVAL;
+    const pathBytes = new Uint8Array(this.memory.buffer, path_ptr, path_len);
+    const path = VFS.normalize(new TextDecoder().decode(pathBytes));
+    
+    // In our simplified VFS, we can "create a directory" by writing a marker file
+    this.vfs.writeText(path + '/.keep', "").catch(e => console.error(`[WasiShim] path_create_directory failed`, e));
+    return ERRNO_SUCCESS;
+  }
+
+  private strcmp(s1: number, s2: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    const readStr = (ptr: number) => {
+        let str = "";
+        for (let i = 0; view[ptr + i] !== 0 && i < 1024; i++) {
+            str += String.fromCharCode(view[ptr + i]);
+        }
+        return str;
+    };
+    const str1 = readStr(s1);
+    const str2 = readStr(s2);
+    
+    let i = 0;
+    while (view[s1 + i] !== 0 && view[s1 + i] === view[s2 + i]) {
+      i++;
+    }
+    const res = view[s1 + i] - view[s2 + i];
+    
+    // Deep tracing for VFS debugging
+    if (str1.includes("mem") || str2.includes("mem") || str1.includes("vfs") || str2.includes("vfs")) {
+        console.log(`[R1 env] strcmp("${str1}", "${str2}") -> ${res} (VFS Match Attempt)`);
+    } else {
+        console.log(`[R1 env] strcmp("${str1}", "${str2}") -> ${res}`);
+    }
+    
+    return res;
+  }
+
+  private strlen(s: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    let i = 0;
+    while (view[s + i] !== 0) {
+      i++;
+    }
+    return i;
+  }
+
+  private memmove(dest: number, src: number, n: number): number {
+    if (!this.memory) return dest;
+    const buffer = new Uint8Array(this.memory.buffer);
+    buffer.copyWithin(dest, src, src + n);
+    return dest;
+  }
+
+  private memset(s: number, c: number, n: number): number {
+    if (!this.memory) return s;
+    const buffer = new Uint8Array(this.memory.buffer);
+    buffer.fill(c, s, s + n);
+    return s;
+  }
+
+  private memcpy(dest: number, src: number, n: number): number {
+    if (!this.memory) return dest;
+    const buffer = new Uint8Array(this.memory.buffer);
+    const srcView = buffer.subarray(src, src + n);
+    buffer.set(srcView, dest);
+    return dest;
+  }
+
+  private memcmp(s1: number, s2: number, n: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    for (let i = 0; i < n; i++) {
+        const diff = view[s1 + i] - view[s2 + i];
+        if (diff !== 0) return diff;
+    }
+    return 0;
+  }
+
+  private strncmp(s1: number, s2: number, n: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    for (let i = 0; i < n; i++) {
+        const c1 = view[s1 + i];
+        const c2 = view[s2 + i];
+        if (c1 === 0 || c1 !== c2) return c1 - c2;
+    }
+    return 0;
+  }
+
+  private strcspn(s: number, reject: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    let i = 0;
+    while (view[s + i] !== 0) {
+        let j = 0;
+        let found = false;
+        while (view[reject + j] !== 0) {
+            if (view[s + i] === view[reject + j]) {
+                found = true;
+                break;
+            }
+            j++;
+        }
+        if (found) break;
+        i++;
+    }
+    return i;
+  }
+
+  private strspn(s: number, accept: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    let i = 0;
+    while (view[s + i] !== 0) {
+        let j = 0;
+        let found = false;
+        while (view[accept + j] !== 0) {
+            if (view[s + i] === view[accept + j]) {
+                found = true;
+                break;
+            }
+            j++;
+        }
+        if (!found) break;
+        i++;
+    }
+    return i;
+  }
+
+  private strrchr(s: number, c: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    let last = 0;
+    let i = 0;
+    while (true) {
+        if (view[s + i] === (c & 0xFF)) last = s + i;
+        if (view[s + i] === 0) break;
+        i++;
+    }
+    return last;
+  }
+
+  private memchr(s: number, c: number, n: number): number {
+    if (!this.memory) return 0;
+    const view = new Uint8Array(this.memory.buffer);
+    for (let i = 0; i < n; i++) {
+        if (view[s + i] === (c & 0xFF)) return s + i;
+    }
+    return 0;
+  }
+
+  private localtime_r(timer_ptr: number, result_ptr: number): number {
+    if (!this.memory) return 0;
+    const view = new DataView(this.memory.buffer);
+    // WASI i64 is two i32 in some contexts, but usually transmitted as BigInt or single number
+    // For simplicity, we assume BigInt or number.
+    const timeInSeconds = Number(view.getBigInt64(timer_ptr, true));
+    const date = new Date(timeInSeconds * 1000);
+
+    // struct tm layout (usually):
+    // 0: tm_sec (i32)
+    // 4: tm_min (i32)
+    // 8: tm_hour (i32)
+    // 12: tm_mday (i32)
+    // 16: tm_mon (i32)
+    // 20: tm_year (i32)
+    // 24: tm_wday (i32)
+    // 28: tm_yday (i32)
+    // 32: tm_isdst (i32)
+    // 36: tm_gmtoff (i32)
+    // 40: tm_zone (i32 pointer)
+    
+    view.setInt32(result_ptr + 0, date.getSeconds(), true);
+    view.setInt32(result_ptr + 4, date.getMinutes(), true);
+    view.setInt32(result_ptr + 8, date.getHours(), true);
+    view.setInt32(result_ptr + 12, date.getDate(), true);
+    view.setInt32(result_ptr + 16, date.getMonth(), true);
+    view.setInt32(result_ptr + 20, date.getFullYear() - 1900, true);
+    view.setInt32(result_ptr + 24, date.getDay(), true);
+    // yday is more complex, we'll skip for now or use 0
+    view.setInt32(result_ptr + 28, 0, true);
+    view.setInt32(result_ptr + 32, -1, true); // Unknown DST
+    
+    return result_ptr;
+  }
+
+  private realloc(ptr: number, size: number): number {
+    return 0;
   }
 }
 

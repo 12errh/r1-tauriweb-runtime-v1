@@ -1,0 +1,35 @@
+[package]
+name = "my-sqlite-app"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "my_sqlite_app_lib"
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+cc = "1.0"
+
+# Only used for native builds
+[target.'cfg(not(target_arch = "wasm32"))'.build-dependencies]
+tauri-build = "2.0.0"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+once_cell = "1.18"
+
+# Native (Desktop/Mobile) dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tauri = { version = "2.0.0", features = [] }
+tauri-plugin-opener = "2.0.0"
+tauri-plugin-log = "2.0.0"
+
+# WASM (Browser) dependencies
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+rusqlite = { version = "0.31", features = ["bundled"] }
+console_error_panic_hook = "0.1"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
