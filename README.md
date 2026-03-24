@@ -2,6 +2,7 @@
 
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/r1-tauriweb-runtime-v1)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-67%20passed-brightgreen.svg)](#)
