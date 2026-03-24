@@ -1,0 +1,9 @@
+[submodule "apps/file-browser-tauri"]
+	path = apps/file-browser-tauri
+	url = https://github.com/akoskm/file-browser-tauri.git
+[submodule "apps/rs-tauri-chess"]
+	path = apps/rs-tauri-chess
+	url = https://github.com/zS1L3NT/rs-tauri-chess
+[submodule "apps/svelte-calculator"]
+	path = apps/svelte-calculator
+	url = https://github.com/Coder-Blue/svelte-calculator
