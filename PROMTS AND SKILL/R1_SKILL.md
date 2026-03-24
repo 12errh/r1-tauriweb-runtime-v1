@@ -251,6 +251,7 @@ import { message, ask, confirm, open, save } from '@tauri-apps/api/dialog'
 import { readText, writeText } from '@tauri-apps/api/clipboard'
 import { platform, arch, version, locale } from '@tauri-apps/api/os'
 import { Store } from '@tauri-apps/plugin-store'
+import { Connection } from 'rusqlite'                     // Supported via bundled feature
 ```
 
 ### ⚠️ Partially Supported — Works with limitations
@@ -269,7 +270,6 @@ import { execute } from '@tauri-apps/api/shell'    // can't spawn processes
 // System tray APIs                                 // not a browser concept
 // Global shortcuts                                 // not available outside focus
 // Native window vibrancy/blur effects              // GPU compositing not available
-// SQLite via rusqlite                              // needs v0.3 (planned)
 // Raw TCP/UDP sockets                              // browser sandbox
 ```
 
@@ -431,6 +431,26 @@ npm run build
 # 3. Then serve
 npx serve dist -l 3000
 ```
+
+---
+
+## SQLite WASM Build Protocol (Windows/macOS)
+
+To compile SQLite (`rusqlite` with `bundled` feature) to WASM, you MUST use the WASI SDK.
+
+1. **Install LLVM 18+ and WASI SDK 24+** (e.g., to `C:\LLVM` and `C:\wasi-sdk`).
+2. **Configure `.cargo/config.toml`**:
+```toml
+[target.wasm32-unknown-unknown]
+# Use default rust-lld for linking, but configure CC for compilation
+[env]
+CC_wasm32_unknown_unknown = "C:\\LLVM\\bin\\clang.exe"
+CFLAGS_wasm32_unknown_unknown = "--sysroot=C:\\wasi-sdk\\share\\wasi-sysroot -I C:\\wasi-sdk\\share\\wasi-sysroot\\include\\wasm32-wasi -DSQLITE_OS_OTHER=1"
+```
+3. **Environment Variables**:
+Set `LIBSQLITE3_FLAGS="-DSQLITE_THREADSAFE=0 -DSQLITE_OS_OTHER=1 -DSQLITE_OMIT_WAL=1"` during build.
+4. **Rust Gating**:
+Gate any usage of `AppHandle` or `tauri::State` with `#[cfg(not(target_arch = "wasm32"))]`.
 
 Skipping step 1 is the most common mistake. Any change to `@r1/apis`,
 `@r1/core`, `@r1/kernel`, or `@r1/vite-plugin` requires a full R1 rebuild

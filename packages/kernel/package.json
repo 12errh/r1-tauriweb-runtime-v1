@@ -1,6 +1,6 @@
 {
   "name": "@r1/kernel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The core OS-like kernel for the R1 Runtime, managing IPC, WASM, and VFS.",
   "type": "module",
   "author": "R1 Runtime Team",
