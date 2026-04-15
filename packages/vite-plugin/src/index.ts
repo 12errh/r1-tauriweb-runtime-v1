@@ -224,6 +224,20 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         });
       }
 
+      // SQLite OPFS Proxy (required for persistence)
+      const proxyFile = resolve(
+        config.root,
+        'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'
+      );
+      if (existsSync(proxyFile)) {
+        console.log('[R1] Emitting SQLite OPFS Proxy...');
+        this.emitFile({
+          type: 'asset',
+          fileName: 'sqlite3-opfs-async-proxy.js',
+          source: readFileSync(proxyFile, 'utf-8'),
+        });
+      }
+
       // 2. Bundle and emit the Kernel Worker (sw.js)
       const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
       if (existsSync(kernelEntry)) {
