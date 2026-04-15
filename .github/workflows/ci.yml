@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev", "feature/**"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────── Lint & Type Check ───────────
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        run: npm run typecheck
+
+  # ─────────── Test Suite ───────────
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            coverage/
+          retention-days: 7
+
+  # ─────────── Build ───────────
+  build:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: [typecheck, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npm run build --if-present
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            packages/*/dist/
+            apps/*/dist/
+          retention-days: 7
+
+  # ─────────── Summary ───────────
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [typecheck, test, build]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          echo "┌─────────────────────────────────┐"
+          echo "│        CI Pipeline Summary       │"
+          echo "├─────────────────────────────────┤"
+          echo "│ Type Check : ${{ needs.typecheck.result }}"
+          echo "│ Tests      : ${{ needs.test.result }}"
+          echo "│ Build      : ${{ needs.build.result }}"
+          echo "└─────────────────────────────────┘"
+
+          if [[ "${{ needs.typecheck.result }}" == "failure" || \
+                "${{ needs.test.result }}"     == "failure" || \
+                "${{ needs.build.result }}"    == "failure" ]]; then
+            echo "❌ One or more CI jobs failed."
+            exit 1
+          else
+            echo "✅ All CI checks passed."
+          fi
