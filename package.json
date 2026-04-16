@@ -1,6 +1,6 @@
 {
   "name": "r1-runtime",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -12,6 +12,9 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspace=apps/demo",
     "typecheck": "tsc --noEmit"
+  },
+  "overrides": {
+    "ajv": "^8.17.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
