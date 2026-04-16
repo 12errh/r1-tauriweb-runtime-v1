@@ -1221,12 +1221,12 @@ git push origin main
 ```
 
 ### Exit Criteria
-- [ ] `R1_SKILL.md` updated with correct SQLite guidance
-- [ ] `GETTING_STARTED.md` has SQLite section
-- [ ] v0.3 roadmap updated
-- [ ] `MIGRATE_APP.md` updated
-- [ ] No documentation references rusqlite WASM compilation
-- [ ] Committed and pushed to GitHub
+- [x] `R1_SKILL.md` updated with correct SQLite guidance
+- [x] `GETTING_STARTED.md` has SQLite section
+- [x] v0.3 roadmap updated
+- [x] `MIGRATE_APP.md` updated
+- [x] No documentation references rusqlite WASM compilation
+- [x] Committed and pushed to GitHub
 
 ---
 
