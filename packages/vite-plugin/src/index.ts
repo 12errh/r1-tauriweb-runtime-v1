@@ -163,11 +163,14 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         '@tauri-apps/api/http':         '@r1/apis/http',
         '@tauri-apps/api/store':        '@r1/apis/store',
         '@tauri-apps/plugin-store':     '@r1/apis/store',
+        // SQLite: @tauri-apps/plugin-sql → @r1/apis/sql (Phase 1 of SQLite fix roadmap)
+        '@tauri-apps/plugin-sql/index': '@r1/apis/sql',
+        '@tauri-apps/plugin-sql':       '@r1/apis/sql',
         '@tauri-apps/api':              '@r1/apis',
       };
 
       // Check if code contains any Tauri imports
-      if (code.includes('@tauri-apps/api') || code.includes('@tauri-apps/plugin-store')) {
+      if (code.includes('@tauri-apps/api') || code.includes('@tauri-apps/plugin-store') || code.includes('@tauri-apps/plugin-sql')) {
         let newCode = code;
         
         // Sort keys by length (longest first) to match sub-paths before bare imports
@@ -224,18 +227,25 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         });
       }
 
-      // SQLite OPFS Proxy (required for persistence)
-      const proxyFile = resolve(
-        config.root,
-        'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'
-      );
-      if (existsSync(proxyFile)) {
-        console.log('[R1] Emitting SQLite OPFS Proxy...');
+      // SQLite OPFS Proxy (required for OPFS persistence — must be served same-origin)
+      // Try both root and dist/ layouts across package versions
+      const proxyPaths = [
+        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+        // Also check kernel's own node_modules (when installed workspace-locally)
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+      ];
+      const proxyFile = proxyPaths.find(p => existsSync(p));
+      if (proxyFile) {
+        console.log('[R1] Emitting SQLite OPFS Proxy from:', proxyFile);
         this.emitFile({
           type: 'asset',
           fileName: 'sqlite3-opfs-async-proxy.js',
           source: readFileSync(proxyFile, 'utf-8'),
         });
+      } else {
+        console.warn('[R1] sqlite3-opfs-async-proxy.js not found — OPFS persistence will not work. Run: npm install @sqlite.org/sqlite-wasm in packages/kernel');
       }
 
       // 2. Bundle and emit the Kernel Worker (sw.js)
