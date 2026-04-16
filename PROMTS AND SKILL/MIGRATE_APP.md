@@ -97,7 +97,8 @@ After making all changes, tell me:
 
 DO NOT change any frontend import statements — R1's Vite plugin rewrites them automatically.
 DO NOT change any invoke() calls in the frontend — the IPC bridge handles them.
-DO NOT add rusqlite to Cargo.toml for SQLite support.
-R1 uses @sqlite.org/sqlite-wasm — install @tauri-apps/plugin-sql
-in the frontend instead. No Rust changes needed for SQLite.
+DO NOT add `rusqlite`, `sqlx`, or `diesel` to Cargo.toml for SQLite/DB support.
+Native Rust databases cannot work over WASM due to strict browser TCP/Sandbox limits.
+R1 uses `@sqlite.org/sqlite-wasm` via the official JS API.
+You MUST install `@tauri-apps/plugin-sql` in the frontend and migrate all Rust SQL logic to Svelte/React TS code calling `Database.load()`.
 ```

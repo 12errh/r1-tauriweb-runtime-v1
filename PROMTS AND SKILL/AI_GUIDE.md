@@ -160,7 +160,7 @@ These are the mistakes agents make without reading `R1_SKILL.md`:
 ❌ Forgetting to rebuild R1 packages after changing them
 ❌ Loading `app.js` instead of `app_bg.wasm` (the WASM binary)
 ❌ Using `.unwrap()` in WASM functions without error handling
-❌ Adding SQLite dependencies (not supported in v0.2)
+❌ Adding native Rust SQLite dependencies like `rusqlite`/`sqlx` (unsupported due to WASM TCP limits. Use `@tauri-apps/plugin-sql` in Javascript instead).
 ❌ Putting WASM execution on the main thread
 
 The prompts include explicit "DO NOT" instructions to prevent these mistakes.
@@ -196,9 +196,10 @@ Then verify the new API works by:
 
 ## Current R1 Version
 
-**v0.2** — API compatibility layer complete
+**v0.3** — API and SQLite compatibility layer complete
 
-What works in v0.2:
+What works in v0.3:
+- SQLite via WASM + OPFS (via `@tauri-apps/plugin-sql`)
 - `invoke()` — Tauri v1 and v2
 - `fs` — read, write, list, delete, copy, rename
 - `path` — all directory functions + path manipulation
@@ -212,8 +213,7 @@ What works in v0.2:
 - `http` — via browser fetch
 - `shell.open` — via window.open
 
-Coming in v0.3:
-- SQLite via WASM + OPFS
+Coming Soon:
 - `npx r1 sync` CLI migration tool
 - `#[r1::command]` macro — eliminates JSON contract boilerplate
 - npm publishing — install without local clone

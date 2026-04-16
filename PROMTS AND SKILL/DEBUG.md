@@ -25,7 +25,7 @@ Look at the error and determine which category it falls into:
 A) Build-time error (appears during npm run build)
    - TypeScript errors
    - Missing exports
-   - Rust compile errors
+   - Rust compile errors (Especially TCP/Network crates like `sqlx`, `rusqlite` which are UNSUPPORTED in WASM)
    - wasm-pack failures
 
 B) Runtime error (appears in browser console after serving)

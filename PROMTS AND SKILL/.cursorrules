@@ -26,7 +26,7 @@ Do not make changes based on assumptions — always check the skill file first.
   (the Vite plugin rewrites them automatically)
 - Never change `invoke()` calls in the frontend
   (the IPC bridge routes them automatically)
-- Never add SQLite to a Rust backend (not supported until v0.3)
+- Never add native database crates (`rusqlite`, `sqlx`, `diesel`) to the Rust backend. WASM strictly blocks TCP sockets. Always manage SQLite locally via `@tauri-apps/plugin-sql` in JavaScript.
 - Never load `app.js` — always load `app_bg.wasm` (the binary)
 - Never use `.unwrap()` in WASM functions without error handling
 

@@ -58,6 +58,8 @@ serde_json = "1"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tauri = { version = "2", features = [] }
 
+**IMPORTANT**: DO NOT add `rusqlite`, `sqlx`, or `diesel`! Native database crates cannot establish TCP or C-bindings in browser WASM. Any database logic must be performed in JS using `@tauri-apps/plugin-sql`.
+
 STEP 3 — GENERATE THE RUST COMMANDS
 Based on what I want to build, create the Rust commands in lib.rs.
 Every command must follow the JSON contract from the skill file:
