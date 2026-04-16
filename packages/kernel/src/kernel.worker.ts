@@ -15,6 +15,14 @@ import {
   WindowPlugin
 } from '@r1/apis';
 
+// Help debug worker crashes in isolated mode
+self.onerror = (err) => {
+  console.error('[Kernel Worker] Uncaught Exception:', err);
+};
+self.onunhandledrejection = (err) => {
+  console.error('[Kernel Worker] Unhandled Rejection:', err.reason);
+};
+
 const router = new Router();
 const vfs = new VFS();
 
@@ -74,7 +82,11 @@ router.register('IPC_INVOKE', async (payload: any) => {
   if (!response.error) return response.payload;
 
   // 2. Fallback: Check if it's a WASM command (mapped as module:fn)
-  // or just attempt  // 2. Fallback: Check if it's a WASM command (mapped as module:fn)
+  // Only attempt if it's NOT a plugin command (which should have been handled by router.use above)
+  if (command.startsWith('plugin:')) {
+    throw new Error(response.error || `Plugin command failed: ${command}`);
+  }
+
   try {
     // If command has no colon, assume 'main:' prefix for the primary app WASM
     const finalCmd = command.includes(':') ? command : `main:${command}`;

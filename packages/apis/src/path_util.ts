@@ -1,17 +1,16 @@
-import { KernelPlugin, KernelHandler } from '@r1/kernel';
+﻿import { KernelPlugin, KernelHandler } from '@r1/kernel';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function posixJoin(...parts: string[]): string {
-  // Filters out empty strings and joins with /
   return parts
-    .filter(p => p !== '')
+    .filter(p => !!p)
     .join('/')
     .replace(/\/+/g, '/');
 }
 
 function posixNormalize(path: string): string {
-  if (path === '') return '.';
+  if (!path) return '.';
   const isAbsolute = path.startsWith('/');
   const trailingSlash = path.endsWith('/') && path !== '/';
   
@@ -39,8 +38,8 @@ function posixNormalize(path: string): string {
 }
 
 function posixRelative(from: string, to: string): string {
-  const fromParts = posixNormalize(from).split('/').filter(p => p !== '');
-  const toParts = posixNormalize(to).split('/').filter(p => p !== '');
+  const fromParts = posixNormalize(from).split('/').filter(p => !!p);
+  const toParts = posixNormalize(to).split('/').filter(p => !!p);
   
   let commonLength = 0;
   const minLength = Math.min(fromParts.length, toParts.length);
@@ -59,10 +58,6 @@ function posixRelative(from: string, to: string): string {
   
   return result.join('/') || '.';
 }
-
-// ─── VFS "special directory" roots ──────────────────────────────────────────
-// In the browser there is no real OS filesystem.
-// We map every Tauri special directory to a sensible VFS path.
 
 const VFS_DIRS: Record<string, string> = {
   home: '/home/user',
@@ -87,42 +82,38 @@ const VFS_DIRS: Record<string, string> = {
   log: '/app/logs',
 };
 
-// ─── Plugin ──────────────────────────────────────────────────────────────────
-
 export class PathPlugin implements KernelPlugin {
   name = 'path';
 
   getCommands(): Map<string, KernelHandler> {
     const commands = new Map<string, KernelHandler>();
 
-    // ── Manipulation ──────────────────────────────────────────────────────
-
     commands.set('join', async (payload: { paths: string[] }) => {
-      return posixJoin(...payload.paths);
+      return posixJoin(...(payload.paths || []));
     });
 
     commands.set('resolve', async (payload: { pathSegments: string[] }) => {
       let resolved = '';
-      for (const seg of payload.pathSegments) {
+      for (const seg of (payload.pathSegments || [])) {
+        if (!seg) continue;
         if (seg.startsWith('/')) resolved = seg;
         else resolved = posixJoin(resolved, seg);
       }
-      return posixNormalize(resolved);
+      return posixNormalize(resolved || '/');
     });
 
     commands.set('relative', async (payload: { from: string; to: string }) => {
-      return posixRelative(payload.from, payload.to);
+      return posixRelative(payload.from || '/', payload.to || '/');
     });
 
     commands.set('normalize', async (payload: { path: string }) => {
-      return posixNormalize(payload.path);
+      return posixNormalize(payload.path || '.');
     });
 
     commands.set('basename', async (payload: { path: string; ext?: string }) => {
-      // Remove trailing slash if present
-      const p = payload.path.endsWith('/') && payload.path.length > 1 
-        ? payload.path.slice(0, -1) 
-        : payload.path;
+      const path = payload.path || '';
+      if (!path) return '';
+      const p = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
       let base = p.split('/').pop() || '';
       if (payload.ext && base.endsWith(payload.ext)) {
         base = base.slice(0, -payload.ext.length);
@@ -131,40 +122,34 @@ export class PathPlugin implements KernelPlugin {
     });
 
     commands.set('dirname', async (payload: { path: string }) => {
+      if (!payload.path) return '/';
       const parts = payload.path.split('/');
       parts.pop();
       return parts.join('/') || '/';
     });
 
     commands.set('extname', async (payload: { path: string }) => {
-      const base = payload.path.split('/').pop() || '';
+      const path = payload.path || '';
+      const base = path.split('/').pop() || '';
       const dot = base.lastIndexOf('.');
       return dot > 0 ? base.slice(dot) : '';
     });
 
     commands.set('isAbsolute', async (payload: { path: string }) => {
-      return payload.path.startsWith('/');
+      const path = payload.path || '';
+      return path.startsWith('/') || path.startsWith('\\');
     });
-
-    // ── Special directories ───────────────────────────────────────────────
 
     for (const [key, vfsPath] of Object.entries(VFS_DIRS)) {
       commands.set(`${key}Dir`, async () => vfsPath);
     }
 
-    // Aliases Tauri uses
     commands.set('sep', async () => '/');
     commands.set('delimiter', async () => ':');
 
     return commands;
   }
 }
-
-// ─── Direct JS exports (used by @tauri-apps/api/path imports) ────────────────
-// When a developer writes:
-//   import { homeDir, resolve } from '@tauri-apps/api/path'
-// The Vite plugin rewrites it to @r1/apis/path.
-// These named exports must exist here so the import resolves correctly.
 
 export const homeDir = () => Promise.resolve(VFS_DIRS.home);
 export const appDir = () => Promise.resolve(VFS_DIRS.app);
@@ -190,22 +175,19 @@ export const logDir = () => Promise.resolve(VFS_DIRS.log);
 export const resolve = (...paths: string[]) => {
   let resolved = '';
   for (const seg of paths) {
+    if (!seg) continue;
     if (seg.startsWith('/')) resolved = seg;
     else resolved = posixJoin(resolved, seg);
   }
-  return Promise.resolve(posixNormalize(resolved));
+  return Promise.resolve(posixNormalize(resolved || '/'));
 };
 
-export const normalize = (path: string) =>
-  Promise.resolve(posixNormalize(path));
-
-export const join = (...paths: string[]) =>
-  Promise.resolve(posixJoin(...paths));
-
-export const relative = (from: string, to: string) =>
-  Promise.resolve(posixRelative(from, to));
+export const normalize = (path: string) => Promise.resolve(posixNormalize(path || '.'));
+export const join = (...paths: string[]) => Promise.resolve(posixJoin(...paths.filter(Boolean)));
+export const relative = (from: string, to: string) => Promise.resolve(posixRelative(from || '/', to || '/'));
 
 export const basename = (path: string, ext?: string) => {
+  if (!path) return Promise.resolve('');
   const p = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
   let base = p.split('/').pop() || '';
   if (ext && base.endsWith(ext)) base = base.slice(0, -ext.length);
@@ -213,19 +195,19 @@ export const basename = (path: string, ext?: string) => {
 };
 
 export const dirname = (path: string) => {
+  if (!path) return Promise.resolve('/');
   const parts = path.split('/');
   parts.pop();
   return Promise.resolve(parts.join('/') || '/');
 };
 
 export const extname = (path: string) => {
+  if (!path) return Promise.resolve('');
   const base = path.split('/').pop() || '';
   const dot = base.lastIndexOf('.');
   return Promise.resolve(dot > 0 ? base.slice(dot) : '');
 };
 
-export const isAbsolute = (path: string) =>
-  Promise.resolve(path.startsWith('/'));
-
+export const isAbsolute = (path: string) => Promise.resolve(!!path && (path.startsWith('/') || path.startsWith('\\')));
 export const sep = '/';
 export const delimiter = ':';

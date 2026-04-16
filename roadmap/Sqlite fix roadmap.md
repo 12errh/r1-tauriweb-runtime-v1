@@ -879,7 +879,7 @@ git commit -m "test(sqlite): add OPFS persistence tests for SQLitePlugin
 git push origin main
 ```
 
-### Exit Criteria
+### Exit Criteria ✅ COMPLETE
 - [x] All Phase 3 tests pass or are documented as expected-fallback
 - [x] Multiple simultaneous databases work
 - [x] Full test suite still passes
@@ -887,7 +887,7 @@ git push origin main
 
 ---
 
-## Phase 4 — @r1/apis/sql Direct Exports
+## Phase 4 — @r1/apis/sql Direct Exports ✅ COMPLETED
 
 > **Goal**: The `@tauri-apps/plugin-sql` import pattern works in any
 > Tauri app. The `Database` class mirrors the exact API that developers

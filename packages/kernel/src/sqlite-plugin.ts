@@ -1,11 +1,27 @@
 import { KernelPlugin, KernelHandler } from './router';
 import { VFS } from './vfs';
 
-/**
- * SQLitePlugin (Phase 2): Official @sqlite.org/sqlite-wasm bridge.
- * 
- * Supports both :memory: and OPFS-based persistence.
- */
+// ──────────────────────────────────────────────────────────────────────────
+// Global SQLite Configuration Hook
+// This MUST be defined in the global scope BEFORE initialize code runs.
+const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+
+if (typeof self !== 'undefined' && !isNode) {
+  const origin = self.location.origin || (self.location.href ? new URL(self.location.href).origin : '');
+  const baseUrl = origin + '/';
+  
+  (self as any).sqlite3ApiConfig = {
+    locateFile: (file: string) => {
+      const result = new URL(file, baseUrl).href;
+      // We log specifically for the proxy to verify detection
+      if (file.includes('proxy')) {
+        console.log('[SQLitePlugin] Resolving OPFS Proxy (Global):', file, '->', result);
+      }
+      return result;
+    }
+  };
+}
+
 export class SQLitePlugin implements KernelPlugin {
   name = 'plugin:sql';
   private sqlite3: any = null;
@@ -22,11 +38,26 @@ export class SQLitePlugin implements KernelPlugin {
   private async initSqlite() {
     if (this.sqlite3) return this.sqlite3;
 
-    // Use dynamic import to avoid blocking worker boot
-    const { default: sqlite3InitModule } = await import('@sqlite.org/sqlite-wasm');
-    this.sqlite3 = await sqlite3InitModule();
-    console.log('[SQLitePlugin] Initialised version:', this.sqlite3.version.libVersion);
-    return this.sqlite3;
+    try {
+      // Use dynamic import to avoid blocking worker boot
+      const { default: sqlite3InitModule } = await import('@sqlite.org/sqlite-wasm');
+      
+      const config: any = {};
+      
+      if (!isNode) {
+        const origin = self.location.origin || (self.location.href ? new URL(self.location.href).origin : '');
+        const baseUrl = origin + '/';
+        config.locateFile = (file: string) => new URL(file, baseUrl).href;
+      }
+      
+      this.sqlite3 = await (sqlite3InitModule as any)(config);
+      
+      console.log('[SQLitePlugin] Initialised version:', this.sqlite3.version.libVersion);
+      return this.sqlite3;
+    } catch (e) {
+      console.error('[SQLitePlugin] Failed to initialise SQLite module:', e);
+      throw e;
+    }
   }
 
   getCommands(): Map<string, KernelHandler> {

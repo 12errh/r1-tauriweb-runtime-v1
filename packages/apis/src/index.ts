@@ -56,3 +56,6 @@ export {
   open as shellOpen,
   Command,
 } from './shell';
+
+// SQL Plugin API (SQLite)
+export * from './sql';

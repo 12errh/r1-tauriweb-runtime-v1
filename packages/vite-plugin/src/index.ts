@@ -53,6 +53,21 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       config = resolvedConfig;
     },
 
+    config() {
+      return {
+        server: {
+          headers: {
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Embedder-Policy': 'credentialless',
+            'Cross-Origin-Resource-Policy': 'cross-origin',
+          }
+        },
+        optimizeDeps: {
+          exclude: ['@sqlite.org/sqlite-wasm']
+        }
+      };
+    },
+
     resolveId(id) {
       if (id === virtualEnvId) {
         return resolvedVirtualEnvId;
@@ -247,6 +262,25 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         console.warn('[R1] sqlite3-opfs-async-proxy.js not found — OPFS persistence will not work. Run: npm install @sqlite.org/sqlite-wasm in packages/kernel');
       }
 
+      // SQLite WASM Binary (required for the core engine)
+      const wasmPaths = [
+        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+      ];
+      const wasmFile = wasmPaths.find(p => existsSync(p));
+      if (wasmFile) {
+        console.log('[R1] Emitting SQLite WASM from:', wasmFile);
+        this.emitFile({
+          type: 'asset',
+          fileName: 'sqlite3.wasm',
+          source: readFileSync(wasmFile),
+        });
+      } else {
+        console.error('[R1] sqlite3.wasm NOT FOUND. SQLite will fail to load.');
+      }
+
       // 2. Bundle and emit the Kernel Worker (sw.js)
       const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
       if (existsSync(kernelEntry)) {
@@ -315,11 +349,17 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                        rawPathname.endsWith('/sw.js') || 
                        rawPathname.endsWith('/r1-boot.js') ||
                        rawPathname.endsWith(virtualEnvId) ||
+                       rawPathname.endsWith('/sqlite3.wasm') ||
+                       rawPathname.endsWith('/sqlite3-opfs-async-proxy.js') ||
                        (rawPathname.startsWith('/wasm/') && rawPathname.endsWith('.js'));
 
           if (!isR1) {
             return next();
           }
+
+          // Ensure SQLite assets have CORP headers so they can be loaded by the secure worker
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
 
           // We are handling this request. Strictly DO NOT call next() after this point.
           (async () => {
@@ -342,7 +382,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   entryPoints: [entry],
                   bundle: true,
                   write: false,
-                  format: 'iife',
+                  format: 'esm',
                   target: 'es2020',
                   minify: false,
                   loader: { '.css': 'empty', '.wasm': 'binary' },
@@ -353,7 +393,12 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                 const wasmName = getWasmName();
                 const bootScript = `
                   import { R1Runtime } from '@r1/core';
+                  import * as R1APIs from '@r1/apis';
+                  
                   if (!window.__R1_BOOT_STATUS__) {
+                    // Expose APIs for console debugging
+                    window.R1 = R1APIs;
+                    
                     const r1 = new R1Runtime();
                     r1.boot({ 
                       wasmPath: '/wasm/${wasmName}.js' 
@@ -418,7 +463,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   let code = readFileSync(filePath, 'utf8');
                   if (code.includes('from "env"')) {
                     console.log(`[R1 Plugin] Middleware patching "env" in ${rawPathname}`);
-                    const protocol = req.socket.remotePort === 443 ? 'https' : 'http'; // Simplistic but usually OK for dev
+                    const protocol = req.socket.remotePort === 443 ? 'https' : 'http'; 
                     const origin = `${protocol}://${req.headers.host}`;
                     const envUrl = `${origin}${virtualEnvId}`;
                     code = code.replace(/from\s+(['"])env\1/g, `from $1${envUrl}$1`);
@@ -427,10 +472,49 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                 } else {
                   return next(); // Let Vite handle 404
                 }
+              } else if (rawPathname.endsWith('/sqlite3.wasm')) {
+                const wasmPaths = [
+                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+                ];
+                const wasmFile = wasmPaths.find(p => existsSync(p));
+                if (wasmFile) {
+                  res.setHeader('Content-Type', 'application/wasm');
+                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                  return res.end(readFileSync(wasmFile));
+                }
+                return next();
+              } else if (rawPathname.endsWith('/sqlite3-opfs-async-proxy.js')) {
+                const proxyPaths = [
+                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+                ];
+                const proxyFile = proxyPaths.find(p => existsSync(p));
+                if (proxyFile) {
+                  res.setHeader('Content-Type', 'application/javascript');
+                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                  return res.end(readFileSync(proxyFile, 'utf-8'));
+                }
+                return next();
               }
 
               res.setHeader('Content-Type', 'application/javascript');
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+              
+              // Enable Cross-Origin Isolation for SharedArrayBuffer
+              res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+              res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+              res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              
+              if (config.command === 'serve') {
+                console.log(`[R1 Plugin] Serving ${rawPathname} with CORP/COOP/COEP headers`);
+              }
+
               if (rawPathname.endsWith('/r1-sw.js')) {
                 res.setHeader('Service-Worker-Allowed', '/');
               }
