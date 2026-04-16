@@ -97,5 +97,7 @@ After making all changes, tell me:
 
 DO NOT change any frontend import statements — R1's Vite plugin rewrites them automatically.
 DO NOT change any invoke() calls in the frontend — the IPC bridge handles them.
-DO NOT add sqlite or any database dependencies — this is not supported in v0.2.
+DO NOT add rusqlite to Cargo.toml for SQLite support.
+R1 uses @sqlite.org/sqlite-wasm — install @tauri-apps/plugin-sql
+in the frontend instead. No Rust changes needed for SQLite.
 ```

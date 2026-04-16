@@ -284,6 +284,29 @@ That's the complete pattern. Input JSON → Rust processes → Output JSON.
 
 ---
 
+## Using SQLite
+
+R1 supports SQLite out of the box. Use @tauri-apps/plugin-sql
+exactly as you would in a native Tauri app — no changes needed.
+
+Install the plugin in your frontend:
+```bash
+npm install @tauri-apps/plugin-sql
+```
+
+Use it in your code:
+```typescript
+import Database from '@tauri-apps/plugin-sql';
+const db = await Database.load('sqlite:myapp.db');
+await db.execute('INSERT INTO items (name) VALUES (?)', ['hello']);
+const items = await db.select('SELECT * FROM items');
+```
+
+R1 handles everything else. No rusqlite in Cargo.toml.
+No C compiler. No LLVM. Just works.
+
+---
+
 ## Using the Filesystem
 
 Data written through R1's filesystem API is stored in the browser's Origin Private File System (OPFS). It persists across page refreshes — closing and reopening the tab will not lose your data.

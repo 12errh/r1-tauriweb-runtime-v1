@@ -434,23 +434,31 @@ npx serve dist -l 3000
 
 ---
 
-## SQLite WASM Build Protocol (Windows/macOS)
+## SQLite Support (v0.3+)
 
-To compile SQLite (`rusqlite` with `bundled` feature) to WASM, you MUST use the WASI SDK.
+R1 supports SQLite via the official pre-built WASM module
+(@sqlite.org/sqlite-wasm). This works on all platforms without
+any C compiler, LLVM, or WASI SDK.
 
-1. **Install LLVM 18+ and WASI SDK 24+** (e.g., to `C:\LLVM` and `C:\wasi-sdk`).
-2. **Configure `.cargo/config.toml`**:
-```toml
-[target.wasm32-unknown-unknown]
-# Use default rust-lld for linking, but configure CC for compilation
-[env]
-CC_wasm32_unknown_unknown = "C:\\LLVM\\bin\\clang.exe"
-CFLAGS_wasm32_unknown_unknown = "--sysroot=C:\\wasi-sdk\\share\\wasi-sysroot -I C:\\wasi-sdk\\share\\wasi-sysroot\\include\\wasm32-wasi -DSQLITE_OS_OTHER=1"
-```
-3. **Environment Variables**:
-Set `LIBSQLITE3_FLAGS="-DSQLITE_THREADSAFE=0 -DSQLITE_OS_OTHER=1 -DSQLITE_OMIT_WAL=1"` during build.
-4. **Rust Gating**:
-Gate any usage of `AppHandle` or `tauri::State` with `#[cfg(not(target_arch = "wasm32"))]`.
+### What developers use (unchanged from native Tauri):
+import Database from '@tauri-apps/plugin-sql';
+const db = await Database.load('sqlite:myapp.db');
+await db.execute('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY, name TEXT)');
+const rows = await db.select('SELECT * FROM items');
+
+### What R1 does automatically:
+- Import patcher rewrites @tauri-apps/plugin-sql → @r1/apis/sql
+- Database.load() opens an OPFS-backed SQLite database
+- Data persists across page refreshes via OPFS
+- No rusqlite in Cargo.toml needed
+- No C compilation needed
+- No LLVM or WASI SDK needed
+
+### What developers must NOT do:
+- Do NOT add rusqlite to Cargo.toml (not needed)
+- Do NOT use tauri-plugin-sql in Cargo.toml (not needed for web)
+- Do NOT use sqlx (not supported)
+- Do NOT use diesel (not supported)
 
 Skipping step 1 is the most common mistake. Any change to `@r1/apis`,
 `@r1/core`, `@r1/kernel`, or `@r1/vite-plugin` requires a full R1 rebuild
