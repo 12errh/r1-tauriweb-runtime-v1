@@ -14,8 +14,8 @@
     "react-dom": "^19.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "@r1/apis": "file:../../packages/apis",
-    "@r1/core": "file:../../packages/core"
+    "@r1/apis": "*",
+    "@r1/core": "*"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",
@@ -24,6 +24,6 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
     "@tauri-apps/cli": "^2",
-    "@r1/vite-plugin": "file:../../packages/vite-plugin"
+    "@r1/vite-plugin": "*"
   }
 }

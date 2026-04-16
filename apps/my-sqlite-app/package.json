@@ -23,6 +23,6 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
     "@tauri-apps/cli": "^2",
-    "@r1/vite-plugin": "file:../../packages/vite-plugin"
+    "@r1/vite-plugin": "*"
   }
 }

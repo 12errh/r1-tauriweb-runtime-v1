@@ -9,6 +9,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.51.2-build9"
+  },
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit",
