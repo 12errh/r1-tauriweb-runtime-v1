@@ -302,9 +302,10 @@ await db.execute('INSERT INTO items (name) VALUES (?)', ['hello']);
 const items = await db.select('SELECT * FROM items');
 ```
 
-R1 handles everything else. No rusqlite in Cargo.toml.
-No C compiler. No LLVM. Just works.
+R1 handles everything else. No C compiler. No LLVM. Just works.
 
+> **⚠️ CRITICAL ARCHITECTURE WARNING**
+> **You cannot run native Rust SQL tools** like `sqlx`, `diesel`, or `rusqlite` in R1! The browser's security sandbox fundamentally blocks WebAssembly from opening raw TCP sockets, making remote Postgres/MySQL/MSSQL connections impossible. All database logic must be executed through the `@tauri-apps/plugin-sql` JavaScript wrapper, which leverages OPFS under the hood.
 ---
 
 ## Using the Filesystem

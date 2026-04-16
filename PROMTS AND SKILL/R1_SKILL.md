@@ -454,11 +454,10 @@ const rows = await db.select('SELECT * FROM items');
 - No C compilation needed
 - No LLVM or WASI SDK needed
 
-### What developers must NOT do:
-- Do NOT add rusqlite to Cargo.toml (not needed)
-- Do NOT use tauri-plugin-sql in Cargo.toml (not needed for web)
-- Do NOT use sqlx (not supported)
-- Do NOT use diesel (not supported)
+### What developers must NOT do (And Why):
+- **Do NOT add `rusqlite` to `Cargo.toml`.** (C-compilation inside WASM is unstable).
+- **Do NOT use `sqlx`, `diesel`, or native Postgres/MySQL drivers.** (WebAssembly running inside a web browser is strictly blocked from opening raw TCP sockets due to the browser's security model. You cannot connect to a remote database natively from Rust in R1).
+- **You MUST manage your SQLite database strictly through the JS frontend** via `Database.load()`.
 
 Skipping step 1 is the most common mistake. Any change to `@r1/apis`,
 `@r1/core`, `@r1/kernel`, or `@r1/vite-plugin` requires a full R1 rebuild
