@@ -340,11 +340,15 @@ git push origin main
 
 ## Phase 2 — SQLitePlugin Implementation
 
-> **Goal**: A fully functional `SQLitePlugin` class that handles `load`,
-> `execute`, `select`, and `close` commands. In-memory database working.
-> OPFS persistence tested separately in Phase 3.
-
-### Agent Instructions
+### Phase 2: SQLitePlugin Implementation ✅ COMPLETED
+1.  **Create `packages/kernel/src/sqlite-plugin.ts`**:
+    *   Implemented `KernelPlugin` interface.
+    *   Imported `@sqlite.org/sqlite-wasm` via dynamic `import()`.
+    *   Mapped `load`, `execute`, `select`, `close`, `execute_batch` to `sqlite3.oo1` and `sqlite3.capi` methods.
+2.  **Update `packages/kernel/src/kernel.worker.ts`**:
+    *   Registered the plugin with the correct `plugin:sql|` prefix.
+3.  **Create `packages/kernel/src/sqlite-plugin.test.ts`**:
+    *   Added 10 tests verifying all operations.
 
 **Step 2.1 — Create `packages/kernel/src/sqlite-plugin.ts`**
 

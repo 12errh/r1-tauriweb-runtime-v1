@@ -1,6 +1,7 @@
 import { Router } from './router';
 import { VFS } from './vfs';
 import { WasmOrchestrator } from './wasm-orchestrator';
+import { SQLitePlugin } from './sqlite-plugin';
 import type { KernelRequest } from './protocol';
 import {
   FsPlugin,
@@ -50,6 +51,12 @@ router.use(new MainBridgePlugin('shell', onMainThreadCall));
 router.use(new EventPlugin((event, payload) => {
   self.postMessage({ type: 'EVENT_EMIT', payload: { event, payload } });
 }));
+
+// 0.6 - SQLite Plugin Registration (matches Tauri pipe convention)
+const sqlitePlugin = new SQLitePlugin(vfs);
+for (const [name, handler] of sqlitePlugin.getCommands()) {
+  router.register(`plugin:sql|${name}`, handler);
+}
 
 // Ensure VFS is initialised strictly before it handles anything
 // In Phase 8, this will be part of a proper Boot sequence
