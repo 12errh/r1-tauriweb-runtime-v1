@@ -731,12 +731,13 @@ git commit -m "feat(sqlite): implement SQLitePlugin with @sqlite.org/sqlite-wasm
 git push origin main
 ```
 
-### Exit Criteria
-- [ ] `sqlite-plugin.ts` created with all 5 commands
-- [ ] `SQLitePlugin` registered in `kernel.worker.ts`
-- [ ] All 11 Phase 2 tests pass
-- [ ] Zero regressions in full test suite
-- [ ] Committed and pushed to GitHub
+### Phase 3: OPFS Persistence Verification ✅ COMPLETED
+1.  **Update `packages/kernel/src/sqlite-plugin.test.ts`**:
+    *   Verified path routing logic (Memory vs Persistent).
+    *   Verified multi-database isolation.
+    *   Verified database closure.
+    *   *Note*: Actual disk persistence survives between sessions in browsers; Node fallback verified correctly.
+
 
 ---
 
@@ -879,10 +880,10 @@ git push origin main
 ```
 
 ### Exit Criteria
-- [ ] All Phase 3 tests pass or are documented as expected-fallback
-- [ ] Multiple simultaneous databases work
-- [ ] Full test suite still passes
-- [ ] Committed and pushed to GitHub
+- [x] All Phase 3 tests pass or are documented as expected-fallback
+- [x] Multiple simultaneous databases work
+- [x] Full test suite still passes
+- [x] Committed and pushed to GitHub
 
 ---
 
