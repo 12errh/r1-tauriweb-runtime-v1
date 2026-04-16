@@ -231,10 +231,9 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       // Try both root and dist/ layouts across package versions
       const proxyPaths = [
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
-        // Also check kernel's own node_modules (when installed workspace-locally)
-        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
       ];
       const proxyFile = proxyPaths.find(p => existsSync(p));
       if (proxyFile) {
