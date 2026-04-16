@@ -31,7 +31,7 @@ describe('Phase 1: SQLite WASM Load Verification', () => {
     db.exec({
       sql: 'SELECT * FROM test',
       rowMode: 'object',
-      callback: (row: unknown) => rows.push(row),
+      callback: (row: unknown) => { rows.push(row); },
     });
 
     expect(rows).toHaveLength(1);
