@@ -1,6 +1,6 @@
 {
   "name": "@r1/apis",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Standardized Tauri API shims for the R1 Runtime (FS, Dialog, Event, etc.)",
   "type": "module",
   "author": "R1 Runtime Team",
@@ -16,7 +16,8 @@
     "./os": "./src/os.ts",
     "./clipboard": "./src/clipboard/index.ts",
     "./path": "./src/path_util.ts",
-    "./window": "./src/window.ts"
+    "./window": "./src/window.ts",
+    "./sql": "./src/sql.ts"
   },
   "scripts": {
     "build": "vite build",

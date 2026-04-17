@@ -83,3 +83,6 @@ export class Database {
     return await invoke('plugin:sql|close', { db: this.path });
   }
 }
+
+export default Database;
+

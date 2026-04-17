@@ -336,21 +336,29 @@ pub fn save_data(payload: &str) -> String {
 
 ---
 
-## Deploying Your App
+### ⚠️ CRITICAL DEPLOYMENT NOTE: Enabling Persistence (SQLite/OPFS)
 
-Since the output is a static folder, you can deploy it anywhere:
+If your app uses SQLite or depends on OPFS persistence, you **MUST** configure your hosting provider to send specific security headers. Without these, the browser will block `SharedArrayBuffer` and SQLite will fall back to **in-memory mode** (data will be lost on refresh).
 
-```bash
-# Vercel
-npx vercel dist --prod
+**Required Headers:**
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Resource-Policy: cross-origin
+```
 
-# Netlify
-npx netlify deploy --dir=dist --prod
-
-# GitHub Pages — push the dist/ folder to the gh-pages branch
+**Netlify Example (`netlify.toml`):**
+```toml
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Resource-Policy = "cross-origin"
 ```
 
 Anyone with the URL can now run your app. No installer. No download.
+
 
 ---
 
