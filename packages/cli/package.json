@@ -1,18 +1,14 @@
 {
-  "name": "@r1/core",
+  "name": "@r1/cli",
   "version": "0.3.0",
-  "description": "Main thread runtime for R1 — IPC bridge, EventBus, and boot synchronization.",
+  "description": "R1 TauriWeb Runtime CLI — migrate Tauri apps to the browser with npx r1 sync.",
   "type": "module",
   "author": "R1 Runtime Team",
   "license": "MIT",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+  "bin": {
+    "r1": "./dist/index.js"
   },
+  "main": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -22,7 +18,9 @@
     "webassembly",
     "browser",
     "runtime",
-    "r1"
+    "r1",
+    "cli",
+    "migration"
   ],
   "repository": {
     "type": "git",
@@ -32,14 +30,17 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "build": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@r1/apis": "^0.3.0"
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "vite-plugin-dts": "^4.5.4"
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/prompts": "^2.4.9"
   }
 }

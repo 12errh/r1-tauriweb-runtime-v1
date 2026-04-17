@@ -1,7 +1,7 @@
 {
   "name": "@r1/vite-plugin",
   "version": "0.3.0",
-  "description": "The official Vite plugin for R1, automating Rust compilation and runtime injection.",
+  "description": "Official Vite plugin for R1 — automates Rust→WASM compilation and Tauri import patching.",
   "type": "module",
   "author": "R1 Runtime Team",
   "license": "MIT",
@@ -9,9 +9,25 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts"
+    "dist"
   ],
+  "keywords": [
+    "tauri",
+    "wasm",
+    "webassembly",
+    "browser",
+    "runtime",
+    "r1",
+    "vite",
+    "vite-plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/12errh/r1-tauriweb-runtime-v1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",

@@ -31,19 +31,16 @@ wasm-pack --version  # Should print wasm-pack 0.12 or higher
 
 ---
 
-## Step 1 — Clone the R1 Runtime
+## Step 1 — Install R1
 
-R1 is not on npm yet. Clone it locally and build it first.
+R1 is available on npm. No cloning required.
 
 ```bash
-git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
-cd r1-tauriweb-runtime-v1
-npm install
-npm run build
-cd ..
+npm install @r1/core @r1/apis
+npm install --save-dev @r1/vite-plugin
 ```
 
-Keep this folder. Your app will reference it in the next step.
+That's it. Move on to Step 2.
 
 ---
 
@@ -76,26 +73,28 @@ my-r1-app/
 
 ---
 
-## Step 3 — Link R1 to Your Project
+## Step 3 — Add R1 to Your Project
 
-Open `package.json` in your new app and replace the `dependencies` and `devDependencies` sections with this. Adjust the path to match where you cloned R1 in Step 1.
+R1 is on npm. Install it directly:
+
+```bash
+npm install @r1/core @r1/apis
+npm install --save-dev @r1/vite-plugin
+```
+
+Your `package.json` dependencies will look like this:
 
 ```json
 {
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
-    "@r1/apis": "file:../r1-tauriweb-runtime-v1/packages/apis",
-    "@r1/core": "file:../r1-tauriweb-runtime-v1/packages/core"
+    "@r1/core": "^0.3.0",
+    "@r1/apis": "^0.3.0"
   },
   "devDependencies": {
-    "@r1/vite-plugin": "file:../r1-tauriweb-runtime-v1/packages/vite-plugin"
+    "@r1/vite-plugin": "^0.3.0"
   }
 }
-```
-
-Then reinstall:
-```bash
-npm install
 ```
 
 ---

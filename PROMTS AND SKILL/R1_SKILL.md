@@ -126,11 +126,11 @@ And update `package.json` dependencies:
 ```json
 {
   "dependencies": {
-    "@r1/core": "file:../r1-tauriweb-runtime-v1/packages/core",
-    "@r1/apis": "file:../r1-tauriweb-runtime-v1/packages/apis"
+    "@r1/core": "^0.3.0",
+    "@r1/apis": "^0.3.0"
   },
   "devDependencies": {
-    "@r1/vite-plugin": "file:../r1-tauriweb-runtime-v1/packages/vite-plugin"
+    "@r1/vite-plugin": "^0.3.0"
   }
 }
 ```

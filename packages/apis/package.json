@@ -1,13 +1,17 @@
 {
   "name": "@r1/apis",
-  "version": "0.3.1",
-  "description": "Standardized Tauri API shims for the R1 Runtime (FS, Dialog, Event, etc.)",
+  "version": "0.3.0",
+  "description": "Tauri API shims for R1 — fs, path, event, dialog, clipboard, os, window, store, and SQL.",
   "type": "module",
   "author": "R1 Runtime Team",
   "license": "MIT",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
     "./tauri": "./src/tauri/index.ts",
     "./core": "./src/tauri/index.ts",
     "./event": "./src/event/index.ts",
@@ -17,7 +21,35 @@
     "./clipboard": "./src/clipboard/index.ts",
     "./path": "./src/path_util.ts",
     "./window": "./src/window.ts",
-    "./sql": "./src/sql.ts"
+    "./sql": "./src/sql.ts",
+    "./store": "./src/store.ts",
+    "./notification": "./src/notification.ts",
+    "./shell": "./src/shell.ts",
+    "./http": "./src/http.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "tauri",
+    "wasm",
+    "webassembly",
+    "browser",
+    "runtime",
+    "r1",
+    "tauri-api"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/12errh/r1-tauriweb-runtime-v1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-dts": "^4.5.4"
   },
   "scripts": {
     "build": "vite build",

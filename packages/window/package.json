@@ -1,13 +1,40 @@
 {
   "name": "@r1/window",
   "version": "0.3.0",
-  "description": "Virtual Window Manager for R1, providing macOS/Windows/Linux themed desktop environments.",
+  "description": "Virtual Window Manager for R1 — macOS, Windows 11, and Linux themed desktop environments.",
   "type": "module",
   "author": "R1 Runtime Team",
   "license": "MIT",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "tauri",
+    "wasm",
+    "webassembly",
+    "browser",
+    "runtime",
+    "r1",
+    "window-manager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/12errh/r1-tauriweb-runtime-v1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-dts": "^4.5.4"
   },
   "scripts": {
     "build": "vite build",

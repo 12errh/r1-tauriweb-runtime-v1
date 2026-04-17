@@ -74,8 +74,9 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
-| SQLite Support (rusqlite) — Done | ✅ |
-| 71/71 unit tests passing | ✅ |
+| SQLite Support (`@tauri-apps/plugin-sql`) | ✅ |
+| npm publishing — `npm install @r1/core @r1/apis` | ✅ |
+| 76/76 unit tests passing | ✅ |
 
 ---
 
@@ -94,16 +95,14 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 
 ### 🚀 v0.3 In Progress (Current)
 
-**Goal:** Automate migration, enable SQLite, and Move to NPM publishing.
+**Goal:** Automate migration, enable SQLite, and move to NPM publishing.
 
-- **SQLite Support** — Full WASI syscall completion for `rusqlite` (Done ✅).
-- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring.
-- **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4).
-- **#[r1::command]** — Rust macro to eliminate JSON contract boilerplate.
-- **NPM Publishing** — Moving from local clones to `@r1` package imports.
-- **Enterprise Support** — Internal test suite with 3+ real-world open source Tauri apps.
-t local cloning.
-- Support for 3 more real-world open source Tauri apps.
+- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration via `@tauri-apps/plugin-sql` (Done ✅).
+- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring (Done ✅).
+- **npm Publishing** — All 6 packages published to npm — `npm install @r1/core @r1/apis` (Done ✅).
+- **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4 — in progress).
+- **`#[r1::command]`** — Rust macro to eliminate JSON contract boilerplate (Phase 5).
+- **Enterprise Support** — Internal test suite with 3+ real-world open source Tauri apps (Phase 6).
 
 
 ---
@@ -125,7 +124,16 @@ Open **http://localhost:5173** — the todo app is running entirely in the brows
 
 ### Build Your Own App
 
-See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step guide to creating your first R1 app from scratch.
+**Option A — Zero-config migration (recommended):**
+```bash
+cd your-existing-tauri-app
+npx r1 sync
+npm run build
+```
+
+**Option B — Manual setup:**
+
+See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step guide.
 
 ---
 

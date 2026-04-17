@@ -381,13 +381,16 @@ Pre-compile your WASM test binary and commit it to `tests/fixtures/wasm/`. Never
 
 ## Roadmap
 
-R1 is at v0.2-stable. The following are planned for upcoming versions:
+R1 is at v0.3. The following are planned for upcoming versions:
 
-- **`npx r1 sync`** — a CLI that automatically patches `Cargo.toml`, `build.rs`, and `lib.rs` in existing Tauri apps
-- **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required
-- **npm publishing** — install R1 packages directly without cloning
-- **Deeper WASI shim** — more syscall coverage for complex Rust crates
-- **SQLite support** — via `rusqlite` targeting WASM
+- **`npx r1 sync`** — a CLI that automatically patches `Cargo.toml`, `build.rs`, and `lib.rs` in existing Tauri apps *(in progress — Phase 4)*
+- **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required *(in progress — Phase 5)*
+- **Real-world app testing** — verified compatibility with 3+ open source Tauri apps *(Phase 6)*
+
+**Completed in v0.3:**
+- ✅ npm publishing — install R1 packages directly without cloning (`npm install @r1/core @r1/apis`)
+- ✅ SQLite support — via `@tauri-apps/plugin-sql` backed by `@sqlite.org/sqlite-wasm` and OPFS
+- ✅ Full WASI shim — `fd_seek` (all modes), `fd_filestat_get`, `fd_fdstat_get`, `fd_sync`, `path_filestat_get`, `path_rename`
 
 ---
 
