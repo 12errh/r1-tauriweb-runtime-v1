@@ -6,44 +6,71 @@ import "./App.css";
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [addResult, setAddResult] = useState("");
+  const [userInfo, setUserInfo] = useState("");
+  const [version, setVersion] = useState("");
 
   async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
+  }
+
+  async function testAdd() {
+    const result = await invoke("add", { a: 5.5, b: 3.2 });
+    setAddResult(`5.5 + 3.2 = ${result}`);
+  }
+
+  async function testGetUserInfo() {
+    const info = await invoke("get_user_info", { name: "Alice", age: 30 });
+    setUserInfo(JSON.stringify(info, null, 2));
+  }
+
+  async function testGetVersion() {
+    const ver = await invoke("get_version", {});
+    setVersion(`Version: ${ver}`);
   }
 
   return (
     <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+      <h1>R1 Macro Test App</h1>
 
       <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <div>
+          <input
+            id="greet-input"
+            onChange={(e) => setName(e.currentTarget.value)}
+            placeholder="Enter a name..."
+          />
+          <button type="button" onClick={() => greet()}>
+            Test greet()
+          </button>
+        </div>
+        <p>{greetMsg}</p>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      <div className="row">
+        <button type="button" onClick={() => testAdd()}>
+          Test add(5.5, 3.2)
+        </button>
+        <p>{addResult}</p>
+      </div>
+
+      <div className="row">
+        <button type="button" onClick={() => testGetUserInfo()}>
+          Test get_user_info("Alice", 30)
+        </button>
+        <pre>{userInfo}</pre>
+      </div>
+
+      <div className="row">
+        <button type="button" onClick={() => testGetVersion()}>
+          Test get_version()
+        </button>
+        <p>{version}</p>
+      </div>
+
+      <p className="read-the-docs">
+        Testing #[r1::command] macro with 4 different command types
+      </p>
     </main>
   );
 }

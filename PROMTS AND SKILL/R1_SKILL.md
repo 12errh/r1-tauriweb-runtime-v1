@@ -76,6 +76,72 @@ r1-tauriweb-runtime-v1/
 
 ---
 
+## npx r1 sync CLI (v0.3 Phase 4+)
+
+R1 includes a CLI tool that automatically migrates existing Tauri apps.
+
+### Usage
+
+```bash
+# From your Tauri app directory
+npx r1 sync
+```
+
+### What the CLI Does
+
+1. **Detects project configuration:**
+   - Tauri version (v1 or v2)
+   - Frontend framework (React, Svelte, Vue, etc.)
+   - Number of Rust commands
+   - SQLite usage
+
+2. **Patches files automatically:**
+   - `build.rs` → Emptied to `fn main() {}`
+   - `Cargo.toml` → Adds WASM deps, gates native deps
+   - `vite.config.ts` → Adds `r1Plugin()`
+   - `package.json` → Adds R1 dependencies
+   - `lib.rs` → Converts `#[tauri::command]` to R1 format (partial)
+
+3. **Creates backups:**
+   - All modified files get `.r1-backup` copies
+   - Safe to run multiple times (idempotent)
+
+### CLI Output Example
+
+```
+🚀 R1 TauriWeb Runtime — Sync
+
+√ Detected: Tauri v2, react, 3 commands
+√ Patching build.rs
+√ Updating Cargo.toml
+√ Updating vite.config.ts
+√ Updating package.json
+√ Rewriting 3 Rust commands
+
+✓ Done! Your app is ready for R1.
+
+Next steps:
+1. Review the changes (backups created as .r1-backup)
+2. Add r1-macros to Cargo.toml for cleaner Rust code
+3. Run: npm install && npm run build
+```
+
+### Current Limitations
+
+The CLI handles 90% of migration automatically. You may need to manually:
+- Add `r1-macros` dependency for automatic serialization
+- Adjust complex async functions
+- Review custom build scripts
+
+### When to Use the CLI
+
+- ✅ Migrating existing Tauri apps to R1
+- ✅ Quick setup for new projects
+- ✅ Batch processing multiple apps
+- ❌ Not needed if starting from R1 template
+
+---
+
 ## The 3 Setup Changes Required For Any Tauri App
 
 Every Tauri app needs exactly these 3 changes to work with R1.
@@ -139,6 +205,69 @@ And update `package.json` dependencies:
 
 ## The Rust JSON Contract
 
+**v0.3 Phase 5+** includes the `#[r1::command]` macro that eliminates JSON boilerplate.
+
+### Option 1: Using the #[r1::command] Macro (Recommended)
+
+Add to `Cargo.toml`:
+```toml
+[dependencies]
+r1-macros = "0.3"
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+Write commands naturally:
+```rust
+use r1_macros::command;
+use serde::{Serialize, Deserialize};
+
+// Simple command with one parameter
+#[command]
+pub fn greet(name: String) -> String {
+    format!("Hello, {}!", name)
+}
+
+// Multiple parameters
+#[command]
+pub fn add(a: f64, b: f64) -> f64 {
+    a + b
+}
+
+// Custom struct return type
+#[derive(Serialize, Deserialize)]
+pub struct UserInfo {
+    name: String,
+    age: u32,
+}
+
+#[command]
+pub fn get_user(name: String, age: u32) -> UserInfo {
+    UserInfo { name, age }
+}
+
+// No parameters
+#[command]
+pub fn get_version() -> String {
+    "1.0.0".to_string()
+}
+```
+
+**What the macro does:**
+- Wraps function to accept JSON payload string
+- Generates Args struct with Deserialize
+- Deserializes payload into typed arguments
+- Executes function body
+- Serializes result back to JSON
+- Handles errors gracefully
+
+**Supported types:**
+- **Parameters:** Any `serde::Deserialize` type (String, i32, f64, bool, Vec, HashMap, custom structs)
+- **Return types:** Any `serde::Serialize` type (primitives, Vec, Option, Result, custom structs)
+
+### Option 2: Manual JSON Contract (Legacy)
+
 Every Rust function that communicates with JavaScript must follow this pattern.
 The agent must apply this when creating or modifying `lib.rs`.
 
@@ -196,6 +325,37 @@ pub fn my_command(payload: &str) -> String {
 
 When modifying an existing app's `lib.rs`, the agent must follow this structure:
 
+**With #[r1::command] macro (recommended):**
+```rust
+use r1_macros::command;
+use serde::{Serialize, Deserialize};
+
+// ── WASM commands (compiled for both web and desktop) ──────────────────────
+
+#[command]
+pub fn command_one(arg1: String, arg2: i32) -> String {
+    format!("{} - {}", arg1, arg2)
+}
+
+#[command]
+pub fn command_two(data: MyData) -> MyResult {
+    // ... implementation
+}
+
+// ── Native desktop entry point (only for non-WASM builds) ──────────────────
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            // list native commands here
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+```
+
+**Without macro (manual JSON contract):**
 ```rust
 use wasm_bindgen::prelude::*;
 use serde::{Serialize, Deserialize};
@@ -204,12 +364,12 @@ use serde::{Serialize, Deserialize};
 
 #[wasm_bindgen]
 pub fn command_one(payload: &str) -> String {
-    // ... implementation
+    // ... manual JSON handling
 }
 
 #[wasm_bindgen]
 pub fn command_two(payload: &str) -> String {
-    // ... implementation
+    // ... manual JSON handling
 }
 
 // ── Native desktop entry point (only for non-WASM builds) ──────────────────

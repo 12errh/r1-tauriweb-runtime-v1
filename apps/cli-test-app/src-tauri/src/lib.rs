@@ -1,22 +1,41 @@
+use r1_macros::command;
 use serde::{Serialize, Deserialize};
-use wasm_bindgen::prelude::*;
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[wasm_bindgen]
-pub fn greet(payload: &str) -> String {
-    #[derive(Deserialize)]
-    struct Args {
-        name: &str,
-    }
 
-    let args: Args = match serde_json::from_str(payload) {
-        Ok(a) => a,
-        Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
-    };
+// Learn more about R1 commands at https://github.com/yourusername/r1tauriruntime
 
-    let name = args.name;
-
-
+// Simple command with one parameter using the #[command] macro
+#[command]
+pub fn greet(name: String) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+// Example with multiple parameters
+#[command]
+pub fn add(a: f64, b: f64) -> f64 {
+    a + b
+}
+
+// Example with custom struct return type
+#[derive(Serialize, Deserialize)]
+pub struct UserInfo {
+    name: String,
+    age: u32,
+    greeting: String,
+}
+
+#[command]
+pub fn get_user_info(name: String, age: u32) -> UserInfo {
+    UserInfo {
+        name: name.clone(),
+        age,
+        greeting: format!("Hello, {}! You are {} years old.", name, age),
+    }
+}
+
+// Example with no parameters
+#[command]
+pub fn get_version() -> String {
+    "0.1.0".to_string()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
