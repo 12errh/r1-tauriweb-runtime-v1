@@ -105,14 +105,18 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 - **76 Tests Passing** — Full test coverage with zero regressions ✅
 - **Phase 3 Complete** — Package metadata and build system ready ✅
 - **Phase 4 Complete** — `npx r1 sync` CLI fully implemented and tested ✅
-  - Automatic project detection
+- **Phase 5 Complete** — `#[r1::command]` proc macro for automatic serialization ✅
+  - Developers can write standard Tauri-style commands
+  - Automatic JSON serialization/deserialization
+  - 15/15 macro tests passing
+  - Eliminates manual JSON contract boilerplate
   - File patching (build.rs, Cargo.toml, vite.config, package.json)
   - Backup creation
   - 85/85 tests passing
 
 **In Progress:**
-- **Phase 5:** `#[r1::command]` — Rust macro to eliminate JSON contract boilerplate
 - **Phase 6:** Real-World Testing — Spent finance app and other open source Tauri apps
+- **Phase 7:** NPM Publishing — Publish all packages to npm registry
 - **Phase 7:** npm Publishing — Publish all packages to npm registry
 - **Phase 8:** Final Documentation — Update all docs and create v0.3 release
 
@@ -136,7 +140,7 @@ Open **http://localhost:5173** — the todo app is running entirely in the brows
 
 ### Build Your Own App
 
-**Current Setup (v0.3 Phase 4):**
+**Current Setup (v0.3 Phase 5):**
 
 R1 packages are not yet published to npm. You need to clone the repository and use the CLI:
 
@@ -265,8 +269,22 @@ All AI resources are located in the `PROMTS AND SKILL/` directory:
 - 85/85 tests passing
 - Tested on real Tauri app
 
-**Phase 5 (In Progress):**
+**Phase 5 Complete ✅:**
+- `#[r1::command]` proc macro implemented
+- Automatic JSON serialization/deserialization
+- Supports 0-N parameters
+- Supports all common return types (String, i32, f64, bool, Vec, Option, Result, custom structs)
+- 15/15 macro tests passing
+- Eliminates manual JSON contract boilerplate
+
+**Phase 5 Complete ✅:**
 - `#[r1::command]` Rust proc macro
+- Automatic JSON serialization/deserialization
+- Eliminates manual JSON contract boilerplate
+- 15/15 macro tests passing
+
+**Phase 6 (In Progress):**
+- Real-world app testing (Spent finance app)
 
 **Phase 6:**
 - Real-world app testing (Spent finance app)

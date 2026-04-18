@@ -383,8 +383,8 @@ Pre-compile your WASM test binary and commit it to `tests/fixtures/wasm/`. Never
 
 R1 is at v0.3. The following are planned for upcoming versions:
 
-- **`npx r1 sync`** — a CLI that automatically patches `Cargo.toml`, `build.rs`, and `lib.rs` in existing Tauri apps *(in progress — Phase 4)*
-- **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required *(in progress — Phase 5)*
+- **`npx r1 sync`** — a CLI that automatically patches `Cargo.toml`, `build.rs`, and `lib.rs` in existing Tauri apps ✅ **Complete (Phase 4)**
+- **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required ✅ **Complete (Phase 5)**
 - **Real-world app testing** — verified compatibility with 3+ open source Tauri apps *(Phase 6)*
 
 **Completed in v0.3 Phase 3:**
@@ -394,10 +394,11 @@ R1 is at v0.3. The following are planned for upcoming versions:
 - ✅ Full WASI shim — `fd_seek` (all modes), `fd_filestat_get`, `fd_fdstat_get`, `fd_sync`, `path_filestat_get`, `path_rename`
 - ✅ 85/85 tests passing
 - ✅ `npx r1 sync` CLI for automatic migration
+- ✅ `#[r1::command]` proc macro for automatic serialization
 
-**In Progress (Phase 4-7):**
-- 🚧 `npx r1 sync` CLI implementation
-- 🚧 `#[r1::command]` Rust macro
+**In Progress (Phase 6-7):**
+- 🚧 Real-world app testing (Spent finance app)
+- 🚧 NPM publishing
 - 🚧 Real-world app testing
 - 🚧 npm publishing
 

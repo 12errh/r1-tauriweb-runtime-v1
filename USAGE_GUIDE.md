@@ -31,7 +31,7 @@ my-r1-app/
 
 ## Using the R1 CLI
 
-**v0.3 Phase 4+** includes `npx r1 sync` — a CLI tool that automatically migrates existing Tauri apps to R1.
+**v0.3 Phase 5+** includes `npx r1 sync` — a CLI tool that automatically migrates existing Tauri apps to R1, plus the `#[r1::command]` proc macro for automatic serialization.
 
 ### What the CLI Does
 
@@ -65,15 +65,79 @@ The CLI creates `.r1-backup` files for everything it modifies. If something goes
 ### Current Limitations
 
 The CLI handles 90% of migration automatically. You may need to manually:
-- Wrap Rust function return values in `serde_json::to_string()`
+- Wrap Rust function return values in `serde_json::to_string()` (if not using `#[r1::command]` macro)
 - Adjust complex async functions
 - Review custom build scripts
 
-**Phase 5** will add the `#[r1::command]` macro to eliminate these manual steps.
+**Phase 5 Complete:** The `#[r1::command]` macro eliminates manual JSON wrapping!
 
 ---
 
-## The R1 JSON Contract
+## Writing Rust Commands with `#[r1::command]` Macro
+
+**v0.3 Phase 5+** includes the `#[r1::command]` proc macro that automatically handles JSON serialization/deserialization.
+
+### Using the Macro
+
+Add `r1-macros` to your `Cargo.toml`:
+```toml
+[dependencies]
+r1-macros = "0.3"
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+Then write commands like standard Tauri functions:
+
+```rust
+use r1_macros::command;
+
+#[command]
+pub fn greet(name: String) -> String {
+    format!("Hello, {}!", name)
+}
+
+#[command]
+pub fn add(a: f64, b: f64) -> f64 {
+    a + b
+}
+
+#[command]
+pub fn get_user(id: u32) -> User {
+    User {
+        id,
+        name: "Alice".to_string(),
+        age: 30,
+    }
+}
+```
+
+The macro automatically:
+- Wraps the function to accept JSON payload
+- Deserializes arguments
+- Executes your function body
+- Serializes the result back to JSON
+- Handles errors gracefully
+
+### Supported Types
+
+**Parameters:** Any type that implements `serde::Deserialize`
+- Primitives: `String`, `i32`, `f64`, `bool`, `u32`, etc.
+- Collections: `Vec<T>`, `HashMap<K, V>`
+- Custom structs with `#[derive(Deserialize)]`
+
+**Return Types:** Any type that implements `serde::Serialize`
+- Primitives: `String`, `i32`, `f64`, `bool`
+- Collections: `Vec<T>`, `HashMap<K, V>`
+- `Option<T>`, `Result<T, E>`
+- Custom structs with `#[derive(Serialize)]`
+
+---
+
+## The R1 JSON Contract (Manual Approach)
+
+If you prefer not to use the macro, you can write commands manually following the JSON contract:
 
 Every Rust function that receives data from or sends data to JavaScript must follow this contract:
 
@@ -92,7 +156,7 @@ WASM and JavaScript have incompatible type systems. Strings are the common langu
 
 ---
 
-## Writing Rust Commands
+## Writing Rust Commands Manually
 
 ### Basic Command
 
