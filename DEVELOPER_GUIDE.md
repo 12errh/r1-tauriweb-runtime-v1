@@ -387,10 +387,18 @@ R1 is at v0.3. The following are planned for upcoming versions:
 - **`#[r1::command]` macro** — write standard `#[tauri::command]` style functions with no JSON contract required *(in progress — Phase 5)*
 - **Real-world app testing** — verified compatibility with 3+ open source Tauri apps *(Phase 6)*
 
-**Completed in v0.3:**
-- ✅ npm publishing — install R1 packages directly without cloning (`npm install @r1/core @r1/apis`)
+**Completed in v0.3 Phase 3:**
+- ✅ Package metadata prepared for npm publishing
+- ✅ All packages bumped to v0.3.0
 - ✅ SQLite support — via `@tauri-apps/plugin-sql` backed by `@sqlite.org/sqlite-wasm` and OPFS
 - ✅ Full WASI shim — `fd_seek` (all modes), `fd_filestat_get`, `fd_fdstat_get`, `fd_sync`, `path_filestat_get`, `path_rename`
+- ✅ 76/76 tests passing
+
+**In Progress (Phase 4-7):**
+- 🚧 `npx r1 sync` CLI implementation
+- 🚧 `#[r1::command]` Rust macro
+- 🚧 Real-world app testing
+- 🚧 npm publishing
 
 ---
 

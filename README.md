@@ -5,9 +5,9 @@
 [![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/r1-tauriweb-runtime-v1)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-67%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-76%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.3--dev-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v0.3--phase3-blue.svg)](#)
 
 **[Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -75,7 +75,7 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | WASM panic isolation | ✅ |
 | Automatic Rust compilation via Vite plugin | ✅ |
 | SQLite Support (`@tauri-apps/plugin-sql`) | ✅ |
-| npm publishing — `npm install @r1/core @r1/apis` | ✅ |
+| npm publishing — packages ready for npm | 🚧 Phase 7 |
 | 76/76 unit tests passing | ✅ |
 
 ---
@@ -95,14 +95,19 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 
 ### 🚀 v0.3 In Progress (Current)
 
-**Goal:** Automate migration, enable SQLite, and move to NPM publishing.
+**Goal:** Automate migration, enable SQLite, and prepare for NPM publishing.
 
-- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration via `@tauri-apps/plugin-sql` (Done ✅).
-- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring (Done ✅).
-- **npm Publishing** — All 6 packages published to npm — `npm install @r1/core @r1/apis` (Done ✅).
-- **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4 — in progress).
-- **`#[r1::command]`** — Rust macro to eliminate JSON contract boilerplate (Phase 5).
-- **Enterprise Support** — Internal test suite with 3+ real-world open source Tauri apps (Phase 6).
+**Completed:**
+- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration via `@tauri-apps/plugin-sql` ✅
+- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring ✅
+- **Package Preparation** — All 7 packages at v0.3.0 with correct metadata for npm ✅
+- **76 Tests Passing** — Full test coverage with zero regressions ✅
+
+**In Progress:**
+- **`npx r1 sync`** — CLI tool for zero-config Tauri migration (Phase 4)
+- **`#[r1::command]`** — Rust macro to eliminate JSON contract boilerplate (Phase 5)
+- **Real-World Testing** — Spent finance app and other open source Tauri apps (Phase 6)
+- **npm Publishing** — Publish all packages to npm registry (Phase 7)
 
 
 ---
@@ -124,16 +129,24 @@ Open **http://localhost:5173** — the todo app is running entirely in the brows
 
 ### Build Your Own App
 
-**Option A — Zero-config migration (recommended):**
+**Current Setup (v0.3 Phase 3):**
+
+R1 packages are not yet published to npm. You need to clone the repository and use workspace references:
+
 ```bash
-cd your-existing-tauri-app
+git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
+cd r1-tauriweb-runtime-v1
+npm install
+```
+
+Then follow **[GETTING_STARTED.md](./GETTING_STARTED.md)** for complete setup instructions.
+
+**Coming in Phase 4:**
+```bash
+# This will work after Phase 7 (npm publishing)
 npx r1 sync
 npm run build
 ```
-
-**Option B — Manual setup:**
-
-See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step guide.
 
 ---
 
@@ -202,13 +215,28 @@ All AI resources are located in the `PROMTS AND SKILL/` directory:
 
 ## Roadmap
 
-### v0.3 and Beyond
+### v0.3 Phases
 
-- `npx r1 sync` — CLI that automatically patches existing Tauri apps to work with R1
-- `#[r1::command]` macro — write standard `#[tauri::command]` functions with no JSON contract required
-- npm publishing — install R1 without cloning
-- Test with 3+ real open source Tauri apps
-- Deeper WASI syscall coverage based on real app needs
+**Phase 3 Complete ✅:**
+- Package metadata prepared for npm
+- All packages at v0.3.0
+- 76/76 tests passing
+- SQLite fully integrated
+
+**Phase 4 (In Progress):**
+- `npx r1 sync` CLI implementation
+
+**Phase 5:**
+- `#[r1::command]` Rust macro
+
+**Phase 6:**
+- Real-world app testing (Spent finance app)
+
+**Phase 7:**
+- npm publishing - `npm install @r1/core @r1/apis`
+
+**Phase 8:**
+- Final documentation and v0.3 release
 
 ---
 

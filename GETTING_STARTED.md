@@ -31,16 +31,18 @@ wasm-pack --version  # Should print wasm-pack 0.12 or higher
 
 ---
 
-## Step 1 — Install R1
+## Step 1 — Clone R1 Repository
 
-R1 is available on npm. No cloning required.
+**Important:** R1 packages are not yet published to npm (coming in Phase 7). You need to clone the repository and work within the monorepo workspace.
 
 ```bash
-npm install @r1/core @r1/apis
-npm install --save-dev @r1/vite-plugin
+git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
+cd r1-tauriweb-runtime-v1
+npm install
+npm run build
 ```
 
-That's it. Move on to Step 2.
+This builds all R1 packages locally. Now you can create your app inside the `apps/` directory or link to an external project.
 
 ---
 
@@ -75,26 +77,41 @@ my-r1-app/
 
 ## Step 3 — Add R1 to Your Project
 
-R1 is on npm. Install it directly:
+Since R1 is not yet on npm, you need to use workspace references. Create your app inside the R1 monorepo:
 
 ```bash
-npm install @r1/core @r1/apis
-npm install --save-dev @r1/vite-plugin
+# Inside r1-tauriweb-runtime-v1/
+cd apps
+mkdir my-app
+cd my-app
+npm init -y
 ```
 
-Your `package.json` dependencies will look like this:
+Update your `package.json` to use workspace references:
 
 ```json
 {
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
-    "@r1/core": "^0.3.0",
-    "@r1/apis": "^0.3.0"
+    "@r1/core": "workspace:*",
+    "@r1/apis": "workspace:*"
   },
   "devDependencies": {
-    "@r1/vite-plugin": "^0.3.0"
+    "@r1/vite-plugin": "workspace:*"
   }
 }
+```
+
+Then run `npm install` from the root of the monorepo:
+```bash
+cd ../../  # back to root
+npm install
+```
+
+**After Phase 7 (npm publishing), this will become:**
+```bash
+npm install @r1/core @r1/apis
+npm install --save-dev @r1/vite-plugin
 ```
 
 ---
