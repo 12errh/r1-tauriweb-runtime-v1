@@ -69,9 +69,14 @@ function rewriteCommand(fnName: string, params: string, returnType: string, orig
   for (const param of paramList) {
     const parts = param.split(':').map(p => p.trim());
     if (parts.length >= 2) {
+      let paramType = parts.slice(1).join(':').trim();
+      // Convert &str to String for JSON deserialization
+      if (paramType === '&str') {
+        paramType = 'String';
+      }
       parsedParams.push({
         name: parts[0],
-        type: parts.slice(1).join(':').trim()
+        type: paramType
       });
     }
   }
@@ -102,8 +107,12 @@ function rewriteCommand(fnName: string, params: string, returnType: string, orig
     argsParsing += '\n';
   }
   
+  // Note: The function body will need to be manually wrapped in serde_json::to_string
+  // This is a limitation of the simple regex-based approach
+  // For now, we just set up the signature and args parsing
+  
   // Build the new function signature
   const newSignature = `#[wasm_bindgen]\npub fn ${fnName}(payload: &str) -> String {`;
   
-  return newSignature + '\n' + argsStruct + argsParsing;
+  return newSignature + '\n' + argsStruct + argsParsing + '    // TODO: Wrap return value in serde_json::to_string(&result).unwrap()\n';
 }
