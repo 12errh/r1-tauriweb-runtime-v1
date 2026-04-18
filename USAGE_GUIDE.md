@@ -4,6 +4,8 @@
 
 This guide assumes you have already completed [GETTING_STARTED.md](./GETTING_STARTED.md) and have a working R1 app. If you haven't done that yet, start there.
 
+**Quick Migration:** If you have an existing Tauri app, you can use `npx r1 sync` to automatically apply all required changes. See the CLI section below for details.
+
 ---
 
 ## Project Structure
@@ -24,6 +26,50 @@ my-r1-app/
 ├── package.json           ← Must reference R1 packages.
 └── vite.config.ts         ← Must include r1Plugin().
 ```
+
+---
+
+## Using the R1 CLI
+
+**v0.3 Phase 4+** includes `npx r1 sync` — a CLI tool that automatically migrates existing Tauri apps to R1.
+
+### What the CLI Does
+
+```bash
+cd your-tauri-app
+node /path/to/r1/packages/cli/dist/index.js
+
+# Output:
+🚀 R1 TauriWeb Runtime — Sync
+√ Detected: Tauri v2, react, 3 commands
+√ Patching build.rs
+√ Updating Cargo.toml
+√ Updating vite.config.ts
+√ Updating package.json
+√ Rewriting 3 Rust commands
+✓ Done! Your app is ready for R1.
+```
+
+### What Gets Changed
+
+1. **build.rs** — Emptied to `fn main() {}`
+2. **Cargo.toml** — Adds WASM dependencies, moves native deps to cfg target
+3. **vite.config.ts** — Adds `r1Plugin()`
+4. **package.json** — Adds R1 dependencies
+5. **Rust commands** — Converts `#[tauri::command]` to R1 JSON contract (partial)
+
+### Backup Files
+
+The CLI creates `.r1-backup` files for everything it modifies. If something goes wrong, you can restore from these backups.
+
+### Current Limitations
+
+The CLI handles 90% of migration automatically. You may need to manually:
+- Wrap Rust function return values in `serde_json::to_string()`
+- Adjust complex async functions
+- Review custom build scripts
+
+**Phase 5** will add the `#[r1::command]` macro to eliminate these manual steps.
 
 ---
 

@@ -120,11 +120,12 @@ tested and recommended:
 It contains:
 
 - **Full architecture diagram** — Kernel Worker, VFS, IPC bridge, Service Worker
-- **The 3 required setup changes** — build.rs, Cargo.toml, vite.config.ts
+- **The 3 required setup changes** — build.rs, Cargo.toml, vite.config.ts (or use `npx r1 sync` CLI)
 - **The Rust JSON contract** — exactly how every command must be written
-- **Supported API list** — which `@tauri-apps/api` imports work in v0.2
+- **Supported API list** — which `@tauri-apps/api` imports work in v0.3
 - **Import patcher map** — what the Vite plugin rewrites
 - **VFS path mapping** — how OS paths map to browser paths
+- **CLI usage** — how to use `npx r1 sync` for automatic migration
 - **Common error patterns** — every known error with its fix
 - **Build verification checklist** — what success looks like
 - **Rules the agent must never break** — guardrails

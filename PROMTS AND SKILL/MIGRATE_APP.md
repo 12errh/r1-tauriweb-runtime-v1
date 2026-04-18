@@ -28,9 +28,10 @@ Read these files and report what you find:
 
 Then tell me:
 1. Which Tauri APIs this app uses (invoke, fs, path, event, window, dialog, etc.)
-2. Whether any of those APIs are NOT supported by R1 v0.2 (check the skill file)
-3. Whether the app uses SQLite (if yes, it needs R1 v0.3 — stop and inform me)
+2. Whether any of those APIs are NOT supported by R1 v0.3 (check the skill file)
+3. Whether the app uses SQLite (if yes, R1 v0.3 supports it via @tauri-apps/plugin-sql)
 4. The Tauri version (v1 or v2) — check the tauri version in Cargo.toml
+5. Whether I should use `npx r1 sync` CLI for automatic migration (recommended)
 
 STEP 2 — APPLY THE 3 REQUIRED CHANGES
 Apply all 3 of these changes. Do not skip any.

@@ -392,7 +392,8 @@ R1 is at v0.3. The following are planned for upcoming versions:
 - ✅ All packages bumped to v0.3.0
 - ✅ SQLite support — via `@tauri-apps/plugin-sql` backed by `@sqlite.org/sqlite-wasm` and OPFS
 - ✅ Full WASI shim — `fd_seek` (all modes), `fd_filestat_get`, `fd_fdstat_get`, `fd_sync`, `path_filestat_get`, `path_rename`
-- ✅ 76/76 tests passing
+- ✅ 85/85 tests passing
+- ✅ `npx r1 sync` CLI for automatic migration
 
 **In Progress (Phase 4-7):**
 - 🚧 `npx r1 sync` CLI implementation
@@ -404,7 +405,7 @@ R1 is at v0.3. The following are planned for upcoming versions:
 
 The most valuable contributions right now are:
 
-1. **Test R1 with your own Tauri app** and open an issue describing what broke. R1 v0.2 supports complex APIs, so we need real-world stress tests.
+1. **Test R1 with your own Tauri app** and open an issue describing what broke. R1 v0.3 supports complex APIs and has a CLI for automatic migration, so we need real-world stress tests.
 2. **WASI shim additions** — if a syscall returns `ERRNO_NOSYS` that you need, adding it to `packages/kernel/src/wasi-shim.ts` is well-scoped and testable.
 3. **API plugin completeness** — if a `@tauri-apps/api` command returns wrong data or is missing, `packages/apis/src/` is the place to add it.
 

@@ -231,9 +231,9 @@ If the app only has `main.rs` and no `lib.rs`, the agent must:
 
 ---
 
-## Supported Tauri APIs (v0.2)
+## Supported Tauri APIs (v0.3)
 
-The agent must know which APIs R1 supports in v0.2 and which it does not.
+The agent must know which APIs R1 supports in v0.3 and which it does not.
 
 ### ✅ Fully Supported — Direct import works
 ```typescript

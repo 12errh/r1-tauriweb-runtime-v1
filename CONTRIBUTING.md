@@ -1,6 +1,6 @@
 # Contributing to R1 TauriWeb Runtime
 
-R1 is at v0.2-stable and the most valuable thing you can do right now is **test it with your own Tauri app** and report what breaks. v0.2 added support for all major Tauri APIs (Fs, Event, Store, Dialog, etc.).
+R1 is at v0.3 (Phase 4 complete) and the most valuable thing you can do right now is **test it with your own Tauri app** and report what breaks. v0.3 added SQLite support, automatic migration via `npx r1 sync` CLI, and comprehensive WASI shim implementation.
 
 That said, all contributions are welcome — bug fixes, new API implementations, WASI shim additions, and documentation improvements.
 
