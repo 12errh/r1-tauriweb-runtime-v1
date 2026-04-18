@@ -14,6 +14,7 @@ import { patchCargo } from './patch-cargo.js';
 import { patchVite } from './patch-vite.js';
 import { patchPackage } from './patch-package.js';
 import { rewriteRust } from './rewrite-rust.js';
+import { patchSqlImports } from './patch-sql-imports.js';
 
 async function main() {
   const root = process.cwd();
@@ -50,6 +51,12 @@ async function main() {
     { label: 'Updating Cargo.toml', fn: () => patchCargo(root) },
     { label: 'Updating vite.config.ts', fn: () => patchVite(root) },
     { label: 'Updating package.json', fn: () => patchPackage(root) },
+    { label: 'Patching SQL imports', fn: async () => {
+      const count = await patchSqlImports(root);
+      if (count > 0) {
+        console.log(chalk.gray(`    Found and updated ${count} file(s) with SQL imports`));
+      }
+    }},
     { label: `Rewriting ${project.commands.length} Rust commands`, fn: () => rewriteRust(root) },
   ];
 
