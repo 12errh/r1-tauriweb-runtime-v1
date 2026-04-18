@@ -34,7 +34,8 @@ async function main() {
 
   // Step 2: Warn about special cases
   if (project.hasSqlite) {
-    console.log(chalk.yellow('\n⚠  SQLite detected. Supported in R1 v0.3+ via @tauri-apps/plugin-sql'));
+    console.log(chalk.green('\n✓ SQLite detected. R1 includes @sqlite.org/sqlite-wasm with OPFS persistence.'));
+    console.log(chalk.gray('  Your SQLite data will persist across page refreshes in the browser.\n'));
   }
 
   if (project.unsupportedApis.length > 0) {

@@ -35,7 +35,7 @@ export function transformCallback(
 }
 
 // convertFileSrc — converts a VFS path to an asset URL
-export function convertFileSrc(filePath: string, protocol = 'asset'): string {
+export function convertFileSrc(filePath: string, _protocol = 'asset'): string {
   return (window as any).__TAURI_INTERNALS__?.convertFileSrc?.(filePath)
     ?? `https://r1-asset.localhost${filePath}`;
 }

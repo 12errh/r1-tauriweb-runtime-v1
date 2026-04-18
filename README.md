@@ -7,7 +7,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-85%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.3--phase4-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v0.3--phase6-blue.svg)](#)
 
 **[Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -99,24 +99,21 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 **Goal:** Automate migration, enable SQLite, and prepare for NPM publishing.
 
 **Completed:**
-- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration via `@tauri-apps/plugin-sql` ✅
+- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration with OPFS persistence ✅
 - **Data Loss Prevention** — Automated storage persistence requests and quota monitoring ✅
 - **Package Preparation** — All 7 packages at v0.3.0 with correct metadata for npm ✅
-- **76 Tests Passing** — Full test coverage with zero regressions ✅
 - **Phase 3 Complete** — Package metadata and build system ready ✅
 - **Phase 4 Complete** — `npx r1 sync` CLI fully implemented and tested ✅
 - **Phase 5 Complete** — `#[r1::command]` proc macro for automatic serialization ✅
-  - Developers can write standard Tauri-style commands
-  - Automatic JSON serialization/deserialization
-  - 15/15 macro tests passing
-  - Eliminates manual JSON contract boilerplate
-  - File patching (build.rs, Cargo.toml, vite.config, package.json)
-  - Backup creation
+- **Phase 6 Complete** — TaskFlow test app with full SQLite integration ✅
+  - 13 Rust commands using `#[r1::command]` macro
+  - Full CRUD operations with SQLite
+  - Search, filter, and statistics
+  - CSV/JSON export functionality
+  - Real-time persistence across page refreshes
   - 85/85 tests passing
 
 **In Progress:**
-- **Phase 6:** Real-World Testing — Spent finance app and other open source Tauri apps
-- **Phase 7:** NPM Publishing — Publish all packages to npm registry
 - **Phase 7:** npm Publishing — Publish all packages to npm registry
 - **Phase 8:** Final Documentation — Update all docs and create v0.3 release
 
@@ -269,25 +266,15 @@ All AI resources are located in the `PROMTS AND SKILL/` directory:
 - 85/85 tests passing
 - Tested on real Tauri app
 
-**Phase 5 Complete ✅:**
-- `#[r1::command]` proc macro implemented
-- Automatic JSON serialization/deserialization
-- Supports 0-N parameters
-- Supports all common return types (String, i32, f64, bool, Vec, Option, Result, custom structs)
-- 15/15 macro tests passing
-- Eliminates manual JSON contract boilerplate
-
-**Phase 5 Complete ✅:**
-- `#[r1::command]` Rust proc macro
-- Automatic JSON serialization/deserialization
-- Eliminates manual JSON contract boilerplate
-- 15/15 macro tests passing
-
-**Phase 6 (In Progress):**
-- Real-world app testing (Spent finance app)
-
-**Phase 6:**
-- Real-world app testing (Spent finance app)
+**Phase 6 Complete ✅:**
+- TaskFlow test app with full SQLite integration
+- 13 Rust commands using `#[r1::command]` macro
+- Full CRUD operations with SQLite in OPFS
+- Search, filter, and statistics
+- CSV/JSON export functionality
+- Real-time persistence across page refreshes
+- CLI updated to show SQLite support
+- 85/85 tests passing
 
 **Phase 7:**
 - npm publishing - `npm install @r1/core @r1/apis`
