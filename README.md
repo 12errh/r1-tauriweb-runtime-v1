@@ -95,10 +95,6 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 - **Improved Onboarding**: Updated `GETTING_STARTED.md` with build optimization and troubleshooting.
 - **Stability**: 63 unit tests passing total (2x original coverage).
 
-### 🚀 v0.3 In Progress (Current)
-
-**Goal:** Automate migration, enable SQLite, and prepare for NPM publishing.
-
 **✅ v0.3.0 COMPLETE - NOW ON NPM!**
 
 All packages published to npm and crates.io:
@@ -159,12 +155,6 @@ npx serve dist -l 3000
 
 Then follow **[GETTING_STARTED.md](./GETTING_STARTED.md)** for complete setup instructions.
 
-**Coming in Phase 7:**
-```bash
-# This will work after npm publishing
-npx r1 sync
-npm run build
-```
 
 ---
 
@@ -217,9 +207,7 @@ R1 is at v0.3. It works well for simple to medium complexity Tauri apps. Current
 - Multi-threading with shared memory (limited browser support)
 - Some Rust crates may not support `wasm32-unknown-unknown` target
 
-**Current Phase Limitations:**
-- Rust function return values need manual `serde_json::to_string()` wrapper (Phase 5 will automate this with `#[r1::command]` macro)
-- Packages not yet on npm - requires cloning repository (Phase 7 will publish to npm)
+
 
 See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the complete limitations list and workarounds.
 
