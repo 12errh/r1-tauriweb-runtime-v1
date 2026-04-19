@@ -1,83 +1,185 @@
 # r1-macros
 
-Procedural macros for R1 TauriWeb Runtime.
+Procedural macros for R1 TauriWeb Runtime — simplifies Rust command definitions.
 
-## Overview
+## Features
 
-This crate provides the `#[r1::command]` macro that transforms Tauri-style command functions into WASM-compatible functions with automatic JSON serialization/deserialization.
+- **`#[r1::command]` macro**: Drop-in replacement for `#[tauri::command]`
+- **Automatic JSON serialization**: Handles input/output conversion automatically
+- **Type-safe**: Preserves Rust type checking
+- **Zero boilerplate**: Write clean Rust code
+
+## Installation
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+r1-macros = "0.3.0"
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
 
 ## Usage
+
+### Before (Manual Serialization)
+
+```rust
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn greet(payload: &str) -> String {
+    #[derive(serde::Deserialize)]
+    struct Args {
+        name: String,
+    }
+    
+    let args: Args = match serde_json::from_str(payload) {
+        Ok(a) => a,
+        Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
+    };
+    
+    let result = format!("Hello, {}!", args.name);
+    serde_json::to_string(&result).unwrap()
+}
+```
+
+### After (With `#[r1::command]`)
 
 ```rust
 use r1_macros::command;
 
 #[command]
-pub fn greet(name: String) -> String {
+fn greet(name: String) -> String {
     format!("Hello, {}!", name)
-}
-
-#[command]
-pub fn add(a: f64, b: f64) -> f64 {
-    a + b
-}
-
-#[command]
-pub fn get_status() -> bool {
-    true
 }
 ```
 
-## What the Macro Does
+The macro automatically:
+1. Generates the `#[wasm_bindgen]` attribute
+2. Creates the input struct from parameters
+3. Handles JSON deserialization
+4. Wraps the return value in JSON
+5. Handles errors gracefully
 
-The `#[command]` macro automatically:
+## Examples
 
-1. **Wraps the function signature** to accept a JSON payload string
-2. **Generates an Args struct** with proper Deserialize traits
-3. **Deserializes the payload** into typed arguments
-4. **Executes the function body** with the typed arguments
-5. **Serializes the result** back to JSON
-6. **Handles errors** gracefully with JSON error responses
-
-## Example Expansion
+### Simple Command
 
 ```rust
-// You write:
+use r1_macros::command;
+
 #[command]
-pub fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+```
+
+### With Struct Return
+
+```rust
+use r1_macros::command;
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct User {
+    id: u32,
+    name: String,
 }
 
-// Macro expands to:
+#[command]
+fn get_user(id: u32) -> User {
+    User {
+        id,
+        name: "Alice".to_string(),
+    }
+}
+```
+
+### With Result
+
+```rust
+use r1_macros::command;
+
+#[command]
+fn divide(a: f64, b: f64) -> Result<f64, String> {
+    if b == 0.0 {
+        Err("Division by zero".to_string())
+    } else {
+        Ok(a / b)
+    }
+}
+```
+
+### With Multiple Parameters
+
+```rust
+use r1_macros::command;
+
+#[command]
+fn create_user(name: String, email: String, age: u32) -> String {
+    format!("Created user: {} ({}, {} years old)", name, email, age)
+}
+```
+
+### With Vec and Option
+
+```rust
+use r1_macros::command;
+
+#[command]
+fn process_items(items: Vec<String>, filter: Option<String>) -> Vec<String> {
+    match filter {
+        Some(f) => items.into_iter().filter(|item| item.contains(&f)).collect(),
+        None => items,
+    }
+}
+```
+
+## Generated Code
+
+The `#[command]` macro expands to:
+
+```rust
 #[wasm_bindgen]
-pub fn greet(payload: &str) -> String {
+pub fn function_name(payload: &str) -> String {
     #[derive(serde::Deserialize)]
-    struct __R1Args {
-        name: String
+    struct Args {
+        // ... parameters as struct fields
     }
     
-    let args: __R1Args = match serde_json::from_str(payload) {
+    let args: Args = match serde_json::from_str(payload) {
         Ok(a) => a,
-        Err(e) => return serde_json::json!({ "error": format!("Deserialization error: {}", e) }).to_string(),
+        Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
     };
     
-    let name = args.name;
+    // Call your original function
+    let result = original_function(args.param1, args.param2, ...);
     
-    let __r1_result = (|| {
-        format!("Hello, {}!", name)
-    })();
-    
-    match serde_json::to_string(&__r1_result) {
-        Ok(s) => s,
-        Err(e) => serde_json::json!({ "error": format!("Serialization error: {}", e) }).to_string(),
-    }
+    // Serialize result
+    serde_json::to_string(&result).unwrap()
 }
 ```
 
 ## Requirements
 
-Your return type must implement `serde::Serialize`.
-Your parameter types must implement `serde::Deserialize`.
+- Rust 1.70+
+- `wasm-bindgen` 0.2+
+- `serde` 1.0+ with `derive` feature
+- `serde_json` 1.0+
+
+## Compatibility
+
+The `#[r1::command]` macro is designed to be a drop-in replacement for `#[tauri::command]` when migrating to R1. Most Tauri commands will work without modification.
+
+## Limitations
+
+- Function must have named parameters (no `self`)
+- All parameters must implement `serde::Deserialize`
+- Return type must implement `serde::Serialize`
+- Async functions are not yet supported (coming in v0.4)
 
 ## License
 
-MIT
+MIT © 2026 R1 Runtime Team
