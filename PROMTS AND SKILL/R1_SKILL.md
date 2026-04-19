@@ -1,7 +1,7 @@
-# R1 TauriWeb Runtime — AI Agent Skill
+# R1 TauriWeb Runtime — AI Agent Skill (v0.3.1)
 
 > This file is the complete knowledge base for any AI agent working with R1.
-> Read this entire file before making any changes to any project.
+> Read this entire file before making any changes to the R1 project.
 > Every decision you make must be consistent with the rules in this document.
 
 ---
@@ -22,6 +22,18 @@ Static folder (HTML + JS + .wasm)
          ↓
 End user visits URL → full app runs in browser
 ```
+
+---
+
+## Current Status (v0.3.1 - April 2026)
+
+✅ **PRODUCTION READY - ALL PACKAGES PUBLISHED**
+
+- **npm packages:** `@r1-runtime/*` (7 packages)
+- **crates.io:** `r1-macros` v0.3.0
+- **Tests:** 105+ passing
+- **SQLite:** Full support with OPFS persistence
+- **CLI:** `npx @r1-runtime/cli sync` for automatic migration
 
 ---
 
@@ -62,21 +74,75 @@ Service Worker
 ```
 r1-tauriweb-runtime-v1/
 ├── packages/
-│   ├── @r1/core/          ← IPC bridge, EventBus, R1Runtime, KernelProxy
-│   ├── @r1/kernel/        ← Kernel Worker, WasmOrchestrator, VFS, WASI shim
-│   ├── @r1/apis/          ← All Tauri API implementations (fs, path, event…)
-│   ├── @r1/window/        ← Virtual Window Manager + OS themes
-│   ├── @r1/sw/            ← Service Worker (asset:// protocol)
-│   └── @r1/vite-plugin/   ← Build tooling, import patcher, WASM compiler
+│   ├── @r1-runtime/kernel/      ← Kernel Worker, WasmOrchestrator, VFS, WASI shim
+│   ├── @r1-runtime/core/        ← IPC bridge, EventBus, R1Runtime, KernelProxy
+│   ├── @r1-runtime/apis/        ← All Tauri API implementations (fs, path, event, sql…)
+│   ├── @r1-runtime/sw/          ← Service Worker (asset:// protocol)
+│   ├── @r1-runtime/window/      ← Virtual Window Manager + OS themes
+│   ├── @r1-runtime/vite-plugin/ ← Build tooling, import patcher, WASM compiler
+│   └── @r1-runtime/cli/         ← Migration CLI tool
+├── templates/
+│   └── r1-macros/               ← Proc macro crate for #[r1::command]
 ├── apps/
-│   ├── todo-demo/         ← Reference working app
-│   └── demo/              ← Technical showcase
-└── tests/fixtures/wasm/   ← Pre-compiled test binaries
+│   ├── todo-demo/               ← Reference working app
+│   ├── phase6-test-app/         ← TaskFlow SQLite demo
+│   └── demo/                    ← Technical showcase
+└── tests/fixtures/wasm/         ← Pre-compiled test binaries
 ```
 
 ---
 
-## npx r1 sync CLI (v0.3 Phase 4+)
+## Published Packages
+
+### npm (@r1-runtime scope)
+
+All packages are published to npm under the `@r1-runtime` scope:
+
+1. **@r1-runtime/kernel** (v0.3.1)
+   - WASM orchestration
+   - Virtual File System (VFS) with OPFS
+   - WASI shim for Rust std::fs
+   - SQLite syscall support
+
+2. **@r1-runtime/core** (v0.3.1)
+   - IPC bridge
+   - EventBus
+   - Boot orchestration
+   - Runtime initialization
+
+3. **@r1-runtime/apis** (v0.3.1)
+   - Complete Tauri API implementations
+   - Direct imports: `@r1-runtime/apis/fs`, `@r1-runtime/apis/sql`, etc.
+   - **Note:** Includes both `dist/` and `src/` for direct imports
+
+4. **@r1-runtime/sw** (v0.3.1)
+   - Service Worker for asset:// protocol
+   - OPFS integration
+
+5. **@r1-runtime/window** (v0.3.1)
+   - Virtual Window Manager
+   - OS themes (macOS, Windows 11, Linux)
+
+6. **@r1-runtime/vite-plugin** (v0.3.1)
+   - Automatic Rust→WASM compilation
+   - Import patching
+   - Boot script injection
+
+7. **@r1-runtime/cli** (v0.3.1)
+   - `npx @r1-runtime/cli sync` command
+   - Automatic project migration
+   - SQL import patching
+
+### crates.io
+
+- **r1-macros** (v0.3.0)
+  - `#[r1::command]` proc macro
+  - Automatic JSON serialization
+  - Drop-in replacement for `#[tauri::command]`
+
+---
+
+## npx @r1-runtime/cli sync (v0.3+)
 
 R1 includes a CLI tool that automatically migrates existing Tauri apps.
 
@@ -84,7 +150,7 @@ R1 includes a CLI tool that automatically migrates existing Tauri apps.
 
 ```bash
 # From your Tauri app directory
-npx r1 sync
+npx @r1-runtime/cli sync
 ```
 
 ### What the CLI Does
@@ -97,528 +163,413 @@ npx r1 sync
 
 2. **Patches files automatically:**
    - `build.rs` → Emptied to `fn main() {}`
-   - `Cargo.toml` → Adds WASM deps, gates native deps
-   - `vite.config.ts` → Adds `r1Plugin()`
-   - `package.json` → Adds R1 dependencies
-   - `lib.rs` → Converts `#[tauri::command]` to R1 format (partial)
+   - `Cargo.toml` → Adds WASM deps, gates native deps, adds r1-macros
+   - `vite.config.ts` → Adds `@r1-runtime/vite-plugin`
+   - `package.json` → Installs `@r1-runtime/core`, `@r1-runtime/apis`, `@r1-runtime/vite-plugin`
+   - SQL imports → Converts `@tauri-apps/plugin-sql` to `@r1-runtime/apis/sql`
 
 3. **Creates backups:**
-   - All modified files get `.r1-backup` copies
-   - Safe to run multiple times (idempotent)
+   - All modified files get `.r1-backup` extension
 
-### CLI Output Example
+### CLI Implementation Files
 
-```
-🚀 R1 TauriWeb Runtime — Sync
-
-√ Detected: Tauri v2, react, 3 commands
-√ Patching build.rs
-√ Updating Cargo.toml
-√ Updating vite.config.ts
-√ Updating package.json
-√ Rewriting 3 Rust commands
-
-✓ Done! Your app is ready for R1.
-
-Next steps:
-1. Review the changes (backups created as .r1-backup)
-2. Add r1-macros to Cargo.toml for cleaner Rust code
-3. Run: npm install && npm run build
-```
-
-### Current Limitations
-
-The CLI handles 90% of migration automatically. You may need to manually:
-- Add `r1-macros` dependency for automatic serialization
-- Adjust complex async functions
-- Review custom build scripts
-
-### When to Use the CLI
-
-- ✅ Migrating existing Tauri apps to R1
-- ✅ Quick setup for new projects
-- ✅ Batch processing multiple apps
-- ❌ Not needed if starting from R1 template
+- `packages/cli/src/index.ts` - Main entry point
+- `packages/cli/src/detect.ts` - Project detection
+- `packages/cli/src/patch-build-rs.ts` - build.rs patcher
+- `packages/cli/src/patch-cargo.ts` - Cargo.toml patcher
+- `packages/cli/src/patch-vite.ts` - vite.config.ts patcher
+- `packages/cli/src/patch-package.ts` - package.json patcher
+- `packages/cli/src/patch-sql-imports.ts` - SQL import converter
+- `packages/cli/src/rewrite-rust.ts` - Rust command rewriter (deprecated - use r1-macros)
+- `packages/cli/src/utils.ts` - Shared utilities
 
 ---
 
-## The 3 Setup Changes Required For Any Tauri App
+## Rust Command Pattern (v0.3+)
 
-Every Tauri app needs exactly these 3 changes to work with R1.
-The agent must apply all 3. Never skip any of them.
+### Using #[r1::command] Macro (Recommended)
 
-### Change 1 — `src-tauri/build.rs`
-Replace the ENTIRE file with:
-```rust
-fn main() {}
-```
-Reason: `tauri-build` cannot compile to WASM. An empty main() is always correct for web builds.
-
-### Change 2 — `src-tauri/Cargo.toml`
-Remove the `[build-dependencies]` section entirely:
-```toml
-# DELETE this entire block:
-[build-dependencies]
-tauri-build = { version = "X", features = [] }
-```
-
-Add WASM dependencies and gate native deps:
-```toml
-[lib]
-name = "your_app_name"   # snake_case, matches crate name
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-wasm-bindgen = "0.2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# Gate ALL native-only deps behind this cfg
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tauri = { version = "X", features = [] }
-# add other native deps here too
-```
-
-### Change 3 — `vite.config.ts`
-Add the R1 plugin:
-```typescript
-import { r1Plugin } from '@r1/vite-plugin';
-
-// In plugins array, add:
-r1Plugin({ rustSrc: './src-tauri' })
-```
-
-And update `package.json` dependencies:
-```json
-{
-  "dependencies": {
-    "@r1/core": "^0.3.0",
-    "@r1/apis": "^0.3.0"
-  },
-  "devDependencies": {
-    "@r1/vite-plugin": "^0.3.0"
-  }
-}
-```
-
----
-
-## The Rust JSON Contract
-
-**v0.3 Phase 5+** includes the `#[r1::command]` macro that eliminates JSON boilerplate.
-
-### Option 1: Using the #[r1::command] Macro (Recommended)
-
-Add to `Cargo.toml`:
-```toml
-[dependencies]
-r1-macros = "0.3"
-wasm-bindgen = "0.2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-```
-
-Write commands naturally:
 ```rust
 use r1_macros::command;
-use serde::{Serialize, Deserialize};
 
-// Simple command with one parameter
 #[command]
-pub fn greet(name: String) -> String {
+fn greet(name: String) -> String {
     format!("Hello, {}!", name)
 }
 
-// Multiple parameters
 #[command]
-pub fn add(a: f64, b: f64) -> f64 {
+fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 
-// Custom struct return type
-#[derive(Serialize, Deserialize)]
-pub struct UserInfo {
-    name: String,
-    age: u32,
-}
-
 #[command]
-pub fn get_user(name: String, age: u32) -> UserInfo {
-    UserInfo { name, age }
-}
-
-// No parameters
-#[command]
-pub fn get_version() -> String {
-    "1.0.0".to_string()
+fn get_user(id: u32) -> Result<User, String> {
+    // ... implementation
 }
 ```
 
-**What the macro does:**
-- Wraps function to accept JSON payload string
-- Generates Args struct with Deserialize
-- Deserializes payload into typed arguments
-- Executes function body
-- Serializes result back to JSON
+The macro automatically:
+- Generates `#[wasm_bindgen]` attribute
+- Creates input struct from parameters
+- Handles JSON deserialization
+- Wraps return value in JSON
 - Handles errors gracefully
 
-**Supported types:**
-- **Parameters:** Any `serde::Deserialize` type (String, i32, f64, bool, Vec, HashMap, custom structs)
-- **Return types:** Any `serde::Serialize` type (primitives, Vec, Option, Result, custom structs)
-
-### Option 2: Manual JSON Contract (Legacy)
-
-Every Rust function that communicates with JavaScript must follow this pattern.
-The agent must apply this when creating or modifying `lib.rs`.
+### Manual Pattern (Legacy)
 
 ```rust
 use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
 
-// Input struct — matches what JS passes
-#[derive(Deserialize)]
-struct MyArgs {
-    name: String,
-    count: u32,
-}
-
-// Output struct — what JS receives back
-#[derive(Serialize)]
-struct MyResult {
-    message: String,
-    doubled: u32,
-}
-
-// The command — always takes &str, always returns String
 #[wasm_bindgen]
-pub fn my_command(payload: &str) -> String {
-    // Step 1: Decode input — return error if invalid
-    let args: MyArgs = match serde_json::from_str(payload) {
+pub fn greet(payload: &str) -> String {
+    #[derive(serde::Deserialize)]
+    struct Args { name: String }
+    
+    let args: Args = match serde_json::from_str(payload) {
         Ok(a) => a,
         Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
     };
-
-    // Step 2: Your logic here
-    let result = MyResult {
-        message: format!("Hello, {}!", args.name),
-        doubled: args.count * 2,
-    };
-
-    // Step 3: Always return JSON — never a raw value
-    serde_json::to_string(&result).unwrap_or_else(|e| {
-        serde_json::json!({ "error": e.to_string() }).to_string()
-    })
+    
+    let result = format!("Hello, {}!", args.name);
+    serde_json::to_string(&result).unwrap()
 }
-```
-
-**Rules the agent must follow:**
-- Every `#[wasm_bindgen]` function takes `payload: &str` and returns `String`
-- Always use `serde_json::from_str` to decode input — never manual parsing
-- Always wrap output in `serde_json::to_string` — never return raw strings
-- Never use `.unwrap()` without a fallback — always handle errors
-- Error response shape: `{ "error": "message" }`
-- Success response shape: `{ "ok": value }` OR the value directly
-
----
-
-## How `lib.rs` Must Be Structured
-
-When modifying an existing app's `lib.rs`, the agent must follow this structure:
-
-**With #[r1::command] macro (recommended):**
-```rust
-use r1_macros::command;
-use serde::{Serialize, Deserialize};
-
-// ── WASM commands (compiled for both web and desktop) ──────────────────────
-
-#[command]
-pub fn command_one(arg1: String, arg2: i32) -> String {
-    format!("{} - {}", arg1, arg2)
-}
-
-#[command]
-pub fn command_two(data: MyData) -> MyResult {
-    // ... implementation
-}
-
-// ── Native desktop entry point (only for non-WASM builds) ──────────────────
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            // list native commands here
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
-```
-
-**Without macro (manual JSON contract):**
-```rust
-use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
-
-// ── WASM commands (compiled for both web and desktop) ──────────────────────
-
-#[wasm_bindgen]
-pub fn command_one(payload: &str) -> String {
-    // ... manual JSON handling
-}
-
-#[wasm_bindgen]
-pub fn command_two(payload: &str) -> String {
-    // ... manual JSON handling
-}
-
-// ── Native desktop entry point (only for non-WASM builds) ──────────────────
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            // list native commands here
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
-```
-
-If the app only has `main.rs` and no `lib.rs`, the agent must:
-1. Create `src-tauri/src/lib.rs` with the above structure
-2. Update `src-tauri/src/main.rs` to call `lib::run()`
-
----
-
-## Supported Tauri APIs (v0.3)
-
-The agent must know which APIs R1 supports in v0.3 and which it does not.
-
-### ✅ Fully Supported — Direct import works
-```typescript
-import { invoke } from '@tauri-apps/api/core'           // Tauri v2
-import { invoke } from '@tauri-apps/api/tauri'          // Tauri v1
-import { readDir, readTextFile, writeTextFile,
-         exists, createDir, removeFile,
-         copyFile, renameFile } from '@tauri-apps/api/fs'
-import { homeDir, appDataDir, documentDir, downloadDir,
-         join, resolve, basename, dirname,
-         extname, normalize } from '@tauri-apps/api/path'
-import { listen, emit, once, unlisten } from '@tauri-apps/api/event'
-import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
-import { message, ask, confirm, open, save } from '@tauri-apps/api/dialog'
-import { readText, writeText } from '@tauri-apps/api/clipboard'
-import { platform, arch, version, locale } from '@tauri-apps/api/os'
-import { Store } from '@tauri-apps/plugin-store'
-import { Connection } from 'rusqlite'                     // Supported via bundled feature
-```
-
-### ⚠️ Partially Supported — Works with limitations
-```typescript
-import { sendNotification } from '@tauri-apps/api/notification'
-// Works but uses Web Notifications API — requires HTTPS + user permission
-
-import { open } from '@tauri-apps/api/shell'
-// Only window.open(url) works — shell.execute() is stubbed
-```
-
-### ❌ Not Supported — Agent must warn the user
-```typescript
-// These will NOT work — explain why to the user
-import { execute } from '@tauri-apps/api/shell'    // can't spawn processes
-// System tray APIs                                 // not a browser concept
-// Global shortcuts                                 // not available outside focus
-// Native window vibrancy/blur effects              // GPU compositing not available
-// Raw TCP/UDP sockets                              // browser sandbox
-```
-
----
-
-## Import Patcher Map
-
-The R1 Vite plugin automatically rewrites these imports at build time.
-The agent does NOT need to change frontend import statements — they stay as-is.
-
-```
-@tauri-apps/api/core         → @r1/apis/core
-@tauri-apps/api/tauri        → @r1/apis/core
-@tauri-apps/api/fs           → @r1/apis/fs
-@tauri-apps/api/path         → @r1/apis/path
-@tauri-apps/api/event        → @r1/apis/event
-@tauri-apps/api/window       → @r1/apis/window
-@tauri-apps/api/dialog       → @r1/apis/dialog
-@tauri-apps/api/clipboard    → @r1/apis/clipboard
-@tauri-apps/api/os           → @r1/apis/os
-@tauri-apps/api/notification → @r1/apis/notification
-@tauri-apps/api/shell        → @r1/apis/shell
-@tauri-apps/api/http         → @r1/apis/http
-@tauri-apps/api/app          → @r1/apis/app
-@tauri-apps/plugin-store     → @r1/apis/store
-@tauri-apps/api              → @r1/apis
-```
-
----
-
-## VFS Path Mapping
-
-When Rust code uses `std::fs`, R1 redirects to these VFS paths.
-The agent must use these paths when seeding test data or configuring storage.
-
-```
-OS path                              VFS path
-~/ or $HOME                    →    /home/user/
-~/Documents                    →    /home/user/Documents/
-~/Downloads                    →    /home/user/Downloads/
-~/.local/share/<app>           →    /app/data/
-%APPDATA%\<app>                →    /app/data/
-~/Library/Application Support  →    /app/data/
-/tmp                           →    /tmp/
-```
-
----
-
-## Common Error Patterns and Fixes
-
-The agent must recognise these errors and apply the correct fix immediately.
-
-### Error: `tauri_build` unresolved
-```
-error[E0433]: failed to resolve: use of unresolved module tauri_build
-```
-**Fix**: Replace `src-tauri/build.rs` with `fn main() {}`
-Also remove `[build-dependencies]` from `Cargo.toml`
-
-### Error: `"functionName" is not exported`
-```
-"readDir" is not exported by "../../packages/apis/src/fs.ts"
-```
-**Fix**: The R1 packages need to be rebuilt.
-Run `npm run build` from the R1 monorepo root, then rebuild the app.
-
-### Error: `WebAssembly.instantiate(): Argument 0 must be a buffer source`
-**Fix**: The vite-plugin is loading `.js` instead of `_bg.wasm`.
-Check `packages/vite-plugin/src/index.ts` — the WASM path must end in `_bg.wasm`.
-
-### Error: `VFS is not initialized`
-```
-[R1 VFS] Cannot perform operations: VFS is not initialized. Call init() first.
-```
-**Fix**: The VFS singleton has a race condition.
-The `getVfs()` function in `fs.ts` must use a promise lock pattern.
-
-### Error: `Config is not defined` (blank screen)
-**Fix**: The app uses `@tauri-apps/api/app` which is not in the import patcher.
-Create `packages/apis/src/app.ts` and add the mapping to the vite-plugin.
-
-### Error: TypeScript `importsNotUsedAsValues` deprecated
-**Fix**: The app's `tsconfig.json` extends `@tsconfig/svelte` which has old options.
-Remove the `extends` line and write a standalone `tsconfig.json` without deprecated options.
-
-### Error: SvelteKit adapter conflict
-**Fix**: SvelteKit's `transformIndexHtml` behaves differently.
-Add the R1 boot script manually via `svelte.config.js` head injection instead.
-
----
-
-## Build Verification Checklist
-
-After applying R1 configuration, the agent must verify these outputs:
-
-**Build output must contain:**
-```
-[R1] Found Rust source at ./src-tauri. Building WASM...
-[INFO]: :-) Done in Xs
-✓ built in Xs
-```
-
-**`dist/` folder must contain:**
-```
-dist/
-├── index.html        ← must include r1-boot.js script tag
-├── r1-boot.js        ← R1 runtime boot
-├── sw.js             ← Service Worker
-├── r1-sw.js          ← R1 Service Worker helper
-└── wasm/
-    ├── <app>_bg.wasm ← the binary (this is what R1 loads)
-    └── <app>.js      ← JS glue (not directly loaded by R1)
-```
-
-**Browser console on load must show:**
-```
-[R1] Booting Runtime...
-[R1] Booting Kernel...
-[R1] Service Worker registered.
-[R1] Loading WASM from /wasm/<app>_bg.wasm...
-[R1] Boot complete.
-```
-
-**Must NOT appear:**
-```
-❌ Loading WASM from /wasm/<app>.js    (wrong file)
-❌ VFS is not initialized
-❌ WebAssembly.instantiate() Argument 0 must be buffer
-❌ is not exported by
-```
-
----
-
-## What The Agent Must Never Do
-
-1. **Never change frontend `invoke()` calls** — the IPC bridge handles them
-2. **Never change `import` statements in the frontend** — the Vite plugin patches them
-3. **Never put WASM execution on the main thread** — always in Kernel Worker
-4. **Never use raw memory pointers** in the Rust/JS bridge — always JSON strings
-5. **Never use `.unwrap()` in WASM functions** without error handling
-6. **Never commit `.npmrc`** — it contains auth tokens
-7. **Never rebuild CI with Rust** — commit pre-compiled `.wasm` binaries to fixtures
-8. **Never skip rebuilding R1 packages** after editing them — always run `npm run build`
-   from the monorepo root before rebuilding the app
-
----
-
-## Rebuild Order (Always Follow This)
-
-```bash
-# 1. Always rebuild R1 first when any R1 package is changed
-cd r1-tauriweb-runtime-v1
-npm run build
-
-# 2. Then rebuild the app
-cd apps/your-app
-npm run build
-
-# 3. Then serve
-npx serve dist -l 3000
 ```
 
 ---
 
 ## SQLite Support (v0.3+)
 
-R1 supports SQLite via the official pre-built WASM module
-(@sqlite.org/sqlite-wasm). This works on all platforms without
-any C compiler, LLVM, or WASI SDK.
+R1 fully supports SQLite via `@sqlite.org/sqlite-wasm` with OPFS persistence.
 
-### What developers use (unchanged from native Tauri):
-import Database from '@tauri-apps/plugin-sql';
-const db = await Database.load('sqlite:myapp.db');
-await db.execute('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY, name TEXT)');
-const rows = await db.select('SELECT * FROM items');
+### Rust Side (using rusqlite)
 
-### What R1 does automatically:
-- Import patcher rewrites @tauri-apps/plugin-sql → @r1/apis/sql
-- Database.load() opens an OPFS-backed SQLite database
-- Data persists across page refreshes via OPFS
-- No rusqlite in Cargo.toml needed
-- No C compilation needed
-- No LLVM or WASI SDK needed
+```toml
+[dependencies]
+rusqlite = { version = "0.31", features = ["bundled"] }
+r1-macros = "0.3.0"
+```
 
-### What developers must NOT do (And Why):
-- **Do NOT add `rusqlite` to `Cargo.toml`.** (C-compilation inside WASM is unstable).
-- **Do NOT use `sqlx`, `diesel`, or native Postgres/MySQL drivers.** (WebAssembly running inside a web browser is strictly blocked from opening raw TCP sockets due to the browser's security model. You cannot connect to a remote database natively from Rust in R1).
-- **You MUST manage your SQLite database strictly through the JS frontend** via `Database.load()`.
+```rust
+use rusqlite::{Connection, Result};
+use r1_macros::command;
 
-Skipping step 1 is the most common mistake. Any change to `@r1/apis`,
-`@r1/core`, `@r1/kernel`, or `@r1/vite-plugin` requires a full R1 rebuild
-before the app can see the changes.
+#[command]
+fn create_table() -> Result<(), String> {
+    let conn = Connection::open("/app/data/app.db")
+        .map_err(|e| e.to_string())?;
+    
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)",
+        []
+    ).map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
+#[command]
+fn insert_user(name: String) -> Result<i64, String> {
+    let conn = Connection::open("/app/data/app.db")
+        .map_err(|e| e.to_string())?;
+    
+    conn.execute("INSERT INTO users (name) VALUES (?1)", [&name])
+        .map_err(|e| e.to_string())?;
+    
+    Ok(conn.last_insert_rowid())
+}
+```
+
+### Frontend Side
+
+```typescript
+import { Database } from '@r1-runtime/apis/sql';
+
+// Initialize database
+const db = await Database.load('sqlite:app.db');
+
+// Execute SQL
+await db.execute('CREATE TABLE users (id INTEGER, name TEXT)');
+await db.execute('INSERT INTO users VALUES (?, ?)', [1, 'Alice']);
+
+// Query data
+const rows = await db.select('SELECT * FROM users');
+console.log(rows);
+```
+
+### WASI Syscalls for SQLite
+
+The WASI shim implements all syscalls needed for SQLite:
+- `fd_read`, `fd_write` - File I/O
+- `fd_seek` - Seek with SEEK_SET, SEEK_CUR, SEEK_END
+- `fd_tell` - Get current position
+- `fd_sync` - Flush to storage
+- `fd_close` - Close file descriptor
+- `fd_filestat_get` - Get file metadata
+- `fd_fdstat_get` - Get fd status
+- `path_open` - Open file by path
+- `path_filestat_get` - Stat file by path
+- `path_create_directory` - Create directory
+- `path_remove_file` - Delete file
+- `path_rename` - Rename file (atomic)
+- `clock_time_get` - Timestamps
+- `random_get` - Randomness
+
+---
+
+## Tauri API Implementations
+
+All APIs are in `packages/apis/src/`:
+
+### File System (`@r1-runtime/apis/fs`)
+- `readTextFile`, `writeTextFile`
+- `readBinaryFile`, `writeBinaryFile`
+- `readDir`, `createDir`, `removeDir`
+- `exists`, `remove`, `rename`, `copyFile`
+
+### SQL Database (`@r1-runtime/apis/sql`)
+- `Database.load(path)` - Open database
+- `db.execute(sql, params)` - Execute SQL
+- `db.select(sql, params)` - Query data
+- `db.close()` - Close connection
+
+### Events (`@r1-runtime/apis/event`)
+- `listen(event, handler)` - Listen for events
+- `emit(event, payload)` - Emit events
+- `once(event, handler)` - Listen once
+
+### Dialog (`@r1-runtime/apis/dialog`)
+- `open(options)` - File open dialog
+- `save(options)` - File save dialog
+- `message(text, options)` - Message box
+
+### Path (`@r1-runtime/apis/path`)
+- `appDataDir()`, `appCacheDir()`, `appLocalDataDir()`
+- `join(...paths)`, `basename(path)`, `dirname(path)`
+- `resolve(path)`, `normalize(path)`
+
+### OS (`@r1-runtime/apis/os`)
+- `platform()` - OS platform
+- `arch()` - CPU architecture
+- `version()` - OS version
+- `type()` - OS type
+
+### Clipboard (`@r1-runtime/apis/clipboard`)
+- `writeText(text)` - Write to clipboard
+- `readText()` - Read from clipboard
+
+### Window (`@r1-runtime/apis/window`)
+- `getCurrent()` - Get current window
+- `getAll()` - Get all windows
+- Window methods: `setTitle`, `setSize`, `center`, etc.
+
+### Store (`@r1-runtime/apis/store`)
+- `Store(path)` - Create store
+- `store.set(key, value)` - Set value
+- `store.get(key)` - Get value
+- `store.save()` - Persist to disk
+
+---
+
+## Testing
+
+### Test Structure
+
+```
+tests/
+├── fixtures/
+│   ├── rust/           ← Rust test modules
+│   └── wasm/           ← Pre-compiled .wasm binaries
+└── phase6-test-results.md
+```
+
+### Running Tests
+
+```bash
+# All tests
+npm test
+
+# Specific package
+cd packages/kernel && npm test
+cd packages/cli && npm test
+```
+
+### Test Count
+
+- **Total:** 105+ tests
+- **Kernel:** 85 tests (VFS, WASI, WASM orchestration, SQLite)
+- **Core:** 8 tests (IPC bridge, EventBus)
+- **APIs:** 4 tests (fs, path, event, store)
+- **Vite Plugin:** 8 tests (import patching)
+- **CLI:** 29 tests (SQL import patching, project detection)
+
+---
+
+## Build Process
+
+### For R1 Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build all packages
+npm run build --workspaces
+
+# Run tests
+npm test
+```
+
+### For User Apps
+
+```bash
+# Migrate Tauri app
+npx @r1-runtime/cli sync
+
+# Install R1 packages
+npm install
+
+# Build (Vite plugin compiles Rust→WASM automatically)
+npm run build
+
+# Deploy dist/ folder
+npx serve dist
+```
+
+---
+
+## Critical Rules for AI Agents
+
+### When Modifying R1 Core
+
+1. **Never break the JSON contract:**
+   - All Rust functions must accept `payload: &str`
+   - All Rust functions must return `String` (JSON)
+   - Use `#[r1::command]` macro for automatic serialization
+
+2. **Never block the main thread:**
+   - WASM execution always in Worker
+   - Use `postMessage` for Worker communication
+   - Never use `Atomics.wait` on main thread
+
+3. **Always handle Rust panics:**
+   - Wrap WASM calls in try-catch
+   - Return error JSON: `{ "error": "message" }`
+   - Never let panics crash the Worker
+
+4. **Preserve OPFS integrity:**
+   - All file paths start with `/`
+   - Never expose real filesystem
+   - Always use VFS methods
+
+5. **Test before committing:**
+   - Run `npm test` after any change
+   - Verify no regressions
+   - Update test count in README if adding tests
+
+### When Helping Users Migrate Apps
+
+1. **Always use the CLI first:**
+   ```bash
+   npx @r1-runtime/cli sync
+   ```
+
+2. **Check for unsupported APIs:**
+   - Shell execution (not possible in browser)
+   - System tray (not possible in browser)
+   - Raw sockets (not possible in browser)
+
+3. **Verify Cargo.toml:**
+   - Must have `crate-type = ["cdylib", "rlib"]`
+   - Must have `r1-macros = "0.3.0"`
+   - Native deps must be gated with `cfg(not(target_arch = "wasm32"))`
+
+4. **Verify package.json:**
+   - Must have `@r1-runtime/core`
+   - Must have `@r1-runtime/apis`
+   - Must have `@r1-runtime/vite-plugin` in devDependencies
+
+5. **Verify vite.config.ts:**
+   ```typescript
+   import { r1Plugin } from '@r1-runtime/vite-plugin';
+   
+   export default defineConfig({
+     plugins: [
+       r1Plugin({ rustSrc: './src-tauri' }),
+       // ... other plugins
+     ]
+   });
+   ```
+
+### When Debugging Issues
+
+1. **Check browser console first:**
+   - Look for WASM loading errors
+   - Check for IPC bridge errors
+   - Verify r1:ready event fired
+
+2. **Check Service Worker:**
+   - DevTools → Application → Service Workers
+   - Verify SW is registered
+   - Check SW console logs
+
+3. **Check OPFS:**
+   - DevTools → Application → Storage → Origin Private File System
+   - Verify files are being written
+   - Check file sizes
+
+4. **Common issues:**
+   - **"Module not loaded"** → WASM didn't compile or load
+   - **"Command not found"** → Function not exported or wrong name
+   - **"JSON parse error"** → Rust returned invalid JSON
+   - **"OPFS not available"** → Browser doesn't support OPFS (use Chrome/Edge)
+
+---
+
+## Version History
+
+### v0.3.1 (Current)
+- Added README files to all packages
+- Republished to npm with documentation
+
+### v0.3.0 (April 2026)
+- Published all packages to npm and crates.io
+- SQLite support with OPFS persistence
+- CLI tool for automatic migration
+- `#[r1::command]` proc macro
+- 105+ tests passing
+
+### v0.2.0 (March 2026)
+- Complete Tauri API implementations
+- Barrel exports
+- Vite plugin
+- Virtual Window Manager
+- 63 tests
+
+### v0.1.0 (February 2026)
+- Initial release
+- Basic WASM orchestration
+- VFS with OPFS
+- WASI shim
+- IPC bridge
+
+---
+
+## Links
+
+- **npm packages:** https://www.npmjs.com/~r1-runtime
+- **crates.io:** https://crates.io/crates/r1-macros
+- **GitHub:** https://github.com/12errh/r1-tauriweb-runtime-v1
+- **Live Demo:** https://todo-demo-by-r1-runtime.netlify.app/
+- **Documentation:** See README.md, GETTING_STARTED.md, USAGE_GUIDE.md
+
+---
+
+## Final Notes for AI Agents
+
+- **Always read this file first** before making any changes
+- **Follow the patterns** shown in existing code
+- **Test thoroughly** - run `npm test` after every change
+- **Update documentation** when adding features
+- **Ask for clarification** if something is unclear
+- **Never guess** - check the code to verify behavior
+
+**R1 is production-ready. Treat it with care.**
