@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/sw",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Service Worker for R1 — handles asset:// URL interception and VFS asset loading.",
   "type": "module",
   "author": "R1 Runtime Team",

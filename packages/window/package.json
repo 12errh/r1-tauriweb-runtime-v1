@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/window",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Virtual Window Manager for R1 — macOS, Windows 11, and Linux themed desktop environments.",
   "type": "module",
   "author": "R1 Runtime Team",

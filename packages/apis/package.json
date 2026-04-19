@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/apis",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Tauri API shims for R1 — fs, path, event, dialog, clipboard, os, window, store, and SQL.",
   "type": "module",
   "author": "R1 Runtime Team",
