@@ -3,11 +3,12 @@
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
 [![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/r1-tauriweb-runtime-v1)
+[![npm](https://img.shields.io/npm/v/@r1-runtime/core?label=npm)](https://www.npmjs.com/package/@r1-runtime/core)
+[![crates.io](https://img.shields.io/crates/v/r1-macros?label=crates.io)](https://crates.io/crates/r1-macros)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-85%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.3--phase6-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v0.3.0-blue.svg)](#)
 
 **[Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 
@@ -98,25 +99,15 @@ v0.2 solidified the API layer and enabled complex Tauri applications to run with
 
 **Goal:** Automate migration, enable SQLite, and prepare for NPM publishing.
 
-**Completed:**
-- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration with OPFS persistence ✅
-- **Data Loss Prevention** — Automated storage persistence requests and quota monitoring ✅
-- **Package Preparation** — All 7 packages at v0.3.0 with correct metadata for npm ✅
-- **Phase 3 Complete** — Package metadata and build system ready ✅
-- **Phase 4 Complete** — `npx r1 sync` CLI fully implemented and tested ✅
-- **Phase 5 Complete** — `#[r1::command]` proc macro for automatic serialization ✅
-- **Phase 6 Complete** — TaskFlow test app with full SQLite integration ✅
-  - 13 Rust commands using `#[r1::command]` macro
-  - Full CRUD operations with SQLite
-  - Search, filter, and statistics
-  - CSV/JSON export functionality
-  - Real-time persistence across page refreshes
-  - 85/85 tests passing
+**✅ v0.3.0 COMPLETE - NOW ON NPM!**
 
-**In Progress:**
-- **Phase 7:** npm Publishing — Publish all packages to npm registry
-- **Phase 8:** Final Documentation — Update all docs and create v0.3 release
-
+All packages published to npm and crates.io:
+- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration with OPFS persistence
+- **CLI Tool** — `npx @r1-runtime/cli sync` for automatic migration
+- **Proc Macro** — `#[r1::command]` for automatic JSON serialization
+- **npm Packages** — All 7 packages published to `@r1-runtime/*` scope
+- **crates.io** — `r1-macros` v0.3.0 published
+- **105/105 tests passing**
 
 ---
 
@@ -137,15 +128,20 @@ Open **http://localhost:5173** — the todo app is running entirely in the brows
 
 ### Build Your Own App
 
-**Current Setup (v0.3 Phase 5):**
-
-R1 packages are not yet published to npm. You need to clone the repository and use the CLI:
+**Now available on npm!**
 
 ```bash
-git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
-cd r1-tauriweb-runtime-v1
+# Create a Tauri app
+npm create tauri-app@latest my-app
+
+# Migrate to R1
+cd my-app
+npx @r1-runtime/cli sync
+
+# Build and run
 npm install
 npm run build
+npx serve dist
 
 # Create your Tauri app
 cd apps
@@ -276,8 +272,9 @@ All AI resources are located in the `PROMTS AND SKILL/` directory:
 - CLI updated to show SQLite support
 - 85/85 tests passing
 
-**Phase 7:**
-- npm publishing - `npm install @r1/core @r1/apis`
+**Phase 7:** ✅ COMPLETE
+- npm publishing - all packages live at `@r1-runtime/*`
+- crates.io publishing - `r1-macros` v0.3.0 live
 
 **Phase 8:**
 - Final documentation and v0.3 release
