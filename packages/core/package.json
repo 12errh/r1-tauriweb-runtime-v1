@@ -1,5 +1,5 @@
 {
-  "name": "@r1/core",
+  "name": "@r1-runtime/core",
   "version": "0.3.0",
   "description": "Main thread runtime for R1 — IPC bridge, EventBus, and boot synchronization.",
   "type": "module",
@@ -36,7 +36,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@r1/apis": "^0.3.0"
+    "@r1-runtime/apis": "^0.3.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",

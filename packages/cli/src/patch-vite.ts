@@ -19,7 +19,7 @@ export async function patchVite(root: string): Promise<void> {
   let content = readFile(vitePath);
   
   // Already patched
-  if (content.includes('@r1/vite-plugin') || content.includes('r1Plugin')) {
+  if (content.includes('@r1-runtime/vite-plugin') || content.includes('r1Plugin')) {
     return;
   }
   
@@ -27,7 +27,7 @@ export async function patchVite(root: string): Promise<void> {
   createBackup(vitePath);
   
   // Add import at the top (after other imports)
-  const importStatement = "import { r1Plugin } from '@r1/vite-plugin';\n";
+  const importStatement = "import { r1Plugin } from '@r1-runtime/vite-plugin';\n";
   
   // Find the last import statement
   const lines = content.split('\n');

@@ -1,5 +1,5 @@
 {
-  "name": "@r1/vite-plugin",
+  "name": "@r1-runtime/vite-plugin",
   "version": "0.3.0",
   "description": "Official Vite plugin for R1 — automates Rust→WASM compilation and Tauri import patching.",
   "type": "module",

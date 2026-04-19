@@ -1,5 +1,5 @@
 {
-  "name": "@r1/window",
+  "name": "@r1-runtime/window",
   "version": "0.3.0",
   "description": "Virtual Window Manager for R1 — macOS, Windows 11, and Linux themed desktop environments.",
   "type": "module",
@@ -41,6 +41,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@r1/kernel": "^0.3.0"
+    "@r1-runtime/kernel": "^0.3.0"
   }
 }

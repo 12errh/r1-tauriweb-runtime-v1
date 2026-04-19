@@ -26,18 +26,18 @@ export async function patchPackage(root: string): Promise<void> {
   // Add R1 dependencies if not already present
   let modified = false;
   
-  if (!pkg.dependencies['@r1/core']) {
-    pkg.dependencies['@r1/core'] = 'workspace:*';
+  if (!pkg.dependencies['@r1-runtime/core']) {
+    pkg.dependencies['@r1-runtime/core'] = '^0.3.0';
     modified = true;
   }
   
-  if (!pkg.dependencies['@r1/apis']) {
-    pkg.dependencies['@r1/apis'] = 'workspace:*';
+  if (!pkg.dependencies['@r1-runtime/apis']) {
+    pkg.dependencies['@r1-runtime/apis'] = '^0.3.0';
     modified = true;
   }
   
-  if (!pkg.devDependencies['@r1/vite-plugin']) {
-    pkg.devDependencies['@r1/vite-plugin'] = 'workspace:*';
+  if (!pkg.devDependencies['@r1-runtime/vite-plugin']) {
+    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.0';
     modified = true;
   }
   

@@ -44,6 +44,11 @@ export async function patchCargo(root: string): Promise<void> {
     cargo.dependencies['serde_json'] = '1';
   }
   
+  // Add r1-macros for #[r1::command] support
+  if (!cargo.dependencies['r1-macros']) {
+    cargo.dependencies['r1-macros'] = '0.3.0';
+  }
+  
   // Move native-only dependencies to target-specific section
   const nativeDeps: Record<string, any> = {};
   const nativeOnly = [

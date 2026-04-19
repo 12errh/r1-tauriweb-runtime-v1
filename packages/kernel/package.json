@@ -1,5 +1,5 @@
 {
-  "name": "@r1/kernel",
+  "name": "@r1-runtime/kernel",
   "version": "0.3.0",
   "description": "Core OS-like kernel for R1 — WASM orchestration, VFS, and WASI shim.",
   "type": "module",
