@@ -1,4 +1,4 @@
-# R1 TauriWeb Runtime — AI Agent Guide (v0.3.1)
+# R1 TauriWeb Runtime — AI Agent Guide (v0.3.2)
 
 > This guide explains how to use AI agents with R1 to configure, build,
 > debug, and extend Tauri apps for the browser.
@@ -194,9 +194,9 @@ Then verify the new API works by:
 
 ## Current R1 Version
 
-**v0.3.1** — Production ready, all packages published
+**v0.3.2** — Production ready, all packages published
 
-### What Works in v0.3.1:
+### What Works in v0.3.2:
 
 ✅ **Core Features:**
 - `invoke()` — Tauri v1 and v2 compatible
@@ -234,8 +234,8 @@ Then verify the new API works by:
 - `@r1-runtime/apis` v0.3.1
 - `@r1-runtime/sw` v0.3.1
 - `@r1-runtime/window` v0.3.1
-- `@r1-runtime/vite-plugin` v0.3.1
-- `@r1-runtime/cli` v0.3.1
+- `@r1-runtime/vite-plugin` **v0.3.2** ← use this version
+- `@r1-runtime/cli` **v0.3.2** ← use this version
 
 **crates.io:**
 - `r1-macros` v0.3.0

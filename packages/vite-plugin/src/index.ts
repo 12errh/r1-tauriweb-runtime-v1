@@ -164,24 +164,24 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
 
       // Import map for Tauri API paths to R1 equivalents
       const importMap: Record<string, string> = {
-        '@tauri-apps/api/core':         '@r1/apis/core',
-        '@tauri-apps/api/tauri':        '@r1/apis/core',
-        '@tauri-apps/api/fs':           '@r1/apis/fs',
-        '@tauri-apps/api/path':         '@r1/apis/path',
-        '@tauri-apps/api/event':        '@r1/apis/event',
-        '@tauri-apps/api/window':       '@r1/apis/window',
-        '@tauri-apps/api/dialog':       '@r1/apis/dialog',
-        '@tauri-apps/api/clipboard':    '@r1/apis/clipboard',
-        '@tauri-apps/api/notification': '@r1/apis/notification',
-        '@tauri-apps/api/os':           '@r1/apis/os',
-        '@tauri-apps/api/shell':        '@r1/apis/shell',
-        '@tauri-apps/api/http':         '@r1/apis/http',
-        '@tauri-apps/api/store':        '@r1/apis/store',
-        '@tauri-apps/plugin-store':     '@r1/apis/store',
-        // SQLite: @tauri-apps/plugin-sql → @r1/apis/sql (Phase 1 of SQLite fix roadmap)
-        '@tauri-apps/plugin-sql/index': '@r1/apis/sql',
-        '@tauri-apps/plugin-sql':       '@r1/apis/sql',
-        '@tauri-apps/api':              '@r1/apis',
+        '@tauri-apps/api/core':         '@r1-runtime/apis/core',
+        '@tauri-apps/api/tauri':        '@r1-runtime/apis/core',
+        '@tauri-apps/api/fs':           '@r1-runtime/apis/fs',
+        '@tauri-apps/api/path':         '@r1-runtime/apis/path',
+        '@tauri-apps/api/event':        '@r1-runtime/apis/event',
+        '@tauri-apps/api/window':       '@r1-runtime/apis/window',
+        '@tauri-apps/api/dialog':       '@r1-runtime/apis/dialog',
+        '@tauri-apps/api/clipboard':    '@r1-runtime/apis/clipboard',
+        '@tauri-apps/api/notification': '@r1-runtime/apis/notification',
+        '@tauri-apps/api/os':           '@r1-runtime/apis/os',
+        '@tauri-apps/api/shell':        '@r1-runtime/apis/shell',
+        '@tauri-apps/api/http':         '@r1-runtime/apis/http',
+        '@tauri-apps/api/store':        '@r1-runtime/apis/store',
+        '@tauri-apps/plugin-store':     '@r1-runtime/apis/store',
+        // SQLite: @tauri-apps/plugin-sql → @r1-runtime/apis/sql
+        '@tauri-apps/plugin-sql/index': '@r1-runtime/apis/sql',
+        '@tauri-apps/plugin-sql':       '@r1-runtime/apis/sql',
+        '@tauri-apps/api':              '@r1-runtime/apis',
       };
 
       // Check if code contains any Tauri imports
@@ -304,7 +304,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       // 3. Bundle and emit the R1 Boot script (to avoid bare import errors)
       const wasmName = getWasmName();
       const bootScript = `
-        import { R1Runtime } from '@r1/core';
+        import { R1Runtime } from '@r1-runtime/core';
         console.log('[R1] Booting Runtime...');
         const r1 = new R1Runtime();
         r1.boot({ 
@@ -392,8 +392,8 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
               } else if (rawPathname.endsWith('/r1-boot.js')) {
                 const wasmName = getWasmName();
                 const bootScript = `
-                  import { R1Runtime } from '@r1/core';
-                  import * as R1APIs from '@r1/apis';
+                  import { R1Runtime } from '@r1-runtime/core';
+                  import * as R1APIs from '@r1-runtime/apis';
                   
                   if (!window.__R1_BOOT_STATUS__) {
                     // Expose APIs for console debugging

@@ -1,4 +1,4 @@
-# R1 Migration Prompt (v0.3.1)
+# R1 Migration Prompt (v0.3.2)
 
 **Instructions for the user**: Copy everything below the line and paste it to your AI agent (Claude, Cursor, Copilot, etc.). The agent will automatically configure your Tauri app to run with R1.
 
@@ -7,7 +7,7 @@
 ## PROMPT — Migrate My Tauri App to R1
 
 ```
-You are configuring a Tauri application to run in the browser using the R1 TauriWeb Runtime v0.3.1.
+You are configuring a Tauri application to run in the browser using the R1 TauriWeb Runtime v0.3.2.
 
 Before making any changes, read the skill file at:
 PROMTS AND SKILL/R1_SKILL.md
@@ -174,7 +174,7 @@ If something doesn't work, show me the error messages and I'll help debug.
 
 ---
 
-## What R1 Supports (v0.3.1)
+## What R1 Supports (v0.3.2)
 
 ✅ **Fully Supported:**
 - File system operations (fs)

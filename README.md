@@ -8,7 +8,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)](#)
 [![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.3.0-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v0.3.2-blue.svg)](#)
 
 **[Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
 

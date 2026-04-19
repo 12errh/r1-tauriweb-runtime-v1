@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * Patches SQL imports from @tauri-apps/plugin-sql to @r1/apis/sql
+ * Patches SQL imports from @tauri-apps/plugin-sql to @r1-runtime/apis/sql
  * 
  * This ensures that apps using Tauri's SQL plugin work seamlessly with R1.
  * The API is identical, only the import path changes.
@@ -43,43 +43,43 @@ export function patchSqlImportsInContent(content: string): string {
   // Must be at start of line (not in comments or strings)
   updated = updated.replace(
     /^(\s*)import\s+Database\s+from\s+["']@tauri-apps\/plugin-sql["']/gm,
-    '$1import { Database } from "@r1/apis/sql"'
+    '$1import { Database } from "@r1-runtime/apis/sql"'
   );
 
   // Pattern 2: import { Database } from "@tauri-apps/plugin-sql"
   updated = updated.replace(
     /^(\s*)import\s+\{\s*Database\s*\}\s+from\s+["']@tauri-apps\/plugin-sql["']/gm,
-    '$1import { Database } from "@r1/apis/sql"'
+    '$1import { Database } from "@r1-runtime/apis/sql"'
   );
 
   // Pattern 3: import type Database from "@tauri-apps/plugin-sql"
   updated = updated.replace(
     /^(\s*)import\s+type\s+Database\s+from\s+["']@tauri-apps\/plugin-sql["']/gm,
-    '$1import type { Database } from "@r1/apis/sql"'
+    '$1import type { Database } from "@r1-runtime/apis/sql"'
   );
 
   // Pattern 4: import type { Database } from "@tauri-apps/plugin-sql"
   updated = updated.replace(
     /^(\s*)import\s+type\s+\{\s*Database\s*\}\s+from\s+["']@tauri-apps\/plugin-sql["']/gm,
-    '$1import type { Database } from "@r1/apis/sql"'
+    '$1import type { Database } from "@r1-runtime/apis/sql"'
   );
 
   // Pattern 5: import type { Database as Alias } from "@tauri-apps/plugin-sql"
   updated = updated.replace(
     /^(\s*)import\s+type\s+\{\s*Database\s+as\s+\w+\s*\}\s+from\s+["']@tauri-apps\/plugin-sql["']/gm,
-    (match) => match.replace('@tauri-apps/plugin-sql', '@r1/apis/sql')
+    (match) => match.replace('@tauri-apps/plugin-sql', '@r1-runtime/apis/sql')
   );
 
   // Pattern 6: const Database = require("@tauri-apps/plugin-sql")
   updated = updated.replace(
     /^(\s*)const\s+Database\s+=\s+require\(["']@tauri-apps\/plugin-sql["']\)/gm,
-    '$1const { Database } = require("@r1/apis/sql")'
+    '$1const { Database } = require("@r1-runtime/apis/sql")'
   );
 
   // Pattern 7: Dynamic imports (must be careful not to match strings)
   updated = updated.replace(
     /\bimport\(["']@tauri-apps\/plugin-sql["']\)/g,
-    'import("@r1/apis/sql")'
+    'import("@r1-runtime/apis/sql")'
   );
 
   return updated;

@@ -1,4 +1,4 @@
-# R1 Debug Prompt (v0.3.1)
+# R1 Debug Prompt (v0.3.2)
 
 **Instructions for the user**: When your R1 app has errors, copy everything below the line, paste it to your AI agent, and add your error output at the bottom.
 

@@ -41,6 +41,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@r1-runtime/kernel": "^0.3.0"
+    "@r1-runtime/kernel": "^0.3.1"
   }
 }

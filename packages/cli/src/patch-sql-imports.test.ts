@@ -5,19 +5,19 @@ describe('SQL Import Patcher', () => {
   describe('Default import patterns', () => {
     it('should patch default import with double quotes', () => {
       const input = `import Database from "@tauri-apps/plugin-sql";`;
-      const expected = `import { Database } from "@r1/apis/sql";`;
+      const expected = `import { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
 
     it('should patch default import with single quotes', () => {
       const input = `import Database from '@tauri-apps/plugin-sql';`;
-      const expected = `import { Database } from "@r1/apis/sql";`;
+      const expected = `import { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
 
     it('should patch default import with extra whitespace', () => {
       const input = `import   Database   from   "@tauri-apps/plugin-sql"  ;`;
-      const expected = `import { Database } from "@r1/apis/sql"  ;`;
+      const expected = `import { Database } from "@r1-runtime/apis/sql"  ;`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
   });
@@ -25,13 +25,13 @@ describe('SQL Import Patcher', () => {
   describe('Named import patterns', () => {
     it('should patch named import', () => {
       const input = `import { Database } from "@tauri-apps/plugin-sql";`;
-      const expected = `import { Database } from "@r1/apis/sql";`;
+      const expected = `import { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
 
     it('should patch named import with whitespace', () => {
       const input = `import {  Database  } from "@tauri-apps/plugin-sql";`;
-      const expected = `import { Database } from "@r1/apis/sql";`;
+      const expected = `import { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
   });
@@ -39,13 +39,13 @@ describe('SQL Import Patcher', () => {
   describe('Type import patterns', () => {
     it('should patch type default import', () => {
       const input = `import type Database from "@tauri-apps/plugin-sql";`;
-      const expected = `import type { Database } from "@r1/apis/sql";`;
+      const expected = `import type { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
 
     it('should patch type named import', () => {
       const input = `import type { Database } from "@tauri-apps/plugin-sql";`;
-      const expected = `import type { Database } from "@r1/apis/sql";`;
+      const expected = `import type { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
   });
@@ -53,13 +53,13 @@ describe('SQL Import Patcher', () => {
   describe('CommonJS patterns', () => {
     it('should patch require statement', () => {
       const input = `const Database = require("@tauri-apps/plugin-sql");`;
-      const expected = `const { Database } = require("@r1/apis/sql");`;
+      const expected = `const { Database } = require("@r1-runtime/apis/sql");`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
 
     it('should patch require with single quotes', () => {
       const input = `const Database = require('@tauri-apps/plugin-sql');`;
-      const expected = `const { Database } = require("@r1/apis/sql");`;
+      const expected = `const { Database } = require("@r1-runtime/apis/sql");`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
   });
@@ -67,7 +67,7 @@ describe('SQL Import Patcher', () => {
   describe('Dynamic import patterns', () => {
     it('should patch dynamic import', () => {
       const input = `const db = await import("@tauri-apps/plugin-sql");`;
-      const expected = `const db = await import("@r1/apis/sql");`;
+      const expected = `const db = await import("@r1-runtime/apis/sql");`;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
   });
@@ -80,9 +80,9 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Database as DB } from "@tauri-apps/plugin-sql";
 `;
       const expected = `
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 import { invoke } from "@tauri-apps/api/core";
-import type { Database as DB } from "@r1/apis/sql";
+import type { Database as DB } from "@r1-runtime/apis/sql";
 `;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });
@@ -101,7 +101,7 @@ export async function initDB() {
 }
 `;
       const expected = `
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 import { invoke } from "@tauri-apps/api/core";
 
 export async function initDB() {
@@ -130,7 +130,7 @@ export function App() {
 `;
       const expected = `
 import React, { useEffect, useState } from 'react';
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 
 export function App() {
   const [db, setDb] = useState<Database | null>(null);
@@ -187,18 +187,18 @@ export function hello() {
 
   describe('Already patched files', () => {
     it('should not modify already patched imports', () => {
-      const input = `import { Database } from "@r1/apis/sql";`;
+      const input = `import { Database } from "@r1-runtime/apis/sql";`;
       expect(patchSqlImportsInContent(input)).toBe(input);
     });
 
     it('should handle mixed patched and unpatched', () => {
       const input = `
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 import Database from "@tauri-apps/plugin-sql";
 `;
       const expected = `
-import { Database } from "@r1/apis/sql";
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 `;
       expect(patchSqlImportsInContent(input)).toBe(expected);
     });

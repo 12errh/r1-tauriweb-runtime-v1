@@ -1,7 +1,7 @@
 # Phase 7: Production Publishing Checklist
 
-**Version:** v0.3.0  
-**Status:** In Progress  
+**Version:** v0.3.2 (vite-plugin, cli) / v0.3.1 (all other packages)  
+**Status:** Complete  
 **Estimated Time:** 3-4 hours
 
 ---

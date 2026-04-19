@@ -1,4 +1,4 @@
-# R1 TauriWeb Runtime — AI Agent Skill (v0.3.1)
+# R1 TauriWeb Runtime — AI Agent Skill (v0.3.2)
 
 > This file is the complete knowledge base for any AI agent working with R1.
 > Read this entire file before making any changes to the R1 project.
@@ -25,7 +25,7 @@ End user visits URL → full app runs in browser
 
 ---
 
-## Current Status (v0.3.1 - April 2026)
+## Current Status (v0.3.2 - April 2026)
 
 ✅ **PRODUCTION READY - ALL PACKAGES PUBLISHED**
 
@@ -34,6 +34,18 @@ End user visits URL → full app runs in browser
 - **Tests:** 105+ passing
 - **SQLite:** Full support with OPFS persistence
 - **CLI:** `npx @r1-runtime/cli sync` for automatic migration
+
+### Package Versions
+| Package | Version | Notes |
+|---|---|---|
+| `@r1-runtime/kernel` | 0.3.1 | |
+| `@r1-runtime/core` | 0.3.1 | |
+| `@r1-runtime/apis` | 0.3.1 | |
+| `@r1-runtime/sw` | 0.3.1 | |
+| `@r1-runtime/window` | 0.3.1 | |
+| `@r1-runtime/vite-plugin` | **0.3.2** | Required — fixes import map bug |
+| `@r1-runtime/cli` | **0.3.2** | Required — injects correct versions |
+| `r1-macros` (crates.io) | 0.3.0 | |
 
 ---
 
@@ -123,15 +135,16 @@ All packages are published to npm under the `@r1-runtime` scope:
    - Virtual Window Manager
    - OS themes (macOS, Windows 11, Linux)
 
-6. **@r1-runtime/vite-plugin** (v0.3.1)
+6. **@r1-runtime/vite-plugin** (**v0.3.2** — use this version, not 0.3.1)
    - Automatic Rust→WASM compilation
-   - Import patching
+   - Import patching (maps `@tauri-apps/api/*` → `@r1-runtime/apis/*`)
    - Boot script injection
 
-7. **@r1-runtime/cli** (v0.3.1)
+7. **@r1-runtime/cli** (**v0.3.2** — use this version, not 0.3.1)
    - `npx @r1-runtime/cli sync` command
    - Automatic project migration
    - SQL import patching
+   - Injects correct versions: `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
 
 ### crates.io
 
@@ -526,7 +539,12 @@ npx serve dist
 
 ## Version History
 
-### v0.3.1 (Current)
+### v0.3.2 (Current)
+- Fixed import map in vite-plugin: `@tauri-apps/api/*` now correctly maps to `@r1-runtime/apis/*`
+- CLI now injects correct versions: `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
+- All builds now work correctly after `npx @r1-runtime/cli sync`
+
+### v0.3.1
 - Added README files to all packages
 - Republished to npm with documentation
 

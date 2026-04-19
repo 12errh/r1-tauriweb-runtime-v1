@@ -5,6 +5,19 @@ All notable changes to R1 TauriWeb Runtime will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-04-20
+
+### Fixed
+- **vite-plugin**: Import map now correctly maps `@tauri-apps/api/*` to `@r1-runtime/apis/*` (was incorrectly using old `@r1/apis/*` names)
+- **vite-plugin**: Boot scripts now import from `@r1-runtime/core` and `@r1-runtime/apis` (was `@r1/core`, `@r1/apis`)
+- **cli**: SQL import patcher now rewrites to `@r1-runtime/apis/sql` (was `@r1/apis/sql`)
+- **cli**: `patch-package.ts` now injects correct versions — `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
+
+### Packages
+- `@r1-runtime/vite-plugin` → **0.3.2** (breaking fix — required for builds to work)
+- `@r1-runtime/cli` → **0.3.2** (injects correct versions on sync)
+- All other packages remain at **0.3.1**
+
 ## [0.3.0] - 2026-04-20
 
 ### Added
