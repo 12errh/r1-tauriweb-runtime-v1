@@ -118,8 +118,8 @@ All packages are live on npm and crates.io.
 | [`@r1-runtime/apis`](https://www.npmjs.com/package/@r1-runtime/apis) | 0.3.1 | Tauri API shims (fs, event, dialog…) |
 | [`@r1-runtime/sw`](https://www.npmjs.com/package/@r1-runtime/sw) | 0.3.1 | Service Worker for `asset://` protocol |
 | [`@r1-runtime/window`](https://www.npmjs.com/package/@r1-runtime/window) | 0.3.1 | Virtual Window Manager + OS themes |
-| [`@r1-runtime/vite-plugin`](https://www.npmjs.com/package/@r1-runtime/vite-plugin) | **0.3.2** | Vite plugin — Rust compilation + import patching |
-| [`@r1-runtime/cli`](https://www.npmjs.com/package/@r1-runtime/cli) | **0.3.2** | Migration CLI: `npx @r1-runtime/cli sync` |
+| [`@r1-runtime/vite-plugin`](https://www.npmjs.com/package/@r1-runtime/vite-plugin) | **0.3.3** | Vite plugin — Rust compilation + import patching |
+| [`@r1-runtime/cli`](https://www.npmjs.com/package/@r1-runtime/cli) | **0.3.3** | Migration CLI: `npx @r1-runtime/cli sync` |
 
 ### crates.io
 
@@ -138,7 +138,7 @@ All packages are live on npm and crates.io.
 3. **`vite.config.ts`** — adds `r1Plugin({ rustSrc: './src-tauri' })`
 4. **`package.json`** — adds `@r1-runtime/core`, `@r1-runtime/apis`, `@r1-runtime/vite-plugin`
 5. **SQL imports** — converts `@tauri-apps/plugin-sql` → `@r1-runtime/apis/sql`
-6. **Rust commands** — rewrites `#[tauri::command]` to the R1 JSON contract
+6. **Rust commands** — rewrites `#[tauri::command]` to `#[r1::command]` macro (adds `pub`, removes `staticlib` from crate-type)
 
 All modified files get a `.r1-backup` copy before changes are applied.
 

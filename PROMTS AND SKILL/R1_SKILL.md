@@ -1,4 +1,4 @@
-# R1 TauriWeb Runtime — AI Agent Skill (v0.3.2)
+# R1 TauriWeb Runtime — AI Agent Skill (v0.3.3)
 
 > This file is the complete knowledge base for any AI agent working with R1.
 > Read this entire file before making any changes to the R1 project.
@@ -25,7 +25,7 @@ End user visits URL → full app runs in browser
 
 ---
 
-## Current Status (v0.3.2 - April 2026)
+## Current Status (v0.3.3 - April 2026)
 
 ✅ **PRODUCTION READY - ALL PACKAGES PUBLISHED**
 
@@ -43,8 +43,8 @@ End user visits URL → full app runs in browser
 | `@r1-runtime/apis` | 0.3.1 | |
 | `@r1-runtime/sw` | 0.3.1 | |
 | `@r1-runtime/window` | 0.3.1 | |
-| `@r1-runtime/vite-plugin` | **0.3.2** | Required — fixes import map bug |
-| `@r1-runtime/cli` | **0.3.2** | Required — injects correct versions |
+| `@r1-runtime/vite-plugin` | **0.3.3** | Required — Tauri v2 compatible, vite 5/6/7 |
+| `@r1-runtime/cli` | **0.3.3** | Required — correct pub fn, no staticlib |
 | `r1-macros` (crates.io) | 0.3.0 | |
 
 ---
@@ -135,16 +135,19 @@ All packages are published to npm under the `@r1-runtime` scope:
    - Virtual Window Manager
    - OS themes (macOS, Windows 11, Linux)
 
-6. **@r1-runtime/vite-plugin** (**v0.3.2** — use this version, not 0.3.1)
+6. **@r1-runtime/vite-plugin** (**v0.3.3** — use this version)
    - Automatic Rust→WASM compilation
    - Import patching (maps `@tauri-apps/api/*` → `@r1-runtime/apis/*`)
    - Boot script injection
+   - Compatible with vite 5, 6, and 7
 
-7. **@r1-runtime/cli** (**v0.3.2** — use this version, not 0.3.1)
+7. **@r1-runtime/cli** (**v0.3.3** — use this version)
    - `npx @r1-runtime/cli sync` command
    - Automatic project migration
+   - Rewrites `#[tauri::command]` → `#[r1::command]` macro (with `pub fn`)
+   - Strips `staticlib` from crate-type (Tauri v2 compatibility)
    - SQL import patching
-   - Injects correct versions: `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
+   - Injects correct versions: `^0.3.1` for core/apis, `^0.3.3` for vite-plugin
 
 ### crates.io
 
@@ -193,7 +196,7 @@ npx @r1-runtime/cli sync
 - `packages/cli/src/patch-vite.ts` - vite.config.ts patcher
 - `packages/cli/src/patch-package.ts` - package.json patcher
 - `packages/cli/src/patch-sql-imports.ts` - SQL import converter
-- `packages/cli/src/rewrite-rust.ts` - Rust command rewriter (deprecated - use r1-macros)
+- `packages/cli/src/rewrite-rust.ts` - Rust command rewriter (uses `#[r1::command]` macro)
 - `packages/cli/src/utils.ts` - Shared utilities
 
 ---
@@ -541,10 +544,16 @@ npx serve dist
 
 ## Version History
 
-### v0.3.2 (Current)
+### v0.3.3 (Current)
+- CLI now uses `#[r1::command]` macro for Rust command rewriting (no more TODO comments)
+- CLI makes commands `pub fn` automatically (required by wasm_bindgen)
+- CLI strips `staticlib` from crate-type (Tauri v2 templates include it; wasm-pack rejects it)
+- CLI fixes double `#[cfg]` from `#[cfg_attr(mobile,...)]` pattern
+- vite-plugin peerDependencies now accepts vite 5, 6, and 7
+
+### v0.3.2
 - Fixed import map in vite-plugin: `@tauri-apps/api/*` now correctly maps to `@r1-runtime/apis/*`
 - CLI now injects correct versions: `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
-- All builds now work correctly after `npx @r1-runtime/cli sync`
 
 ### v0.3.1
 - Added README files to all packages

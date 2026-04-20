@@ -1,4 +1,4 @@
-# R1 Debug Prompt (v0.3.2)
+# R1 Debug Prompt (v0.3.3)
 
 **Instructions for the user**: When your R1 app has errors, copy the prompt block below, paste it to your AI agent, and add your error output at the bottom.
 
@@ -6,7 +6,7 @@
 
 ## PROMPT — Debug My R1 App
 
-You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.2.
+You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.3.
 
 Before doing anything, read the skill file at:
 `PROMTS AND SKILL/R1_SKILL.md`
@@ -65,9 +65,9 @@ Apply the fix. Common fixes:
       npm install --save-dev @r1-runtime/vite-plugin
 
 **"Rollup failed to resolve import '@r1/apis/core'"**
-- The vite-plugin version is wrong. Ensure `@r1-runtime/vite-plugin` is at `^0.3.2`:
+- The vite-plugin version is wrong. Ensure `@r1-runtime/vite-plugin` is at `^0.3.3`:
 
-      npm install --save-dev @r1-runtime/vite-plugin@^0.3.2
+      npm install --save-dev @r1-runtime/vite-plugin@^0.3.3
 
 **"Module not loaded"**
 - Check that WASM compiled successfully
@@ -94,7 +94,21 @@ Apply the fix. Common fixes:
 - If using rusqlite in Rust, ensure it has the `"bundled"` feature
 - Database paths must start with `/`
 
-**"error: failed to run custom build command for tauri-build"**
+**"error: can only #[wasm_bindgen] public functions"**
+- Your Rust command is missing `pub`. The CLI (v0.3.3+) adds it automatically.
+- Fix manually: add `pub` before `fn`:
+
+      #[command]
+      pub fn my_function(param: String) -> String { ... }
+
+**wasm-pack fails with "staticlib is not supported"**
+- Your `Cargo.toml` has `staticlib` in `crate-type` (Tauri v2 templates include it).
+- The CLI (v0.3.3+) removes it automatically.
+- Fix manually in `src-tauri/Cargo.toml`:
+
+      crate-type = ["cdylib", "rlib"]   # remove "staticlib"
+
+
 - Replace `src-tauri/build.rs` with just `fn main() {}`
 
 **"error[E0432]: unresolved import" (tauri crate)**
@@ -143,7 +157,7 @@ If you only changed the app's own files:
 
     # Install new
     npm install @r1-runtime/core @r1-runtime/apis
-    npm install --save-dev @r1-runtime/vite-plugin@^0.3.2
+    npm install --save-dev @r1-runtime/vite-plugin@^0.3.3
 
 ### Missing r1-macros in Cargo.toml
     [dependencies]

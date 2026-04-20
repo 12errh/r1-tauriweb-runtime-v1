@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@r1-runtime/vite-plugin` → **0.3.3**
 - All other packages remain at **0.3.1**
 
-
+## [0.3.2] - 2026-04-20
 
 ### Fixed
 - **vite-plugin**: Import map now correctly maps `@tauri-apps/api/*` to `@r1-runtime/apis/*` (was incorrectly using old `@r1/apis/*` names)
@@ -28,8 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **cli**: `patch-package.ts` now injects correct versions — `^0.3.1` for core/apis, `^0.3.2` for vite-plugin
 
 ### Packages
-- `@r1-runtime/vite-plugin` → **0.3.2** (breaking fix — required for builds to work)
-- `@r1-runtime/cli` → **0.3.2** (injects correct versions on sync)
+- `@r1-runtime/vite-plugin` → **0.3.2**
+- `@r1-runtime/cli` → **0.3.2**
 - All other packages remain at **0.3.1**
 
 ## [0.3.0] - 2026-04-20
