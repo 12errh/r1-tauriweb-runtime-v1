@@ -1,4 +1,4 @@
-import { KernelPlugin, KernelHandler } from '@r1/kernel';
+import { KernelPlugin, KernelHandler } from '@r1-runtime/kernel';
 
 /**
  * A generic plugin that forwards calls to the Main Thread.

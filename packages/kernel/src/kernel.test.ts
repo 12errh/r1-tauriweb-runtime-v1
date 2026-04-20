@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Router } from './router';
-import { KernelProxy } from '@r1/core';
+import { KernelProxy } from '@r1-runtime/core';
 import type { KernelRequest, KernelResponse } from './protocol';
 
 // --- MOCKING THE WORKER API FOR NODE ENVIRONMENT ---

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Router } from './router';
 import { VFS } from './vfs';
 import { WasmOrchestrator } from './wasm-orchestrator';
-import { FsPlugin, EventPlugin, StorePlugin, OsPlugin, PathPlugin } from '@r1/apis';
+import { FsPlugin, EventPlugin, StorePlugin, OsPlugin, PathPlugin } from '@r1-runtime/apis';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 

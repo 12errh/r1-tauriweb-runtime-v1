@@ -2,8 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "baseUrl": "../..",
+    "paths": {
+      "@r1-runtime/apis": ["./packages/apis/src/index.ts"],
+      "@r1-runtime/core": ["./packages/core/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts", "dist", "node_modules"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
 }

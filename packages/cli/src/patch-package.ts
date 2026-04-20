@@ -27,17 +27,22 @@ export async function patchPackage(root: string): Promise<void> {
   let modified = false;
   
   if (!pkg.dependencies['@r1-runtime/core']) {
-    pkg.dependencies['@r1-runtime/core'] = '^0.3.1';
+    pkg.dependencies['@r1-runtime/core'] = '^0.3.3';
     modified = true;
   }
   
   if (!pkg.dependencies['@r1-runtime/apis']) {
-    pkg.dependencies['@r1-runtime/apis'] = '^0.3.1';
+    pkg.dependencies['@r1-runtime/apis'] = '^0.3.2';
+    modified = true;
+  }
+
+  if (!pkg.dependencies['@r1-runtime/window']) {
+    pkg.dependencies['@r1-runtime/window'] = '^0.3.1';
     modified = true;
   }
   
   if (!pkg.devDependencies['@r1-runtime/vite-plugin']) {
-    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.3';
+    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.4';
     modified = true;
   }
   

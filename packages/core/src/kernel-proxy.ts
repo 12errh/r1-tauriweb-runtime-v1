@@ -1,6 +1,6 @@
-import type { KernelRequest, KernelResponse } from '@r1/kernel';
+import type { KernelRequest, KernelResponse } from '@r1-runtime/kernel';
 import { EventBus } from './event-bus';
-import { WindowManager } from '@r1/window';
+import { WindowManager } from '@r1-runtime/window';
 
 /** Let's wait up to 30s before considering the worker dead/stuck. */
 const REQUEST_TIMEOUT_MS = 30000;

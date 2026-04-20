@@ -1,6 +1,6 @@
-﻿import { KernelPlugin, KernelHandler } from '@r1/kernel';
+import { KernelPlugin, KernelHandler } from '@r1-runtime/kernel';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// --- Helpers ----------------------------------------------------------------
 
 function posixJoin(...parts: string[]): string {
   return parts

@@ -243,12 +243,18 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       }
 
       // SQLite OPFS Proxy (required for OPFS persistence — must be served same-origin)
-      // Try both root and dist/ layouts across package versions
+      // Search in: user's app node_modules, monorepo root, and inside @r1-runtime/kernel
       const proxyPaths = [
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
         resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+        // Inside @r1-runtime/kernel's own node_modules (npm install path)
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+        // Hoisted to the vite-plugin's parent node_modules
+        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
       ];
       const proxyFile = proxyPaths.find(p => existsSync(p));
       if (proxyFile) {
@@ -265,9 +271,15 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       // SQLite WASM Binary (required for the core engine)
       const wasmPaths = [
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
         resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+        // Inside @r1-runtime/kernel's own node_modules (npm install path)
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+        // Hoisted to the vite-plugin's parent node_modules
+        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3.wasm'),
       ];
       const wasmFile = wasmPaths.find(p => existsSync(p));
       if (wasmFile) {
@@ -319,7 +331,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
       const result = await esbuild.build({
         stdin: {
           contents: bootScript,
-          resolveDir: process.cwd(),
+          resolveDir: config.root,
           loader: 'ts'
         },
         bundle: true,
@@ -327,6 +339,10 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         format: 'esm',
         minify: true,
         loader: { '.css': 'empty' },
+        // Mark @r1-runtime/window as external — it's loaded by the kernel worker,
+        // not needed in the main thread boot script directly.
+        // core imports it but the WindowManager is only used when the kernel calls back.
+        external: ['@r1-runtime/window'],
       });
 
       this.emitFile({
@@ -475,9 +491,13 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
               } else if (rawPathname.endsWith('/sqlite3.wasm')) {
                 const wasmPaths = [
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
                   resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
+                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
+                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3.wasm'),
                 ];
                 const wasmFile = wasmPaths.find(p => existsSync(p));
                 if (wasmFile) {
@@ -489,9 +509,13 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
               } else if (rawPathname.endsWith('/sqlite3-opfs-async-proxy.js')) {
                 const proxyPaths = [
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
                   resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
+                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
+                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
                 ];
                 const proxyFile = proxyPaths.find(p => existsSync(p));
                 if (proxyFile) {

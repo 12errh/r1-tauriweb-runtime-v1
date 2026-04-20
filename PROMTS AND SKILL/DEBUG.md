@@ -1,4 +1,4 @@
-# R1 Debug Prompt (v0.3.3)
+# R1 Debug Prompt (v0.3.5)
 
 **Instructions for the user**: When your R1 app has errors, copy the prompt block below, paste it to your AI agent, and add your error output at the bottom.
 
@@ -6,7 +6,7 @@
 
 ## PROMPT — Debug My R1 App
 
-You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.3.
+You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.5.
 
 Before doing anything, read the skill file at:
 `PROMTS AND SKILL/R1_SKILL.md`
@@ -65,9 +65,9 @@ Apply the fix. Common fixes:
       npm install --save-dev @r1-runtime/vite-plugin
 
 **"Rollup failed to resolve import '@r1/apis/core'"**
-- The vite-plugin version is wrong. Ensure `@r1-runtime/vite-plugin` is at `^0.3.3`:
+- The vite-plugin version is wrong. Ensure `@r1-runtime/vite-plugin` is at `^0.3.5`:
 
-      npm install --save-dev @r1-runtime/vite-plugin@^0.3.3
+      npm install --save-dev @r1-runtime/vite-plugin@^0.3.5
 
 **"Module not loaded"**
 - Check that WASM compiled successfully
@@ -95,7 +95,7 @@ Apply the fix. Common fixes:
 - Database paths must start with `/`
 
 **"error: can only #[wasm_bindgen] public functions"**
-- Your Rust command is missing `pub`. The CLI (v0.3.3+) adds it automatically.
+- Your Rust command is missing `pub`. The CLI (v0.3.5+) adds it automatically.
 - Fix manually: add `pub` before `fn`:
 
       #[command]
@@ -103,7 +103,7 @@ Apply the fix. Common fixes:
 
 **wasm-pack fails with "staticlib is not supported"**
 - Your `Cargo.toml` has `staticlib` in `crate-type` (Tauri v2 templates include it).
-- The CLI (v0.3.3+) removes it automatically.
+- The CLI (v0.3.5+) removes it automatically.
 - Fix manually in `src-tauri/Cargo.toml`:
 
       crate-type = ["cdylib", "rlib"]   # remove "staticlib"
@@ -157,7 +157,7 @@ If you only changed the app's own files:
 
     # Install new
     npm install @r1-runtime/core @r1-runtime/apis
-    npm install --save-dev @r1-runtime/vite-plugin@^0.3.3
+    npm install --save-dev @r1-runtime/vite-plugin@^0.3.5
 
 ### Missing r1-macros in Cargo.toml
     [dependencies]

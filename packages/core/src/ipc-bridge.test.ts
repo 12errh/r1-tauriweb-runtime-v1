@@ -3,7 +3,7 @@ import { R1Runtime } from './runtime';
 import { CallbackRegistry } from './callback-registry';
 import { installIpcBridge } from './ipc-bridge';
 import { KernelProxy } from './kernel-proxy';
-import type { KernelRequest } from '@r1/kernel';
+import type { KernelRequest } from '@r1-runtime/kernel';
 
 // Mock Worker to test IPC Bridge routing without spinning up real threads
 class MockWorker {

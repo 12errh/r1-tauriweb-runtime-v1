@@ -1,4 +1,4 @@
-import { KernelPlugin, KernelHandler, VFS } from '@r1/kernel';
+import { KernelPlugin, KernelHandler, VFS } from '@r1-runtime/kernel';
 
 /**
  * A JSON-backed key-value store that persists to the VFS.

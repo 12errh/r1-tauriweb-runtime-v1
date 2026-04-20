@@ -1,4 +1,4 @@
-import { KernelPlugin, KernelHandler } from '@r1/kernel';
+import { KernelPlugin, KernelHandler } from '@r1-runtime/kernel';
 
 export class HttpPlugin implements KernelPlugin {
   name = 'http';

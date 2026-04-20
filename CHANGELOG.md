@@ -5,7 +5,36 @@ All notable changes to R1 TauriWeb Runtime will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.3] - 2026-04-20
+## [0.3.5] - 2026-04-20
+
+### Fixed
+- **core**: Added `@r1-runtime/window` to `dependencies` — npm now installs it automatically when you install `@r1-runtime/core`. Previously users had to run `npm install @r1-runtime/window` manually.
+- **cli**: `patch-package.ts` now explicitly adds `@r1-runtime/window` to the user's `package.json` when running `npx @r1-runtime/cli sync`.
+
+### Packages
+- `@r1-runtime/core` → **0.3.3**
+- `@r1-runtime/cli` → **0.3.5**
+
+
+
+### Fixed
+- **core**: `kernel-proxy.ts` was importing `@r1/window` and `@r1/kernel` (old names) — fixed to `@r1-runtime/window` and `@r1-runtime/kernel`. This caused the `Could not resolve "@r1/window"` build error in user apps.
+- **core**: `ipc-bridge.ts` was importing `@r1/apis/window` — fixed to `@r1-runtime/apis/window`
+- **kernel**: `kernel.worker.ts` was importing `@r1/apis` — fixed to `@r1-runtime/apis`
+- **apis**: All source files importing `@r1/kernel` — fixed to `@r1-runtime/kernel`
+- **vite-plugin**: SQLite proxy/wasm file search now also looks inside `@r1-runtime/kernel/node_modules` and the hoisted npm path — fixes "sqlite3-opfs-async-proxy.js not found" when installed from npm
+- **vite-plugin**: `peerDependencies` accepts `vite ^5 || ^6 || ^7`
+
+### Packages
+- `@r1-runtime/kernel` → **0.3.2**
+- `@r1-runtime/apis` → **0.3.2**
+- `@r1-runtime/core` → **0.3.2**
+- `@r1-runtime/vite-plugin` → **0.3.4**
+- `@r1-runtime/cli` → **0.3.4**
+- `@r1-runtime/window` — no source change, stays at **0.3.1**
+- `@r1-runtime/sw` — no source change, stays at **0.3.1**
+
+
 
 ### Fixed
 - **cli**: `rewrite-rust.ts` now uses `#[r1::command]` macro instead of manual JSON rewriting — no more TODO comments in generated code

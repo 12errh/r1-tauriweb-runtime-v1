@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readDir, readTextFile, writeTextFile, exists, createDir, FileEntry } from './fs';
-import { VFS } from '@r1/kernel';
+import { VFS } from '@r1-runtime/kernel';
 
 // Mock VFS for testing
 class MockVFS {

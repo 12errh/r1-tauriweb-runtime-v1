@@ -1,1 +1,13 @@
-{ "extends": "../../tsconfig.base.json", "compilerOptions": { "outDir": "./dist" }, "include": ["src/**/*"] }
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "../..",
+    "paths": {
+      "@r1-runtime/kernel": ["./packages/kernel/src/index.ts"],
+      "@r1-runtime/core": ["./packages/core/src/index.ts"],
+      "@r1-runtime/window": ["./packages/window/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

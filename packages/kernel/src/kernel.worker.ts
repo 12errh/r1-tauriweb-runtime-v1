@@ -13,7 +13,7 @@ import {
   PathPlugin,
   MainBridgePlugin,
   WindowPlugin
-} from '@r1/apis';
+} from '@r1-runtime/apis';
 
 // Help debug worker crashes in isolated mode
 self.onerror = (err) => {

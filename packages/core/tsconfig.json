@@ -1,1 +1,15 @@
-{ "extends": "../../tsconfig.base.json", "compilerOptions": { "outDir": "./dist" }, "include": ["src/**/*"] }
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "../..",
+    "paths": {
+      "@r1-runtime/kernel": ["./packages/kernel/src/index.ts"],
+      "@r1-runtime/apis": ["./packages/apis/src/index.ts"],
+      "@r1-runtime/apis/window": ["./packages/apis/src/window.ts"],
+      "@r1-runtime/apis/core": ["./packages/apis/src/tauri/index.ts"],
+      "@r1-runtime/window": ["./packages/window/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

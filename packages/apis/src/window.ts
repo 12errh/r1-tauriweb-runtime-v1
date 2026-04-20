@@ -1,4 +1,4 @@
-import { KernelPlugin, KernelHandler } from '@r1/kernel';
+import { KernelPlugin, KernelHandler } from '@r1-runtime/kernel';
 
 /**
  * Allows the guest app (WASM/JS) to control its own window.

@@ -1,6 +1,6 @@
 import type { KernelProxy } from './kernel-proxy';
 import { CallbackRegistry } from './callback-registry';
-import { appWindow } from '@r1/apis/window';
+import { appWindow } from '@r1-runtime/apis/window';
 
 /**
  * Patches the browser `window` to intercept Tauri frontend library calls
