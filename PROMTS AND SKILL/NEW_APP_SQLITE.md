@@ -112,32 +112,37 @@ fn get_tasks() -> Result<Vec<Task>, String> {
 }
 
 STEP 4 — FRONTEND WITH SQLITE
-You can also use SQLite from JavaScript:
+Install the SQL plugin:
 
-import { Database } from '@r1-runtime/apis/sql';
+    npm install @tauri-apps/plugin-sql
 
-// Initialize database
-const db = await Database.load('sqlite:app.db');
+Use it in your frontend with the standard @tauri-apps import.
+The Vite plugin rewrites it to @r1-runtime/apis/sql at build time automatically.
 
-// Create table
-await db.execute(`
-    CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        status TEXT NOT NULL
-    )
-`);
+    import Database from '@tauri-apps/plugin-sql';
 
-// Insert data
-await db.execute(
-    'INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)',
-    ['My Task', 'Description', 'pending']
-);
+    // Initialize database
+    const db = await Database.load('sqlite:app.db');
 
-// Query data
-const rows = await db.select('SELECT * FROM tasks');
-console.log(rows);
+    // Create table
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL
+        )
+    `);
+
+    // Insert data
+    await db.execute(
+        'INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)',
+        ['My Task', 'Description', 'pending']
+    );
+
+    // Query data
+    const rows = await db.select('SELECT * FROM tasks');
+    console.log(rows);
 
 STEP 5 — INITIALIZE DATABASE ON APP START
 In your frontend, initialize the database when the app loads:
@@ -213,9 +218,11 @@ fn db_operation() -> Result<(), String> {
 }
 ```
 
-### JavaScript Side (@r1-runtime/apis/sql)
+### JavaScript Side (@tauri-apps/plugin-sql)
 ```typescript
-import { Database } from '@r1-runtime/apis/sql';
+// Always use @tauri-apps/plugin-sql in source code.
+// The Vite plugin rewrites it to @r1-runtime/apis/sql at build time.
+import Database from '@tauri-apps/plugin-sql';
 
 const db = await Database.load('sqlite:app.db');
 await db.execute('CREATE TABLE ...');

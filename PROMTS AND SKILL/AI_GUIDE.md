@@ -267,10 +267,12 @@ fn my_function(param: String) -> String {
 
 ### SQL Usage
 ```typescript
-import { Database } from '@r1-runtime/apis/sql';
+// Always use @tauri-apps/plugin-sql in your source code.
+// The Vite plugin rewrites it to @r1-runtime/apis/sql at build time.
+import Database from '@tauri-apps/plugin-sql';
 
 const db = await Database.load('sqlite:app.db');
-await db.execute('CREATE TABLE users (id INTEGER, name TEXT)');
+await db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, name TEXT)');
 ```
 
 ---

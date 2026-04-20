@@ -180,22 +180,28 @@ fn search_notes(query: String) -> Result<Vec<Note>, String> {
 }
 
 STEP 5 — UPDATE FRONTEND
-Initialize the database when the app loads:
+First, install the SQL plugin if not already installed:
 
-import { invoke } from '@tauri-apps/api/core';
+    npm install @tauri-apps/plugin-sql
 
-window.addEventListener('r1:ready', async () => {
-    try {
-        await invoke('init_database');
-        console.log('Database initialized');
-        
-        // Load initial data
-        const notes = await invoke('get_notes');
-        console.log('Loaded notes:', notes);
-    } catch (error) {
-        console.error('Database initialization failed:', error);
-    }
-});
+Initialize the database when the app loads.
+Always use @tauri-apps/plugin-sql in your source — the Vite plugin rewrites it automatically:
+
+    import Database from '@tauri-apps/plugin-sql';
+    import { invoke } from '@tauri-apps/api/core';
+
+    window.addEventListener('r1:ready', async () => {
+        try {
+            await invoke('init_database');
+            console.log('Database initialized');
+            
+            // Load initial data
+            const notes = await invoke('get_notes');
+            console.log('Loaded notes:', notes);
+        } catch (error) {
+            console.error('Database initialization failed:', error);
+        }
+    });
 
 STEP 6 — MIGRATE EXISTING DATA (If Applicable)
 If you have data in localStorage, migrate it:

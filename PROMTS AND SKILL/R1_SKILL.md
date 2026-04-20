@@ -294,13 +294,15 @@ fn insert_user(name: String) -> Result<i64, String> {
 ### Frontend Side
 
 ```typescript
-import { Database } from '@r1-runtime/apis/sql';
+import Database from '@tauri-apps/plugin-sql';
+// The Vite plugin automatically rewrites this to @r1-runtime/apis/sql at build time.
+// Always use the @tauri-apps/plugin-sql import in your source code.
 
-// Initialize database
+// Open (or create) a database
 const db = await Database.load('sqlite:app.db');
 
 // Execute SQL
-await db.execute('CREATE TABLE users (id INTEGER, name TEXT)');
+await db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, name TEXT)');
 await db.execute('INSERT INTO users VALUES (?, ?)', [1, 'Alice']);
 
 // Query data
