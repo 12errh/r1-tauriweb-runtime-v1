@@ -2,30 +2,61 @@
 
 > Run your Tauri app in the browser. No server. No installer. Just a URL.
 
-[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/r1-tauriweb-runtime-v1)
-[![npm](https://img.shields.io/npm/v/@r1-runtime/core?label=npm)](https://www.npmjs.com/package/@r1-runtime/core)
+[![npm](https://img.shields.io/npm/v/@r1-runtime/core?label=npm%20core)](https://www.npmjs.com/package/@r1-runtime/core)
+[![npm cli](https://img.shields.io/npm/v/@r1-runtime/cli?label=npm%20cli)](https://www.npmjs.com/package/@r1-runtime/cli)
 [![crates.io](https://img.shields.io/crates/v/r1-macros?label=crates.io)](https://crates.io/crates/r1-macros)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)](#)
-[![Demo](https://img.shields.io/badge/live-demo-orange.svg)](https://todo-demo-by-r1-runtime.netlify.app/)
-[![Version](https://img.shields.io/badge/version-v0.3.2-blue.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen)](https://github.com/12errh/r1-tauriweb-runtime-v1)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-orange)](https://todo-demo-by-r1-runtime.netlify.app/)
 
-**[Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — A real Tauri todo app running as WebAssembly in the browser.
+**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a Rust + SQLite backend, running entirely in your browser.
 
 ---
 
 ## What is R1?
 
-R1 is a browser-native runtime for Tauri applications. You write a standard Tauri app — Rust backend, React/Vue/Svelte frontend — and R1 runs it entirely in the browser.
+R1 is a runtime that lets you deploy Tauri desktop apps as static websites. You write a standard Tauri app — Rust backend, React/Vue/Svelte frontend — and R1 compiles the Rust to WebAssembly and runs it in the browser.
 
-The developer adds one line to `vite.config.ts`. The end user visits a URL. That's it.
+Your users visit a URL. No download. No installer. No trust prompt.
 
 ```
-Your Tauri App  →  npm run build  →  Static folder  →  Deploy anywhere
-                   (R1 compiles                         Vercel / Netlify /
-                    Rust → WASM                         GitHub Pages)
-                    automatically)
+Your Tauri App
+      │
+      ▼  npm run build  (R1 compiles Rust → WASM automatically)
+      │
+      ▼  deploy to Vercel / Netlify / GitHub Pages
+      │
+      ▼  user visits URL → full app runs in browser
 ```
+
+---
+
+## Quick Start
+
+### Migrate an existing Tauri app
+
+```bash
+cd your-tauri-app
+npx @r1-runtime/cli sync
+npm install
+npm run build
+npx serve dist -l 3000
+```
+
+Open **http://localhost:3000** and press `Ctrl+F5` on first load.
+
+### Start from scratch
+
+```bash
+npm create tauri-app@latest my-app -- --template react-ts --yes
+cd my-app
+npx @r1-runtime/cli sync
+npm install
+npm run build
+npx serve dist -l 3000
+```
+
+That's it. See [GETTING_STARTED.md](./GETTING_STARTED.md) for a full walkthrough.
 
 ---
 
@@ -33,32 +64,24 @@ Your Tauri App  →  npm run build  →  Static folder  →  Deploy anywhere
 
 The browser can't run a native Rust binary. R1 solves this with a layered architecture:
 
-- **Rust → WASM** — the R1 Vite plugin compiles your `src-tauri/` directory to WebAssembly automatically during `npm run build`
-- **Kernel Worker** — all WASM execution runs in a dedicated Web Worker, so the UI thread is never blocked
-- **WASI Shim** — intercepts `std::fs` calls from Rust and redirects them to the browser's Origin Private File System (OPFS). Your Rust file I/O works unchanged
-- **IPC Bridge** — patches `window.__TAURI_INTERNALS__` so your existing `invoke()` calls work with zero frontend code changes
-- **Event Bridge** — Rust can emit events back to JavaScript via `listen()` just like in native Tauri
-- **Service Worker** — intercepts `asset://` URLs and serves files from the virtual filesystem
-- **Persistence Layer** — automatically requests persistent storage from the browser and monitors storage quotas to prevent data loss.
-
-### WASI & SQLite
-R1 supports the WASI `snapshot_preview1` ABI, enabling standard Rust crates like `rusqlite` (with `bundled` feature) to run in the web.
-
-```rust
-// Example: Using SQLite in R1 (compiled to wasm32-wasip1)
-let conn = Connection::open("/app/data/prod.db")?;
-conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)", [])?;
-```
-
-The runtime handles `fd_seek`, `fd_tell`, `fd_sync`, and `path_rename` to ensure database integrity.
+| Layer | What it does |
+|---|---|
+| **Vite Plugin** | Compiles `src-tauri/` to WebAssembly during `npm run build` |
+| **Kernel Worker** | Runs all WASM in a Web Worker — UI thread never blocks |
+| **WASI Shim** | Intercepts `std::fs` calls and redirects them to OPFS |
+| **IPC Bridge** | Patches `window.__TAURI_INTERNALS__` so `invoke()` works unchanged |
+| **Event Bridge** | Lets Rust emit events back to JavaScript via `listen()` |
+| **Service Worker** | Intercepts `asset://` URLs and serves files from the VFS |
+| **VFS** | In-memory cache backed by OPFS for persistent storage |
 
 ```
-Your Frontend (React)
-      ↓ invoke('command', args)
-IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
-                     ↕                    ↕
-                    VFS              WASI Shim
-                 (OPFS)           (std::fs → OPFS)
+Your Frontend (React/Vue/Svelte)
+      │ invoke('command', args)
+      ▼
+IPC Bridge ──► Kernel Worker ──► WASM (your Rust code)
+                    │                    │
+                   VFS              WASI Shim
+                 (OPFS)          (std::fs → OPFS)
 ```
 
 ---
@@ -70,113 +93,91 @@ IPC Bridge  →  Kernel Worker  →  WASM (your Rust code)
 | `invoke()` — Tauri v1 and v2 compatible | ✅ |
 | `std::fs` read/write from Rust | ✅ |
 | Rust → JS event bridge (`emit` / `listen`) | ✅ |
-| Persistent storage (OPFS) + Data Loss Prevention | ✅ |
-| Virtual Window Manager (macOS, Windows 11 themes) | ✅ |
-| Tauri API plugins: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
+| SQLite with OPFS persistence | ✅ |
+| Persistent storage + data loss prevention | ✅ |
+| Virtual Window Manager (macOS, Windows 11, Linux themes) | ✅ |
+| Tauri APIs: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
 | WASM panic isolation | ✅ |
-| Automatic Rust compilation via Vite plugin | ✅ |
-| SQLite Support (`@tauri-apps/plugin-sql`) | ✅ |
-| `npx r1 sync` CLI for automatic migration | ✅ |
-| npm publishing — packages ready for npm | 🚧 Phase 7 |
-| 85/85 unit tests passing | ✅ |
+| Automatic Rust → WASM compilation via Vite plugin | ✅ |
+| One-command migration: `npx @r1-runtime/cli sync` | ✅ |
+| `#[r1::command]` proc macro for automatic serialization | ✅ |
+| 105 tests passing | ✅ |
 
 ---
 
-## Development Status
+## Published Packages
 
-### ✅ v0.2 Complete (March 2026)
+All packages are live on npm and crates.io.
 
-v0.2 solidified the API layer and enabled complex Tauri applications to run with zero manual code changes.
+### npm — `@r1-runtime/*`
 
-- **Phase 0-8 (Core APIs)**: Completed full implementations of `fs`, `path`, `event`, `window`, `dialog`, `clipboard`, `os`, and `store`.
-- **Barrel Exports**: Implemented a robust direct-export layer allowing standard imports like `import { readDir } from '@tauri-apps/api/fs'`.
-- **Vite Plugin**: Advanced patcher handles all 14 Tauri API paths and sub-paths.
-- **E2E Testing**: Verified with `file-browser-tauri` and `test-greet` scaffolds.
-- **Improved Onboarding**: Updated `GETTING_STARTED.md` with build optimization and troubleshooting.
-- **Stability**: 63 unit tests passing total (2x original coverage).
+| Package | Version | Description |
+|---|---|---|
+| [`@r1-runtime/kernel`](https://www.npmjs.com/package/@r1-runtime/kernel) | 0.3.1 | WASM orchestration, VFS, WASI shim |
+| [`@r1-runtime/core`](https://www.npmjs.com/package/@r1-runtime/core) | 0.3.1 | IPC bridge, EventBus, boot runtime |
+| [`@r1-runtime/apis`](https://www.npmjs.com/package/@r1-runtime/apis) | 0.3.1 | Tauri API shims (fs, event, dialog…) |
+| [`@r1-runtime/sw`](https://www.npmjs.com/package/@r1-runtime/sw) | 0.3.1 | Service Worker for `asset://` protocol |
+| [`@r1-runtime/window`](https://www.npmjs.com/package/@r1-runtime/window) | 0.3.1 | Virtual Window Manager + OS themes |
+| [`@r1-runtime/vite-plugin`](https://www.npmjs.com/package/@r1-runtime/vite-plugin) | **0.3.2** | Vite plugin — Rust compilation + import patching |
+| [`@r1-runtime/cli`](https://www.npmjs.com/package/@r1-runtime/cli) | **0.3.2** | Migration CLI: `npx @r1-runtime/cli sync` |
 
-**✅ v0.3.0 COMPLETE - NOW ON NPM!**
+### crates.io
 
-All packages published to npm and crates.io:
-- **SQLite Support** — Full `@sqlite.org/sqlite-wasm` integration with OPFS persistence
-- **CLI Tool** — `npx @r1-runtime/cli sync` for automatic migration
-- **Proc Macro** — `#[r1::command]` for automatic JSON serialization
-- **npm Packages** — All 7 packages published to `@r1-runtime/*` scope
-- **crates.io** — `r1-macros` v0.3.0 published
-- **105/105 tests passing**
+| Crate | Version | Description |
+|---|---|---|
+| [`r1-macros`](https://crates.io/crates/r1-macros) | 0.3.0 | `#[r1::command]` proc macro |
 
 ---
 
-## Quick Start
+## What the CLI Does
 
-### Run the Todo Demo
+`npx @r1-runtime/cli sync` automatically patches your Tauri project:
 
-```bash
-git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
-cd r1-tauriweb-runtime-v1
-npm install
-npm run build
-cd apps/todo-demo
-npm run dev
-```
+1. **`build.rs`** — emptied to `fn main() {}` (prevents native build logic from breaking WASM)
+2. **`Cargo.toml`** — adds WASM deps, moves native deps to `cfg(not(target_arch = "wasm32"))`
+3. **`vite.config.ts`** — adds `r1Plugin({ rustSrc: './src-tauri' })`
+4. **`package.json`** — adds `@r1-runtime/core`, `@r1-runtime/apis`, `@r1-runtime/vite-plugin`
+5. **SQL imports** — converts `@tauri-apps/plugin-sql` → `@r1-runtime/apis/sql`
+6. **Rust commands** — rewrites `#[tauri::command]` to the R1 JSON contract
 
-Open **http://localhost:5173** — the todo app is running entirely in the browser with its Rust backend executing as WASM.
+All modified files get a `.r1-backup` copy before changes are applied.
 
-### Build Your Own App
+---
 
-**Now available on npm!**
+## Limitations
 
-```bash
-# Create a Tauri app
-npm create tauri-app@latest my-app
+R1 runs in a browser sandbox. Some things are not possible:
 
-# Migrate to R1
-cd my-app
-npx @r1-runtime/cli sync
+- **Child processes** — `shell::execute` is stubbed, not functional
+- **System tray / global shortcuts** — not browser concepts
+- **Raw sockets** — not available in WASM
+- **Native OS libraries** — crates that depend on C system libraries may not compile to WASM
+- **Multi-threading** — WASM workers are single-threaded
 
-# Build and run
-npm install
-npm run build
-npx serve dist
-
-# Create your Tauri app
-cd apps
-npm create tauri-app@latest my-app -- --template react-ts --yes
-cd my-app
-
-# Run R1 sync to migrate it
-node ../../packages/cli/dist/index.js
-
-# Build and run
-npm install
-npm run build
-npx serve dist -l 3000
-```
-
-Then follow **[GETTING_STARTED.md](./GETTING_STARTED.md)** for complete setup instructions.
-
+For most Tauri apps — CRUD, file management, tools, utilities — none of these are blockers.
 
 ---
 
 ## Project Structure
 
 ```
-r1-tauriweb-runtime/
+r1-tauriweb-runtime-v1/
 ├── packages/
-│   ├── kernel/       — Core OS-like kernel: WASM orchestration, VFS, WASI shim (85 tests)
-│   ├── core/         — Main thread: IPC bridge, EventBus, R1Runtime
-│   ├── apis/         — Tauri API implementations (fs, event, dialog, sql…)
-│   ├── sw/           — Service Worker: asset:// protocol
-│   ├── window/       — Virtual Window Manager + OS themes
-│   ├── vite-plugin/  — Build tooling: Rust → WASM, import patching
-│   └── cli/          — Migration tool: npx r1 sync (9 tests)
+│   ├── kernel/        — WASM orchestration, VFS, WASI shim
+│   ├── core/          — IPC bridge, EventBus, R1Runtime
+│   ├── apis/          — Tauri API implementations
+│   ├── sw/            — Service Worker
+│   ├── window/        — Virtual Window Manager
+│   ├── vite-plugin/   — Build tooling
+│   └── cli/           — Migration tool
 ├── apps/
-│   ├── todo-demo/    — Complete Tauri todo app running in the browser
-│   ├── demo/         — Technical showcase and API tests
-│   └── cli-test-app/ — Fresh Tauri app for CLI testing
+│   ├── todo-demo/     — Live demo app (React + Rust + SQLite)
+│   ├── phase6-test-app/ — TaskFlow: full SQLite CRUD demo
+│   └── demo/          — Technical showcase
+├── templates/
+│   └── r1-macros/     — Proc macro crate source
 └── tests/
-    ├── fixtures/     — Pre-compiled .wasm test binaries
-    └── cli-test-results.md — Phase 4 CLI test report
+    └── fixtures/      — Pre-compiled .wasm test binaries
 ```
 
 ---
@@ -185,87 +186,28 @@ r1-tauriweb-runtime/
 
 | Document | What's in it |
 |---|---|
-| [GETTING_STARTED.md](./GETTING_STARTED.md) | Create and run your first R1 app from scratch |
-| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | Detailed reference for all R1 features and APIs |
-| [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) | Internal architecture, package internals, contributing |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to report bugs and submit pull requests |
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | Step-by-step: create and run your first R1 app |
+| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | Complete API reference and patterns |
+| [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) | Internal architecture and package internals |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute and report bugs |
+| [CHANGELOG.md](./CHANGELOG.md) | Version history |
 
 ---
 
-## Limitations
+## AI-Assisted Development
 
-R1 is at v0.3. It works well for simple to medium complexity Tauri apps. Current limitations:
+R1 ships with prompt files and a skill document for AI coding assistants (Cursor, Claude, Copilot). These give any AI agent full context about R1's architecture so it can make accurate changes.
 
-**Browser Sandbox Restrictions:**
-- Spawning child processes (`shell::execute`) — not possible in a browser sandbox
-- System tray, global shortcuts — not browser concepts
-- Raw sockets and Unix signals — not available in WASM
-- Direct filesystem access outside OPFS — browser security prevents this
+All AI resources are in the [`PROMTS AND SKILL/`](./PROMTS%20AND%20SKILL/) directory:
 
-**WASM Compilation:**
-- Apps that depend on native OS libraries that can't compile to WASM
-- Multi-threading with shared memory (limited browser support)
-- Some Rust crates may not support `wasm32-unknown-unknown` target
-
-
-
-See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the complete limitations list and workarounds.
-
----
-
-## 🤖 AI-First Development
-
-R1 is designed to be built and maintained with AI agents. We provide a set of specialized prompts and a technical "Skill" file that allows any code-aware AI (Cursor, Claude, Copilot) to understand R1's architecture and apply changes with 100% accuracy.
-
-### AI Prompts & Skills
-
-All AI resources are located in the `PROMTS AND SKILL/` directory:
-
-| Resource | Description | Usage Guide |
-|---|---|---|
-| [R1_SKILL.md](./PROMTS%20AND%20SKILL/R1_SKILL.md) | **The Master Skill**. Technical knowledge base. | Agents should read this FIRST for any task. |
-| [MIGRATE_APP.md](./PROMTS%20AND%20SKILL/MIGRATE_APP.md) | **Migration Prompt**. Ports existing Tauri apps. | Paste into AI chat to automate v0.2 setup. |
-| [NEW_APP.md](./PROMTS%20AND%20SKILL/NEW_APP.md) | **Scaffold Prompt**. Builds new R1 apps. | Paste and describe your app idea. |
-| [DEBUG.md](./PROMTS%20AND%20SKILL/DEBUG.md) | **Troubleshooting Prompt**. Fixes build/runtime errors. | Paste and attach your error logs. |
-| [AI_GUIDE.md](./PROMTS%20AND%20SKILL/AI_GUIDE.md) | **General Guide**. Best practices for AI workflow. | Read to understand the AI-native workflow. |
-| [.cursorrules](./PROMTS%20AND%20SKILL/.cursorrules) | **Cursor Config**. Optimises Cursor IDE behavior. | Place in root or reference for Cursor. |
-
----
-
-## Roadmap
-
-### v0.3 Phases
-
-**Phase 3 Complete ✅:**
-- Package metadata prepared for npm
-- All packages at v0.3.0
-- 76/76 tests passing
-- SQLite fully integrated
-
-**Phase 4 Complete ✅:**
-- `npx r1 sync` CLI implemented
-- Automatic project detection
-- File patching (build.rs, Cargo.toml, vite.config, package.json)
-- Backup creation
-- 85/85 tests passing
-- Tested on real Tauri app
-
-**Phase 6 Complete ✅:**
-- TaskFlow test app with full SQLite integration
-- 13 Rust commands using `#[r1::command]` macro
-- Full CRUD operations with SQLite in OPFS
-- Search, filter, and statistics
-- CSV/JSON export functionality
-- Real-time persistence across page refreshes
-- CLI updated to show SQLite support
-- 85/85 tests passing
-
-**Phase 7:** ✅ COMPLETE
-- npm publishing - all packages live at `@r1-runtime/*`
-- crates.io publishing - `r1-macros` v0.3.0 live
-
-**Phase 8:**
-- Final documentation and v0.3 release
+| File | Purpose |
+|---|---|
+| `R1_SKILL.md` | Master knowledge base — read this first |
+| `MIGRATE_APP.md` | Prompt for migrating an existing Tauri app |
+| `NEW_APP.md` | Prompt for building a new R1 app |
+| `NEW_APP_SQLITE.md` | Prompt for building a new app with SQLite |
+| `DEBUG.md` | Prompt for debugging build and runtime errors |
+| `AI_GUIDE.md` | How to use AI agents with R1 |
 
 ---
 

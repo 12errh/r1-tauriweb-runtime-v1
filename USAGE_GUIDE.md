@@ -1,97 +1,48 @@
 # R1 Usage Guide
 
-> A complete reference for building apps with R1 — from project setup to advanced patterns.
+> Complete reference for building apps with R1 — commands, APIs, events, filesystem, SQLite, and deployment.
 
-This guide assumes you have already completed [GETTING_STARTED.md](./GETTING_STARTED.md) and have a working R1 app. If you haven't done that yet, start there.
-
-**Quick Migration:** If you have an existing Tauri app, you can use `npx r1 sync` to automatically apply all required changes. See the CLI section below for details.
+This guide assumes you have a working R1 app. If you haven't set one up yet, start with [GETTING_STARTED.md](./GETTING_STARTED.md).
 
 ---
 
-## Project Structure
+## Table of Contents
 
-R1 expects the standard Tauri directory layout. Every file has a specific role:
-
-```
-my-r1-app/
-├── src/                   ← Your frontend. Unchanged from standard Tauri.
-│   ├── App.tsx
-│   └── main.tsx
-├── src-tauri/             ← Your Rust backend. Three files need R1 changes.
-│   ├── src/
-│   │   └── lib.rs         ← Your commands. Must use the R1 JSON contract.
-│   ├── Cargo.toml         ← Dependencies. Native deps must be gated.
-│   └── build.rs           ← Build script. Must have the WASM guard.
-├── index.html
-├── package.json           ← Must reference R1 packages.
-└── vite.config.ts         ← Must include r1Plugin().
-```
+- [Writing Rust Commands](#writing-rust-commands)
+- [Calling Rust from JavaScript](#calling-rust-from-javascript)
+- [Events — Rust to JavaScript](#events--rust-to-javascript)
+- [Filesystem](#filesystem)
+- [SQLite](#sqlite)
+- [Store Plugin](#store-plugin)
+- [Dialog](#dialog)
+- [Clipboard](#clipboard)
+- [OS Info](#os-info)
+- [Window Manager](#window-manager)
+- [Deploying](#deploying)
+- [Supported APIs](#supported-apis)
+- [Limitations](#limitations)
 
 ---
 
-## Using the R1 CLI
+## Writing Rust Commands
 
-**v0.3 Phase 5+** includes `npx r1 sync` — a CLI tool that automatically migrates existing Tauri apps to R1, plus the `#[r1::command]` proc macro for automatic serialization.
+### Using `#[r1::command]` (Recommended)
 
-### What the CLI Does
+The `r1-macros` crate provides a `#[command]` attribute that handles all JSON serialization automatically. Add it to `Cargo.toml`:
 
-```bash
-cd your-tauri-app
-node /path/to/r1/packages/cli/dist/index.js
-
-# Output:
-🚀 R1 TauriWeb Runtime — Sync
-√ Detected: Tauri v2, react, 3 commands
-√ Patching build.rs
-√ Updating Cargo.toml
-√ Updating vite.config.ts
-√ Updating package.json
-√ Rewriting 3 Rust commands
-✓ Done! Your app is ready for R1.
-```
-
-### What Gets Changed
-
-1. **build.rs** — Emptied to `fn main() {}`
-2. **Cargo.toml** — Adds WASM dependencies, moves native deps to cfg target
-3. **vite.config.ts** — Adds `r1Plugin()`
-4. **package.json** — Adds R1 dependencies
-5. **Rust commands** — Converts `#[tauri::command]` to R1 JSON contract (partial)
-
-### Backup Files
-
-The CLI creates `.r1-backup` files for everything it modifies. If something goes wrong, you can restore from these backups.
-
-### Current Limitations
-
-The CLI handles 90% of migration automatically. You may need to manually:
-- Wrap Rust function return values in `serde_json::to_string()` (if not using `#[r1::command]` macro)
-- Adjust complex async functions
-- Review custom build scripts
-
-**Phase 5 Complete:** The `#[r1::command]` macro eliminates manual JSON wrapping!
-
----
-
-## Writing Rust Commands with `#[r1::command]` Macro
-
-**v0.3 Phase 5+** includes the `#[r1::command]` proc macro that automatically handles JSON serialization/deserialization.
-
-### Using the Macro
-
-Add `r1-macros` to your `Cargo.toml`:
 ```toml
 [dependencies]
-r1-macros = "0.3"
+r1-macros = "0.3.0"
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-Then write commands like standard Tauri functions:
+Then write commands exactly like standard Tauri:
 
 ```rust
 use r1_macros::command;
+use serde::{Serialize, Deserialize};
 
 #[command]
 pub fn greet(name: String) -> String {
@@ -103,62 +54,42 @@ pub fn add(a: f64, b: f64) -> f64 {
     a + b
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    pub id: u32,
+    pub name: String,
+}
+
 #[command]
 pub fn get_user(id: u32) -> User {
-    User {
-        id,
-        name: "Alice".to_string(),
-        age: 30,
+    User { id, name: "Alice".to_string() }
+}
+
+#[command]
+pub fn create_user(name: String) -> Result<User, String> {
+    if name.is_empty() {
+        return Err("Name cannot be empty".to_string());
     }
+    Ok(User { id: 1, name })
 }
 ```
 
-The macro automatically:
-- Wraps the function to accept JSON payload
-- Deserializes arguments
-- Executes your function body
-- Serializes the result back to JSON
-- Handles errors gracefully
-
-### Supported Types
-
-**Parameters:** Any type that implements `serde::Deserialize`
-- Primitives: `String`, `i32`, `f64`, `bool`, `u32`, etc.
-- Collections: `Vec<T>`, `HashMap<K, V>`
-- Custom structs with `#[derive(Deserialize)]`
-
-**Return Types:** Any type that implements `serde::Serialize`
-- Primitives: `String`, `i32`, `f64`, `bool`
-- Collections: `Vec<T>`, `HashMap<K, V>`
-- `Option<T>`, `Result<T, E>`
-- Custom structs with `#[derive(Serialize)]`
+The macro supports any parameter and return type that implements `serde::Deserialize` / `serde::Serialize`, including `Option<T>`, `Result<T, E>`, `Vec<T>`, and custom structs.
 
 ---
 
-## The R1 JSON Contract (Manual Approach)
+### Manual JSON Contract
 
-If you prefer not to use the macro, you can write commands manually following the JSON contract:
+If you prefer not to use the macro, every command follows this exact signature:
 
-Every Rust function that receives data from or sends data to JavaScript must follow this contract:
-
-```
-JavaScript → JSON string → Rust function → JSON string → JavaScript
-```
-
-**Function signature in Rust — always this shape:**
 ```rust
 #[wasm_bindgen]
 pub fn my_command(payload: &str) -> String
 ```
 
-**Why JSON strings and not native types?**
-WASM and JavaScript have incompatible type systems. Strings are the common language both sides understand natively. The overhead is under 1ms for typical payloads.
+One JSON string in. One JSON string out.
 
----
-
-## Writing Rust Commands Manually
-
-### Basic Command
+**Basic command:**
 
 ```rust
 use wasm_bindgen::prelude::*;
@@ -169,51 +100,28 @@ struct GreetArgs {
     name: String,
 }
 
-#[derive(Serialize)]
-struct GreetResult {
-    message: String,
-}
-
 #[wasm_bindgen]
 pub fn greet(payload: &str) -> String {
-    let args: GreetArgs = serde_json::from_str(payload).unwrap();
-
-    let result = GreetResult {
-        message: format!("Hello, {}!", args.name),
-    };
-
-    serde_json::to_string(&result).unwrap()
-}
-```
-
-### Command With Error Handling
-
-Never use `.unwrap()` in production. Return errors as JSON so JavaScript receives a clean error instead of a WASM panic:
-
-```rust
-#[wasm_bindgen]
-pub fn divide(payload: &str) -> String {
-    #[derive(Deserialize)]
-    struct Args { a: f64, b: f64 }
-
-    let args: Args = match serde_json::from_str(payload) {
+    let args: GreetArgs = match serde_json::from_str(payload) {
         Ok(a) => a,
         Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
     };
-
-    if args.b == 0.0 {
-        return serde_json::json!({ "error": "cannot divide by zero" }).to_string();
-    }
-
-    serde_json::json!({ "ok": args.a / args.b }).to_string()
+    let message = format!("Hello, {}!", args.name);
+    serde_json::to_string(&message).unwrap()
 }
 ```
 
-R1 checks the response: if it has an `"error"` key, the `invoke()` Promise rejects. If it has an `"ok"` key, it resolves with the value.
+**Error handling convention:**
 
-### Command That Reads and Writes Files
+```rust
+// Success — invoke() resolves with the value
+serde_json::json!({ "ok": your_value }).to_string()
 
-`std::fs` calls are automatically redirected to the browser's VFS (OPFS) via R1's WASI shim. No special setup required:
+// Error — invoke() rejects with the message
+serde_json::json!({ "error": "something went wrong" }).to_string()
+```
+
+**Command with file I/O:**
 
 ```rust
 use std::fs;
@@ -233,146 +141,239 @@ pub fn save_note(payload: &str) -> String {
         Err(e) => serde_json::json!({ "error": e.to_string() }).to_string(),
     }
 }
-
-#[wasm_bindgen]
-pub fn load_note(payload: &str) -> String {
-    #[derive(Deserialize)]
-    struct Args { path: String }
-
-    let args: Args = match serde_json::from_str(payload) {
-        Ok(a) => a,
-        Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),
-    };
-
-    match fs::read_to_string(&args.path) {
-        Ok(content) => serde_json::json!({ "ok": content }).to_string(),
-        Err(e) => serde_json::json!({ "error": e.to_string() }).to_string(),
-    }
-}
 ```
 
-### Command That Emits Events
-
-Rust can push events to JavaScript at any point during execution. Useful for progress reporting, background tasks, and real-time updates:
-
-```rust
-// This extern declaration is provided by R1's wasm-template (src/r1.rs)
-extern "C" {
-    fn r1_emit(name_ptr: *const u8, name_len: usize,
-               payload_ptr: *const u8, payload_len: usize);
-}
-
-fn emit(event: &str, payload: &str) {
-    unsafe {
-        r1_emit(event.as_ptr(), event.len(),
-                payload.as_ptr(), payload.len());
-    }
-}
-
-#[wasm_bindgen]
-pub fn process_items(payload: &str) -> String {
-    #[derive(Deserialize)]
-    struct Args { count: u32 }
-
-    let args: Args = serde_json::from_str(payload).unwrap();
-
-    for i in 0..args.count {
-        let progress = (i * 100) / args.count;
-        emit("progress", &format!(r#"{{"percent": {}, "item": {}}}"#, progress, i));
-    }
-
-    serde_json::json!({ "ok": "complete" }).to_string()
-}
-```
+`std::fs` calls are automatically redirected to OPFS by R1's WASI shim. No special setup needed.
 
 ---
 
-## Calling Rust From JavaScript
+## Calling Rust from JavaScript
 
 Your frontend code is identical to standard Tauri. R1 intercepts the calls automatically.
-
-### Basic Invoke
 
 ```typescript
 import { invoke } from '@tauri-apps/api/core';
 
-// Call a Rust command
-const result = await invoke('greet', { name: 'Alice' });
-console.log(result.message); // "Hello, Alice!"
-```
+// Basic call
+const message = await invoke<string>('greet', { name: 'Alice' });
 
-### Handling Errors
-
-```typescript
+// With error handling
 try {
-    const result = await invoke('divide', { a: 10, b: 0 });
-    console.log(result); // never reached — throws instead
+    const user = await invoke<User>('create_user', { name: '' });
 } catch (error) {
-    console.error(error); // "cannot divide by zero"
+    console.error(error); // "Name cannot be empty"
 }
+
+// Tauri v1 style also works
+import { invoke } from '@tauri-apps/api/tauri';
+const result = await invoke('my_command', { arg: 'value' });
 ```
 
-### Listening for Events
+The Vite plugin automatically rewrites `@tauri-apps/api/core` and `@tauri-apps/api/tauri` to `@r1-runtime/apis/core` at build time. You never need to change your import statements.
+
+---
+
+## Events — Rust to JavaScript
+
+Rust can push events to the frontend at any time during execution. Useful for progress updates, background tasks, and real-time data.
+
+**JavaScript — subscribe to events:**
 
 ```typescript
 import { listen } from '@tauri-apps/api/event';
 
-// Subscribe to events emitted by Rust
-const unlisten = await listen('progress', (event) => {
+const unlisten = await listen<{ percent: number }>('progress', (event) => {
     console.log(`Progress: ${event.payload.percent}%`);
     updateProgressBar(event.payload.percent);
 });
 
 // Start the Rust operation
-await invoke('process_items', { count: 100 });
+await invoke('process_large_file', { path: '/data/file.csv' });
 
-// Clean up the listener when done
+// Clean up when done
 unlisten();
+```
+
+**JavaScript — emit events to Rust (or other listeners):**
+
+```typescript
+import { emit } from '@tauri-apps/api/event';
+
+await emit('user-action', { type: 'click', target: 'button-1' });
 ```
 
 ---
 
-## Using the Filesystem From JavaScript
+## Filesystem
 
-R1 implements the standard Tauri filesystem API. Data is stored in OPFS and persists across page refreshes.
+R1 implements the standard Tauri filesystem API. All data is stored in the browser's Origin Private File System (OPFS) and persists across page refreshes.
+
+### From JavaScript
 
 ```typescript
 import {
     writeTextFile,
     readTextFile,
+    writeBinaryFile,
+    readBinaryFile,
     exists,
     removeFile,
     createDir,
     readDir,
+    renameFile,
+    copyFile,
 } from '@tauri-apps/api/fs';
 
-// Write a text file
+// Write and read text
 await writeTextFile('/app/settings.json', JSON.stringify({ theme: 'dark' }));
-
-// Read it back
 const content = await readTextFile('/app/settings.json');
-const settings = JSON.parse(content);
 
-// Check if a file exists
+// Check existence
 const fileExists = await exists('/app/settings.json');
 
-// List files in a directory
+// List directory contents
 const entries = await readDir('/app/');
+entries.forEach(entry => console.log(entry.name, entry.children));
+
+// Create directories
+await createDir('/app/backups/', { recursive: true });
 
 // Delete a file
 await removeFile('/app/old-data.json');
 
-// Create a directory
-await createDir('/app/backups/', { recursive: true });
+// Rename / move
+await renameFile('/app/old.json', '/app/new.json');
 ```
 
-> Files stored here are private to your app's origin. Users cannot access them from other websites.
+### From Rust
+
+```rust
+use std::fs;
+
+// Write — automatically goes to OPFS
+fs::write("/app/data.txt", "hello world").unwrap();
+
+// Read
+let content = fs::read_to_string("/app/data.txt").unwrap();
+
+// Create directory
+fs::create_dir_all("/app/cache/").unwrap();
+
+// List directory
+for entry in fs::read_dir("/app/").unwrap() {
+    let entry = entry.unwrap();
+    println!("{}", entry.file_name().to_string_lossy());
+}
+```
+
+> Files are private to your app's origin. Users on other websites cannot access them.
 
 ---
 
-## Using the Store Plugin
+## SQLite
 
-The Store plugin is a simple key-value database backed by the VFS. It's easier than managing JSON files directly for settings and small data:
+R1 supports SQLite via `@tauri-apps/plugin-sql` on the frontend and `rusqlite` on the Rust side. Data is stored in OPFS and persists across page refreshes.
+
+### Frontend (JavaScript)
+
+```bash
+npm install @tauri-apps/plugin-sql
+```
+
+```typescript
+import Database from '@tauri-apps/plugin-sql';
+
+// Open (or create) a database
+const db = await Database.load('sqlite:myapp.db');
+
+// Create a table
+await db.execute(`
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        done INTEGER DEFAULT 0
+    )
+`);
+
+// Insert
+await db.execute('INSERT INTO tasks (title) VALUES (?)', ['Buy groceries']);
+
+// Query
+const tasks = await db.select<{ id: number; title: string; done: number }[]>(
+    'SELECT * FROM tasks WHERE done = ?', [0]
+);
+
+// Update
+await db.execute('UPDATE tasks SET done = 1 WHERE id = ?', [1]);
+
+// Delete
+await db.execute('DELETE FROM tasks WHERE id = ?', [1]);
+```
+
+The import is automatically rewritten to `@r1-runtime/apis/sql` at build time.
+
+### Rust side (rusqlite)
+
+```toml
+[dependencies]
+rusqlite = { version = "0.31", features = ["bundled"] }
+r1-macros = "0.3.0"
+```
+
+```rust
+use rusqlite::{Connection, Result};
+use r1_macros::command;
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct Task {
+    pub id: i64,
+    pub title: String,
+    pub done: bool,
+}
+
+#[command]
+pub fn get_tasks() -> Result<Vec<Task>, String> {
+    let conn = Connection::open("/app/tasks.db").map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, title TEXT, done INTEGER)",
+        [],
+    ).map_err(|e| e.to_string())?;
+
+    let mut stmt = conn.prepare("SELECT id, title, done FROM tasks")
+        .map_err(|e| e.to_string())?;
+
+    let tasks = stmt.query_map([], |row| {
+        Ok(Task {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            done: row.get::<_, i32>(2)? != 0,
+        })
+    }).map_err(|e| e.to_string())?
+    .filter_map(|r| r.ok())
+    .collect();
+
+    Ok(tasks)
+}
+```
+
+### Required deployment headers
+
+SQLite uses `SharedArrayBuffer` internally. Your hosting provider must send these headers or SQLite falls back to in-memory mode (data lost on refresh):
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Resource-Policy: cross-origin
+```
+
+See [Deploying](#deploying) for platform-specific config.
+
+---
+
+## Store Plugin
+
+The Store plugin is a simple key-value store backed by the VFS. Good for settings and small data.
 
 ```typescript
 import { invoke } from '@tauri-apps/api/core';
@@ -381,144 +382,121 @@ import { invoke } from '@tauri-apps/api/core';
 await invoke('plugin:store|set', { store: 'settings', key: 'theme', value: 'dark' });
 
 // Get a value
-const theme = await invoke('plugin:store|get', { store: 'settings', key: 'theme' });
+const theme = await invoke<string>('plugin:store|get', { store: 'settings', key: 'theme' });
 
 // Check if a key exists
-const hasKey = await invoke('plugin:store|has', { store: 'settings', key: 'theme' });
+const hasKey = await invoke<boolean>('plugin:store|has', { store: 'settings', key: 'theme' });
 
 // Delete a key
 await invoke('plugin:store|delete', { store: 'settings', key: 'theme' });
 
 // List all keys
-const keys = await invoke('plugin:store|keys', { store: 'settings' });
+const keys = await invoke<string[]>('plugin:store|keys', { store: 'settings' });
 ```
 
 Each store is saved as a JSON file at `/.r1-store/<store-name>.json` in the VFS.
 
 ---
 
-## Using Dialog
+## Dialog
 
-Dialogs are rendered as OS-themed modals that match the active window theme (macOS, Windows, or Linux).
+Dialogs are rendered as OS-themed modals matching the active window theme.
 
 ```typescript
 import { message, ask, confirm, open, save } from '@tauri-apps/api/dialog';
 
-// Show a message
-await message('File saved successfully.', { title: 'Saved', type: 'info' });
+// Info / warning / error message
+await message('File saved.', { title: 'Saved', type: 'info' });
+await message('Something went wrong.', { title: 'Error', type: 'error' });
 
-// Ask a yes/no question — returns boolean
+// Yes/No question — returns boolean
 const shouldDelete = await ask('Delete this file?', { title: 'Confirm', type: 'warning' });
 
-// Confirm dialog — returns boolean
-const confirmed = await confirm('Are you sure?');
+// OK/Cancel — returns boolean
+const confirmed = await confirm('Are you sure you want to quit?');
 
-// Open file picker — returns selected file path(s)
-const filePath = await open({ multiple: false, filters: [{ name: 'JSON', extensions: ['json'] }] });
+// File open picker — returns path string or null
+const filePath = await open({
+    multiple: false,
+    filters: [{ name: 'JSON Files', extensions: ['json'] }],
+});
 
-// Save file dialog — returns chosen save path
-const savePath = await save({ defaultPath: '/app/export.json' });
+// File save dialog — returns chosen path or null
+const savePath = await save({
+    defaultPath: '/app/export.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+});
 ```
 
 ---
 
-## Using the Window Manager
+## Clipboard
 
-The Virtual Window Manager renders your app inside a native-looking OS window.
+```typescript
+import { readText, writeText } from '@tauri-apps/api/clipboard';
+
+// Write to clipboard
+await writeText('Hello from R1!');
+
+// Read from clipboard
+const text = await readText();
+console.log(text); // "Hello from R1!"
+```
+
+Backed by `navigator.clipboard`. Requires user permission on first use.
+
+---
+
+## OS Info
+
+```typescript
+import { platform, arch, version, locale } from '@tauri-apps/api/os';
+
+const os = await platform();   // 'linux' | 'darwin' | 'win32'
+const cpu = await arch();      // 'x86_64' | 'aarch64' | ...
+const ver = await version();   // OS version string
+const lang = await locale();   // 'en-US' | 'fr-FR' | ...
+```
+
+Values are derived from `navigator.userAgent` and `navigator.language`.
+
+---
+
+## Window Manager
+
+The Virtual Window Manager renders your app inside a native-looking OS window frame.
 
 ```typescript
 import { appWindow } from '@tauri-apps/api/window';
 
-// Set the window title
-await appWindow.setTitle('My App — Untitled Document');
+// Set the title bar text
+await appWindow.setTitle('My App — Untitled');
 
-// Resize the window
+// Resize
 await appWindow.setSize({ width: 1024, height: 768 });
 
-// Minimise
+// Window controls
 await appWindow.minimize();
-
-// Maximise / restore
 await appWindow.toggleMaximize();
-
-// Close
 await appWindow.close();
 ```
 
-**Setting the OS theme** in `vite.config.ts`:
+**Set the OS theme** in `vite.config.ts`:
+
 ```typescript
 r1Plugin({
     rustSrc: './src-tauri',
-    os: 'macos'          // 'macos' | 'windows' | 'linux' | 'auto'
+    os: 'macos',   // 'macos' | 'windows' | 'linux' | 'auto'
 })
 ```
 
-`'auto'` (the default) detects the user's operating system and uses the matching theme.
-
----
-
-## Making Your App Work on Both Desktop and Web
-
-If you want your app to run as both a native Tauri desktop app and a browser app via R1, use conditional compilation to gate native-only code.
-
-### `Cargo.toml`
-
-```toml
-[dependencies]
-wasm-bindgen = "0.2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# Only compiled for native desktop targets
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
-
-[lib]
-name = "my_app"
-crate-type = ["cdylib", "rlib"]
-```
-
-### `lib.rs`
-
-```rust
-// WASM commands — compiled for both targets
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-pub fn greet(payload: &str) -> String {
-    // ... your command
-}
-
-// Native entry point — only compiled for desktop
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
-```
-
-### `build.rs`
-
-```rust
-fn main() {
-    let target = std::env::var("TARGET").unwrap_or_default();
-    if target.contains("wasm32") { return; }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    tauri_build::build();
-}
-```
-
-With this setup, `cargo build` produces a native desktop app and `wasm-pack build` (run automatically by R1's Vite plugin) produces the browser version.
+`'auto'` (the default) detects the user's OS and applies the matching theme.
 
 ---
 
 ## Deploying
 
-The output of `npm run build` is a static folder. Deploy it anywhere that serves static files:
+`npm run build` produces a static folder. Deploy it anywhere that serves static files.
 
 ```bash
 # Vercel
@@ -527,66 +505,127 @@ npx vercel dist --prod
 # Netlify
 npx netlify deploy --dir=dist --prod
 
-# GitHub Pages
-# Push the contents of dist/ to the gh-pages branch
+# GitHub Pages — push dist/ contents to gh-pages branch
 
-# Any static file server
+# Local preview
 npx serve dist -l 3000
 ```
 
-> **First load**: Press `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac) on the first visit to ensure the Service Worker registers correctly. Subsequent loads are normal.
+> Press `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac) on first load to register the Service Worker. Subsequent loads are normal.
+
+### Headers for SQLite / OPFS
+
+Required if your app uses SQLite or OPFS persistence:
+
+**Netlify (`netlify.toml`):**
+
+```toml
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Resource-Policy = "cross-origin"
+```
+
+**Vercel (`vercel.json`):**
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }
+      ]
+    }
+  ]
+}
+```
+
+**GitHub Pages** — GitHub Pages does not support custom headers. Use Netlify or Vercel for apps that need SQLite.
+
+---
+
+## Supported APIs
+
+| API | Import | Status | Notes |
+|---|---|---|---|
+| `invoke` | `@tauri-apps/api/core` | ✅ Full | Tauri v1 and v2 |
+| `listen` / `emit` | `@tauri-apps/api/event` | ✅ Full | |
+| `fs` | `@tauri-apps/api/fs` | ✅ Full | Backed by OPFS |
+| `path` | `@tauri-apps/api/path` | ✅ Full | Pure JS |
+| `dialog` | `@tauri-apps/api/dialog` | ✅ Full | OS-themed modals |
+| `clipboard` | `@tauri-apps/api/clipboard` | ✅ Full | `navigator.clipboard` |
+| `os` | `@tauri-apps/api/os` | ✅ Full | `navigator.userAgent` |
+| `window` | `@tauri-apps/api/window` | ✅ Full | Virtual window frame |
+| `store` | `@tauri-apps/plugin-store` | ✅ Full | VFS-backed JSON |
+| `sql` | `@tauri-apps/plugin-sql` | ✅ Full | SQLite via OPFS |
+| `notification` | `@tauri-apps/api/notification` | ⚠️ Partial | Web Notifications API |
+| `shell` | `@tauri-apps/api/shell` | ❌ Stubbed | Browser sandbox |
+| `http` | `@tauri-apps/api/http` | ✅ Full | Mapped to `fetch` |
+
+---
+
+## Limitations
+
+| Feature | Status | Reason |
+|---|---|---|
+| `std::fs` read/write | ✅ | Redirected to OPFS |
+| `serde` / `serde_json` | ✅ | Core to the JSON bridge |
+| Async Rust | ✅ | Via `wasm-bindgen-futures` |
+| External crates | ✅ Most | Must compile to `wasm32-wasip1` |
+| `std::time` | ✅ | Via WASI `clock_time_get` |
+| `rand` | ✅ | Via `crypto.getRandomValues()` |
+| HTTP requests | ✅ | Mapped to browser `fetch` |
+| Multi-threading (`rayon`) | ❌ | WASM workers are single-threaded |
+| Raw sockets | ❌ | Not available in browser |
+| Child processes | ❌ | `shell::execute` is stubbed |
+| System tray | ❌ | Not a browser concept |
+| Global shortcuts | ❌ | Not available outside focus |
+| Native OS libraries | ❌ | Must compile to WASM |
 
 ---
 
 ## Troubleshooting
 
 **Build fails: `error: failed to run custom build command for tauri-build`**
-Your `build.rs` is missing the WASM guard. Replace it with the version from the Getting Started guide.
+
+Replace `src-tauri/build.rs` with:
+```rust
+fn main() {}
+```
 
 **Build fails: `error[E0432]: unresolved import`**
-The `tauri` crate is being compiled into WASM. Your `Cargo.toml` native dependencies need to be inside the `[target.'cfg(not(target_arch = "wasm32"))'.dependencies]` block.
 
-**`invoke()` never resolves (hangs forever)**
-Open DevTools → Application → Service Workers. Check if the Service Worker is registered. If not, hard refresh with `Ctrl+F5`.
+The `tauri` crate is being compiled into WASM. Move it to the native-only section:
+```toml
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tauri = { version = "2", features = [] }
+```
+
+**`invoke()` hangs forever**
+
+Press `Ctrl+F5` to force Service Worker registration.
 
 **`invoke()` returns `undefined`**
-Your Rust function is not returning a valid JSON string. Every function must end with `serde_json::to_string(&your_value).unwrap()`.
+
+Your Rust function isn't returning a JSON string. Add:
+```rust
+serde_json::to_string(&your_value).unwrap()
+```
 
 **WASM panic in console**
-Your Rust function called `.unwrap()` on a failed parse. Add proper error handling using the error convention shown in the "Command With Error Handling" section above.
 
-**Files not persisting after refresh**
-OPFS requires the page to be served over HTTPS or `localhost`. If you're serving over plain HTTP on a non-localhost address, OPFS will not work.
+Your Rust function called `.unwrap()` on a failed operation. Add proper error handling.
+
+**SQLite data lost on refresh**
+
+Your hosting provider isn't sending the required COOP/COEP/CORP headers. See the [Deploying](#deploying) section.
 
 **`wasm-pack: command not found`**
 ```bash
 cargo install wasm-pack
 ```
-
----
-
-## What R1 Supports
-
-| Feature | Supported | Notes |
-|---|---|---|
-| `std::fs` read/write | ✅ | Redirected to OPFS |
-| `serde` / `serde_json` | ✅ | Required for JSON contract |
-| Async Rust | ✅ | Via `wasm-bindgen-futures` |
-| External crates | ✅ Most | Must compile to `wasm32-wasi` |
-| HTTP requests | ✅ | Mapped to browser `fetch` |
-| `std::time` | ✅ | Via WASI `clock_time_get` |
-| Random (`rand`) | ✅ | Via `crypto.getRandomValues()` |
-| Multi-threading | ❌ | WASM workers are single-threaded |
-| Raw sockets | ❌ | Not available in browser |
-| Child processes | ❌ | `shell::execute` is stubbed |
-| System tray | ❌ | Not a browser concept |
-| Global shortcuts | ❌ | Not available outside focus |
-| OS notifications | ⚠️ | Uses Web Notifications API |
-
----
-
-## Next Steps
-
-- Read the **[Developer Guide](./DEVELOPER_GUIDE.md)** for a deep dive into R1's internal architecture
-- Look at the **[Todo Demo](./apps/todo-demo)** source code for a complete working example
-- Test R1 with your own Tauri app and open an issue if something breaks

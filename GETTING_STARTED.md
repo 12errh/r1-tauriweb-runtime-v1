@@ -1,216 +1,173 @@
-# Getting Started with R1 Runtime
+# Getting Started with R1
 
-> Build your first Tauri-style app and run it in the browser — no installer, no server, just a URL.
-
----
-
-## What You Will Build
-
-By the end of this guide you will have a working app with a Rust backend running as WebAssembly in the browser. The same code structure works as a native Tauri desktop app too — R1 is fully compatible.
-
-**Live example of what this produces**: https://todo-demo-by-r1-runtime.netlify.app/
+> Build your first R1 app — or migrate an existing Tauri app — and run it in the browser.
 
 ---
 
 ## Prerequisites
 
-Make sure these are installed before starting. Each link goes to the official install page.
-
-| Tool | Purpose | Install |
+| Tool | Version | Install |
 |---|---|---|
-| **Node.js 18+** | JavaScript runtime | [nodejs.org](https://nodejs.org) |
-| **Rust** | Compiles your backend | [rustup.rs](https://rustup.rs) |
-| **wasm-pack** | Compiles Rust → WebAssembly | `cargo install wasm-pack` |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org) |
+| **Rust** | 1.75+ | [rustup.rs](https://rustup.rs) |
+| **wasm-pack** | 0.12+ | `cargo install wasm-pack` |
 
 Verify everything is ready:
+
 ```bash
-node --version       # Should print v18 or higher
-rustc --version      # Should print rustc 1.75 or higher
-wasm-pack --version  # Should print wasm-pack 0.12 or higher
+node --version      # v18.0.0 or higher
+rustc --version     # rustc 1.75.0 or higher
+wasm-pack --version # wasm-pack 0.12.0 or higher
 ```
 
 ---
 
-## Step 1 — Clone R1 Repository
+## Option A — Migrate an Existing Tauri App (Recommended)
 
-**Important:** R1 packages are not yet published to npm (coming in Phase 7). You need to clone the repository and work within the monorepo workspace.
+If you already have a Tauri app, the CLI handles everything automatically.
 
 ```bash
-git clone https://github.com/12errh/r1-tauriweb-runtime-v1.git
-cd r1-tauriweb-runtime-v1
+cd your-tauri-app
+npx @r1-runtime/cli sync
+```
+
+You'll see:
+
+```
+🚀 R1 TauriWeb Runtime — Sync
+
+✓ Detected: Tauri v2, react, 5 commands
+✓ Patching build.rs
+✓ Updating Cargo.toml
+✓ Updating vite.config.ts
+✓ Updating package.json
+✓ Patching SQL imports
+✓ Rewriting 5 Rust commands
+✓ Done! Your app is ready for R1.
+
+Next steps:
+  npm install
+  npm run build
+  npx serve dist -l 3000
+```
+
+Then:
+
+```bash
 npm install
 npm run build
+npx serve dist -l 3000
 ```
 
-This builds all R1 packages locally. Now you can create your app inside the `apps/` directory or link to an external project.
+Open **http://localhost:3000** and press `Ctrl+F5` on first load.
+
+> The CLI creates `.r1-backup` copies of every file it modifies. If something goes wrong, your originals are safe.
 
 ---
 
-## Step 2 — Create a New Tauri App
+## Option B — Start a New App from Scratch
 
-Use the official Tauri scaffolding tool to create a fresh project:
-
-```bash
-npm create tauri-app@latest my-r1-app -- --template react-ts --yes
-cd my-r1-app
-npm install
-```
-
-Your project structure will look like this:
-
-```
-my-r1-app/
-├── src/                   ← React frontend (leave this alone for now)
-│   ├── App.tsx
-│   └── main.tsx
-├── src-tauri/             ← Rust backend (you will edit files here)
-│   ├── src/
-│   │   └── lib.rs         ← Your Rust commands live here
-│   ├── Cargo.toml         ← Rust dependencies
-│   └── build.rs           ← Build script
-├── index.html
-├── package.json
-└── vite.config.ts
-```
-
----
-
-## Step 3 — Add R1 to Your Project
-
-Since R1 is not yet on npm, you need to use workspace references. Create your app inside the R1 monorepo:
+### Step 1 — Create a Tauri app
 
 ```bash
-# Inside r1-tauriweb-runtime-v1/
-cd apps
-mkdir my-app
+npm create tauri-app@latest my-app -- --template react-ts --yes
 cd my-app
-npm init -y
 ```
 
-Update your `package.json` to use workspace references:
+### Step 2 — Run the R1 CLI
 
-```json
-{
-  "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
-    "@r1/core": "workspace:*",
-    "@r1/apis": "workspace:*"
-  },
-  "devDependencies": {
-    "@r1/vite-plugin": "workspace:*"
-  }
-}
-```
-
-Then run `npm install` from the root of the monorepo:
 ```bash
-cd ../../  # back to root
+npx @r1-runtime/cli sync
+```
+
+### Step 3 — Install and build
+
+```bash
 npm install
+npm run build
+npx serve dist -l 3000
 ```
 
-**After Phase 7 (npm publishing), this will become:**
-```bash
-npm install @r1/core @r1/apis
-npm install --save-dev @r1/vite-plugin
-```
+Open **http://localhost:3000** and press `Ctrl+F5` on first load.
 
 ---
 
-## Step 4 — Add the R1 Vite Plugin
+## Option C — Manual Setup
 
-Open `vite.config.ts` and add the R1 plugin:
+If you prefer to understand every change, here's what the CLI does manually.
+
+### 1. Install R1 packages
+
+```bash
+npm install @r1-runtime/core @r1-runtime/apis
+npm install --save-dev @r1-runtime/vite-plugin
+```
+
+### 2. Update `vite.config.ts`
 
 ```typescript
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { r1Plugin } from '@r1/vite-plugin';
+import { r1Plugin } from '@r1-runtime/vite-plugin';
 
 export default defineConfig({
   plugins: [
     react(),
-    r1Plugin({
-      rustSrc: './src-tauri'
-    })
-  ]
+    r1Plugin({ rustSrc: './src-tauri' }),
+  ],
 });
 ```
 
-> The plugin handles everything automatically — it compiles your Rust to WASM during `npm run build` and patches all `@tauri-apps/api` imports to use R1. You do not need to change your frontend import statements.
+### 3. Update `src-tauri/build.rs`
 
----
+Replace the entire file with:
 
-## Step 5 — Make the Rust Backend WASM-Compatible
+```rust
+fn main() {}
+```
 
-This is the only part that differs from standard Tauri. You need to make three small changes so the Rust code compiles to WebAssembly.
+This prevents native Tauri build logic from running when compiling to WASM.
 
-### 5a — Update `src-tauri/Cargo.toml`
-
-Replace the entire contents with this:
+### 4. Update `src-tauri/Cargo.toml`
 
 ```toml
 [package]
-name = "my-r1-app"
+name = "my-app"
 version = "0.1.0"
 edition = "2021"
 
-# WASM dependencies — always included
+# WASM dependencies — always compiled
 [dependencies]
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+r1-macros = "0.3.0"
 
-# Native-only dependencies — only included when building for desktop
+# Native-only dependencies — only compiled for desktop
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 
 [lib]
-name = "my_r1_app"          # Must be snake_case, no hyphens
+name = "my_app"                    # snake_case — no hyphens
 crate-type = ["cdylib", "rlib"]
 ```
 
-> **Important**: The `name` in `[lib]` must use underscores, not hyphens. `my-r1-app` becomes `my_r1_app`.
+> The `[lib] name` must use underscores, not hyphens. `my-app` → `my_app`.
 
-### 5b — Update `src-tauri/build.rs`
+### 5. Update `src-tauri/src/lib.rs`
 
-Replace the entire contents with this:
-
-```rust
-fn main() {
-    // Standard Tauri build logic is bypassed for WASM targets 
-    // to prevent native build dependencies from interfering.
-}
-```
-
-### 5c — Update `src-tauri/src/lib.rs`
-
-Replace the entire contents with this. This rewrites the default `greet` command to use R1's JSON bridge:
+Using the `#[r1::command]` macro (recommended):
 
 ```rust
-use wasm_bindgen::prelude::*;
-use serde::Deserialize;
+use r1_macros::command;
 
-// The input arguments from JavaScript
-#[derive(Deserialize)]
-struct GreetArgs {
-    name: String,
+#[command]
+pub fn greet(name: String) -> String {
+    format!("Hello, {}! You're running Rust in the browser.", name)
 }
 
-// Every command follows this pattern:
-// - Takes a JSON string as input (&str)
-// - Returns a JSON string as output (String)
-#[wasm_bindgen]
-pub fn greet(payload: &str) -> String {
-    let args: GreetArgs = serde_json::from_str(payload)
-        .unwrap_or(GreetArgs { name: "World".into() });
-
-    let message = format!("Hello, {}! This is Rust running in your browser.", args.name);
-
-    // Always return valid JSON — wrap your value in serde_json::to_string
-    serde_json::to_string(&message).unwrap()
-}
-
-// Gate the native Tauri entry point so it doesn't compile to WASM
+// Gate the native entry point so it doesn't compile to WASM
 #[cfg(not(target_arch = "wasm32"))]
 pub fn run() {
     tauri::Builder::default()
@@ -220,150 +177,129 @@ pub fn run() {
 }
 ```
 
----
+Or manually, without the macro:
 
-## Step 6 — Build and Run
+```rust
+use wasm_bindgen::prelude::*;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct GreetArgs {
+    name: String,
+}
+
+#[wasm_bindgen]
+pub fn greet(payload: &str) -> String {
+    let args: GreetArgs = serde_json::from_str(payload)
+        .unwrap_or(GreetArgs { name: "World".into() });
+    let message = format!("Hello, {}! You're running Rust in the browser.", args.name);
+    serde_json::to_string(&message).unwrap()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![greet])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+```
+
+### 6. Build and run
 
 ```bash
 npm run build
-```
-
-You will see output like this while it builds:
-```
-→ Compiling Rust to WASM...
-→ Patching Tauri imports...
-→ Injecting R1 boot script...
-→ Build complete.
-```
-
-Now serve the output:
-```bash
 npx serve dist -l 3000
 ```
 
-Open **http://localhost:3000** in your browser.
-
-> **Important**: Press `Ctrl+F5` (or `Cmd+Shift+R` on Mac) on first load to force the Service Worker to register correctly. You only need to do this once.
-
 ---
 
-## Step 7 — Verify It Works
+## Verifying It Works
 
-You should see the default Tauri app UI. Type a name into the input field and click **Greet**. The response — `"Hello, [name]! This is Rust running in your browser."` — comes from your Rust code executing as WebAssembly.
-
-To confirm Rust is actually running (not a JS fallback), open DevTools → Console. You should see:
+Open DevTools → Console. You should see:
 
 ```
 [R1] Booting Kernel...
 [R1] Boot complete.
-[R1] Loaded WASM module: my_r1_app
 ```
+
+Type a name into the greet input and click the button. The response comes from your Rust code running as WebAssembly.
+
+To confirm WASM is actually running (not a JS fallback), open DevTools → Sources and look for `wasm` files in the sources panel.
 
 ---
 
-## Adding Your Own Commands
+## Adding SQLite
 
-Every new Rust function you want to call from JavaScript follows the same pattern:
+R1 supports SQLite out of the box. Use `@tauri-apps/plugin-sql` exactly as you would in a native Tauri app.
 
-**Rust (`src-tauri/src/lib.rs`)**:
-```rust
-use serde::{Serialize, Deserialize};
+**Install the frontend package:**
 
-#[derive(Deserialize)]
-struct AddArgs {
-    a: f64,
-    b: f64,
-}
-
-#[derive(Serialize)]
-struct AddResult {
-    sum: f64,
-}
-
-#[wasm_bindgen]
-pub fn add_numbers(payload: &str) -> String {
-    let args: AddArgs = serde_json::from_str(payload).unwrap();
-    let result = AddResult { sum: args.a + args.b };
-    serde_json::to_string(&result).unwrap()
-}
-```
-
-**JavaScript/TypeScript (`src/App.tsx`)**:
-```typescript
-import { invoke } from '@tauri-apps/api/core';
-
-const result = await invoke('add_numbers', { a: 3, b: 4 });
-console.log(result.sum); // 7
-```
-
-That's the complete pattern. Input JSON → Rust processes → Output JSON.
-
----
-
-## Using SQLite
-
-R1 supports SQLite out of the box. Use @tauri-apps/plugin-sql
-exactly as you would in a native Tauri app — no changes needed.
-
-Install the plugin in your frontend:
 ```bash
 npm install @tauri-apps/plugin-sql
 ```
 
-Use it in your code:
+**Use it in your frontend:**
+
 ```typescript
 import Database from '@tauri-apps/plugin-sql';
+
 const db = await Database.load('sqlite:myapp.db');
+await db.execute('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY, name TEXT)');
 await db.execute('INSERT INTO items (name) VALUES (?)', ['hello']);
-const items = await db.select('SELECT * FROM items');
+const items = await db.select<{ id: number; name: string }[]>('SELECT * FROM items');
 ```
 
-R1 handles everything else. No C compiler. No LLVM. Just works.
+R1 automatically rewrites the import to `@r1-runtime/apis/sql` at build time. Your data is stored in OPFS and persists across page refreshes.
 
-> **⚠️ CRITICAL ARCHITECTURE WARNING**
-> **You cannot run native Rust SQL tools** like `sqlx`, `diesel`, or `rusqlite` in R1! The browser's security sandbox fundamentally blocks WebAssembly from opening raw TCP sockets, making remote Postgres/MySQL/MSSQL connections impossible. All database logic must be executed through the `@tauri-apps/plugin-sql` JavaScript wrapper, which leverages OPFS under the hood.
----
+**Add `rusqlite` to your Rust backend if you need SQL from Rust:**
 
-## Using the Filesystem
-
-Data written through R1's filesystem API is stored in the browser's Origin Private File System (OPFS). It persists across page refreshes — closing and reopening the tab will not lose your data.
-
-```typescript
-import { writeTextFile, readTextFile } from '@tauri-apps/api/fs';
-
-// Write
-await writeTextFile('/app/settings.json', JSON.stringify({ theme: 'dark' }));
-
-// Read
-const content = await readTextFile('/app/settings.json');
-const settings = JSON.parse(content);
+```toml
+[dependencies]
+rusqlite = { version = "0.31", features = ["bundled"] }
 ```
-
-You can also read and write from Rust directly:
 
 ```rust
-#[wasm_bindgen]
-pub fn save_data(payload: &str) -> String {
-    // std::fs calls are automatically redirected to OPFS by R1's WASI shim
-    std::fs::write("/app/data.txt", payload).unwrap();
-    serde_json::to_string(&"saved").unwrap()
+use rusqlite::Connection;
+
+#[command]
+pub fn get_items() -> Vec<String> {
+    let conn = Connection::open("/app/data.db").unwrap();
+    // ... query and return
 }
 ```
 
 ---
 
-### ⚠️ CRITICAL DEPLOYMENT NOTE: Enabling Persistence (SQLite/OPFS)
+## Deploying
 
-If your app uses SQLite or depends on OPFS persistence, you **MUST** configure your hosting provider to send specific security headers. Without these, the browser will block `SharedArrayBuffer` and SQLite will fall back to **in-memory mode** (data will be lost on refresh).
+The output of `npm run build` is a plain static folder. Deploy it anywhere:
 
-**Required Headers:**
+```bash
+# Vercel
+npx vercel dist --prod
+
+# Netlify
+npx netlify deploy --dir=dist --prod
+
+# GitHub Pages — push dist/ to gh-pages branch
+
+# Any static server
+npx serve dist -l 3000
+```
+
+### Required headers for SQLite / OPFS
+
+If your app uses SQLite or OPFS persistence, your hosting provider must send these headers:
+
 ```
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 Cross-Origin-Resource-Policy: cross-origin
 ```
 
-**Netlify Example (`netlify.toml`):**
+**Netlify** — add a `netlify.toml` to your project root:
+
 ```toml
 [[headers]]
   for = "/*"
@@ -373,8 +309,24 @@ Cross-Origin-Resource-Policy: cross-origin
     Cross-Origin-Resource-Policy = "cross-origin"
 ```
 
-Anyone with the URL can now run your app. No installer. No download.
+**Vercel** — add a `vercel.json`:
 
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }
+      ]
+    }
+  ]
+}
+```
+
+Without these headers, SQLite falls back to in-memory mode and data is lost on refresh.
 
 ---
 
@@ -385,25 +337,48 @@ Anyone with the URL can now run your app. No installer. No download.
 cargo install wasm-pack
 ```
 
-**Build fails with `error: failed to run custom build command for tauri-build`**
-Your `build.rs` does not have the empty `main` block from Step 5b. When building for WASM, `tauri-build` must not run its default logic because it checks for native C++ compiler tools that aren't needed for R1.
+**Build fails: `error: failed to run custom build command for tauri-build`**
 
-**`Error: [WasmOrchestrator] Function '...' not exported`**
-Check your `src-tauri/src/lib.rs`. Ensure the function has the `#[wasm_bindgen]` attribute and handles input/output as JSON strings. Also, verify that the `[lib]` name in `Cargo.toml` uses underscores, not hyphens.
+Your `build.rs` still has the original Tauri build logic. Replace the entire file with:
+```rust
+fn main() {}
+```
 
-**App loads but Greet button does nothing**
-Check the browser console. The most common cause is the `[lib] name` in `Cargo.toml` containing hyphens instead of underscores (e.g., `my-app` instead of `my_app`).
+**Build fails: `error[E0432]: unresolved import`**
 
-**Page shows blank / R1 not booting**
-Press `Ctrl+F5` to force a hard refresh. The Service Worker needs a clean registration on first load.
+The `tauri` crate is being compiled into WASM. Move it to the native-only section in `Cargo.toml`:
+```toml
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tauri = { version = "2", features = [] }
+```
 
-**`invoke` returns `undefined`**
-Your Rust function is not returning a JSON string. Make sure every function ends with `serde_json::to_string(&your_value).unwrap()`.
+**`invoke()` never resolves (hangs forever)**
+
+The Service Worker isn't registered. Press `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac) to force a hard refresh. You only need to do this once.
+
+**`invoke()` returns `undefined`**
+
+Your Rust function isn't returning a JSON string. Every function must end with:
+```rust
+serde_json::to_string(&your_value).unwrap()
+```
+
+**App loads but commands do nothing**
+
+Check the `[lib] name` in `Cargo.toml`. It must use underscores, not hyphens. `my-app` → `my_app`.
+
+**SQLite data lost on refresh**
+
+Your hosting provider isn't sending the required COOP/COEP/CORP headers. See the deployment section above.
+
+**Page is blank after deploy**
+
+Press `Ctrl+F5` on first load. The Service Worker needs a clean registration.
 
 ---
 
 ## Next Steps
 
-- Read the **Developer Guide** to understand how R1 works internally
-- See the [Todo Demo](apps/todo-demo) for a complete real-world example
-- Join the community and share what you build
+- [USAGE_GUIDE.md](./USAGE_GUIDE.md) — complete API reference and patterns
+- [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) — how R1 works internally
+- [apps/todo-demo](./apps/todo-demo) — a complete working example to read and run
