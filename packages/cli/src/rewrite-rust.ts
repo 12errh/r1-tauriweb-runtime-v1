@@ -2,7 +2,10 @@ import path from 'path';
 import { fileExists, readFile, writeFile, createBackup, findRustFiles } from './utils.js';
 
 /**
- * Rewrite Rust commands from #[tauri::command] to R1 JSON contract
+ * Rewrite Rust commands from #[tauri::command] to #[r1::command] macro.
+ * 
+ * This is the preferred approach — the r1-macros crate handles all JSON
+ * serialization automatically, so we just swap the attribute.
  */
 export async function rewriteRust(root: string): Promise<void> {
   const srcDir = path.join(root, 'src-tauri', 'src');
@@ -26,93 +29,50 @@ export async function rewriteRust(root: string): Promise<void> {
 }
 
 /**
- * Rewrite a single Rust file
+ * Rewrite a single Rust file to use #[r1::command] macro.
  */
 function rewriteRustFile(content: string): string {
   let result = content;
-  
-  // Add required imports at the top if not present
-  if (!result.includes('use wasm_bindgen::prelude::*')) {
-    result = 'use wasm_bindgen::prelude::*;\n' + result;
+
+  // 1. Add r1_macros import if not present
+  if (!result.includes('use r1_macros') && !result.includes('r1_macros::command')) {
+    result = 'use r1_macros::command;\n' + result;
   }
-  
-  if (!result.includes('use serde::')) {
-    result = 'use serde::{Serialize, Deserialize};\n' + result;
-  }
-  
-  // Find and rewrite each #[tauri::command] function
-  const commandRegex = /#\[tauri::command\]\s*(pub\s+)?(async\s+)?fn\s+(\w+)\s*\(([^)]*)\)\s*->\s*([^{]+)\{/g;
-  
-  result = result.replace(commandRegex, (match, pubMod, asyncMod, fnName, params, returnType) => {
-    return rewriteCommand(fnName, params, returnType, match);
-  });
-  
-  // Gate the run() function if it exists
-  if (result.includes('pub fn run()') || result.includes('fn run()')) {
+
+  // 2. Replace #[tauri::command] with #[command] and ensure function is pub
+  result = result.replace(
+    /#\[tauri::command\]\s*\n(\s*)(async\s+)?fn\s+/g,
+    '#[command]\n$1pub $2fn '
+  );
+  // Also handle cases where pub is already there
+  result = result.replace(/#\[tauri::command\]/g, '#[command]');
+
+  // 3. Remove &str parameter types — replace with String (macro needs owned types)
+  //    Only inside function signatures that now have #[command]
+  result = result.replace(
+    /(#\[command\][^{]*fn\s+\w+\s*\([^)]*)\b(\w+)\s*:\s*&str([^)]*\))/g,
+    (match, before, paramName, after) => `${before}${paramName}: String${after}`
+  );
+
+  // 4. Gate the run() function so it doesn't compile to WASM.
+  //    Step A: replace #[cfg_attr(mobile, tauri::mobile_entry_point)] with #[cfg(not(...))]
+  result = result.replace(
+    /#\[cfg_attr\(mobile,\s*tauri::mobile_entry_point\)\]\s*\n(pub\s+)?fn\s+run\(\)/g,
+    '#[cfg(not(target_arch = "wasm32"))]\npub fn run()'
+  );
+  //    Step B: if run() still has no cfg gate, add one
+  //    (only matches lines NOT already preceded by #[cfg(not(target_arch...)])
+  if (!result.includes('#[cfg(not(target_arch = "wasm32"))]\npub fn run()') &&
+      !result.includes('#[cfg(not(target_arch = "wasm32"))]\nfn run()')) {
     result = result.replace(
-      /(pub\s+)?fn\s+run\(\)/g,
-      '#[cfg(not(target_arch = "wasm32"))]\n$&'
+      /^((pub\s+)?fn\s+run\(\))/gm,
+      '#[cfg(not(target_arch = "wasm32"))]\n$1'
     );
   }
-  
-  return result;
-}
 
-/**
- * Rewrite a single command function
- */
-function rewriteCommand(fnName: string, params: string, returnType: string, originalMatch: string): string {
-  // Parse parameters
-  const paramList = params.split(',').map(p => p.trim()).filter(p => p.length > 0);
-  const parsedParams: Array<{ name: string; type: string }> = [];
-  
-  for (const param of paramList) {
-    const parts = param.split(':').map(p => p.trim());
-    if (parts.length >= 2) {
-      let paramType = parts.slice(1).join(':').trim();
-      // Convert &str to String for JSON deserialization
-      if (paramType === '&str') {
-        paramType = 'String';
-      }
-      parsedParams.push({
-        name: parts[0],
-        type: paramType
-      });
-    }
-  }
-  
-  // Generate Args struct
-  let argsStruct = '';
-  if (parsedParams.length > 0) {
-    argsStruct = '    #[derive(Deserialize)]\n';
-    argsStruct += '    struct Args {\n';
-    for (const param of parsedParams) {
-      argsStruct += `        ${param.name}: ${param.type},\n`;
-    }
-    argsStruct += '    }\n\n';
-  }
-  
-  // Generate argument parsing
-  let argsParsing = '';
-  if (parsedParams.length > 0) {
-    argsParsing = '    let args: Args = match serde_json::from_str(payload) {\n';
-    argsParsing += '        Ok(a) => a,\n';
-    argsParsing += '        Err(e) => return serde_json::json!({ "error": e.to_string() }).to_string(),\n';
-    argsParsing += '    };\n\n';
-    
-    // Extract individual parameters
-    for (const param of parsedParams) {
-      argsParsing += `    let ${param.name} = args.${param.name};\n`;
-    }
-    argsParsing += '\n';
-  }
-  
-  // Note: The function body will need to be manually wrapped in serde_json::to_string
-  // This is a limitation of the simple regex-based approach
-  // For now, we just set up the signature and args parsing
-  
-  // Build the new function signature
-  const newSignature = `#[wasm_bindgen]\npub fn ${fnName}(payload: &str) -> String {`;
-  
-  return newSignature + '\n' + argsStruct + argsParsing + '    // TODO: Wrap return value in serde_json::to_string(&result).unwrap()\n';
+  // 5. Remove wasm_bindgen imports that may have been added by a previous run
+  //    (the macro handles this internally)
+  result = result.replace(/^use wasm_bindgen::prelude::\*;\n/gm, '');
+
+  return result;
 }

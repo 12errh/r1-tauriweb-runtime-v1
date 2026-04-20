@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/vite-plugin",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Official Vite plugin for R1 — automates Rust→WASM compilation and Tauri import patching.",
   "type": "module",
   "author": "R1 Runtime Team",
@@ -48,6 +48,6 @@
     "vitest": "^1.0.0"
   },
   "peerDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   }
 }

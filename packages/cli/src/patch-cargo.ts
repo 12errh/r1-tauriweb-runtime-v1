@@ -24,6 +24,14 @@ export async function patchCargo(root: string): Promise<void> {
       name: crateName,
       'crate-type': ['cdylib', 'rlib']
     };
+  } else {
+    // Ensure crate-type is set correctly — remove staticlib if present
+    // (wasm-pack does not support staticlib)
+    const existingTypes: string[] = cargo.lib['crate-type'] || [];
+    const filtered = existingTypes.filter((t: string) => t !== 'staticlib');
+    if (!filtered.includes('cdylib')) filtered.push('cdylib');
+    if (!filtered.includes('rlib')) filtered.push('rlib');
+    cargo.lib['crate-type'] = filtered;
   }
   
   // Ensure dependencies section exists

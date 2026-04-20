@@ -5,7 +5,21 @@ All notable changes to R1 TauriWeb Runtime will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.2] - 2026-04-20
+## [0.3.3] - 2026-04-20
+
+### Fixed
+- **cli**: `rewrite-rust.ts` now uses `#[r1::command]` macro instead of manual JSON rewriting — no more TODO comments in generated code
+- **cli**: Rust commands are now correctly made `pub fn` (required by wasm_bindgen)
+- **cli**: `patch-cargo.ts` now strips `staticlib` from `crate-type` (Tauri v2 templates include it; wasm-pack rejects it)
+- **cli**: Fixed double `#[cfg(not(target_arch = "wasm32"))]` on `run()` when `#[cfg_attr(mobile,...)]` was present
+- **vite-plugin**: `peerDependencies` now accepts `vite ^5 || ^6 || ^7` (Tauri v2 templates ship with vite 7)
+
+### Packages
+- `@r1-runtime/cli` → **0.3.3**
+- `@r1-runtime/vite-plugin` → **0.3.3**
+- All other packages remain at **0.3.1**
+
+
 
 ### Fixed
 - **vite-plugin**: Import map now correctly maps `@tauri-apps/api/*` to `@r1-runtime/apis/*` (was incorrectly using old `@r1/apis/*` names)

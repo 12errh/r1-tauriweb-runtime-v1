@@ -37,7 +37,7 @@ export async function patchPackage(root: string): Promise<void> {
   }
   
   if (!pkg.devDependencies['@r1-runtime/vite-plugin']) {
-    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.2';
+    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.3';
     modified = true;
   }
   
