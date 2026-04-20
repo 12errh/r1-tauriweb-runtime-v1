@@ -222,24 +222,36 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     },
 
     async generateBundle() {
-      // 1. Bundle and emit the Service Worker
-      const swEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
-      if (existsSync(swEntry)) {
-        console.log(`[R1] Bundling Service Worker from ${swEntry}...`);
+      // 1. Emit the Service Worker (r1-sw.js)
+      // When installed from npm, use the pre-built file from dist/.
+      // When running in the monorepo, build from source as fallback.
+      const prebuiltSw = resolve(_dirname, 'r1-sw.js');
+      const swSrcEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
+
+      if (existsSync(prebuiltSw)) {
+        console.log('[R1] Emitting pre-built Service Worker from dist/r1-sw.js...');
+        this.emitFile({
+          type: 'asset',
+          fileName: 'r1-sw.js',
+          source: readFileSync(prebuiltSw, 'utf-8'),
+        });
+      } else if (existsSync(swSrcEntry)) {
+        console.log(`[R1] Bundling Service Worker from ${swSrcEntry}...`);
         const result = await esbuild.build({
-          entryPoints: [swEntry],
+          entryPoints: [swSrcEntry],
           bundle: true,
           write: false,
           format: 'iife',
           minify: true,
           loader: { '.css': 'empty' },
         });
-
         this.emitFile({
           type: 'asset',
           fileName: 'r1-sw.js',
-          source: result.outputFiles[0].text
+          source: result.outputFiles[0].text,
         });
+      } else {
+        console.warn('[R1] r1-sw.js not found — Service Worker will be missing. Reinstall @r1-runtime/vite-plugin.');
       }
 
       // SQLite OPFS Proxy (required for OPFS persistence — must be served same-origin)
@@ -293,24 +305,36 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         console.error('[R1] sqlite3.wasm NOT FOUND. SQLite will fail to load.');
       }
 
-      // 2. Bundle and emit the Kernel Worker (sw.js)
-      const kernelEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
-      if (existsSync(kernelEntry)) {
-        console.log(`[R1] Bundling Kernel Worker from ${kernelEntry}...`);
+      // 2. Emit the Kernel Worker (sw.js)
+      // When installed from npm, use the pre-built file from dist/.
+      // When running in the monorepo, build from source as fallback.
+      const prebuiltKernel = resolve(_dirname, 'sw.js');
+      const kernelSrcEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
+
+      if (existsSync(prebuiltKernel)) {
+        console.log('[R1] Emitting pre-built Kernel Worker from dist/sw.js...');
+        this.emitFile({
+          type: 'asset',
+          fileName: 'sw.js',
+          source: readFileSync(prebuiltKernel, 'utf-8'),
+        });
+      } else if (existsSync(kernelSrcEntry)) {
+        console.log(`[R1] Bundling Kernel Worker from ${kernelSrcEntry}...`);
         const result = await esbuild.build({
-          entryPoints: [kernelEntry],
+          entryPoints: [kernelSrcEntry],
           bundle: true,
           write: false,
           format: 'iife',
           minify: true,
           loader: { '.css': 'empty' },
         });
-
         this.emitFile({
           type: 'asset',
           fileName: 'sw.js',
-          source: result.outputFiles[0].text
+          source: result.outputFiles[0].text,
         });
+      } else {
+        console.warn('[R1] sw.js not found — Kernel Worker will be missing. Reinstall @r1-runtime/vite-plugin.');
       }
 
       // 3. Bundle and emit the R1 Boot script (to avoid bare import errors)
@@ -384,27 +408,33 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
 
               let content = '';
               if (rawPathname.endsWith('/r1-sw.js') || rawPathname.endsWith('/sw.js')) {
-                const entry = rawPathname.endsWith('/r1-sw.js')
+                const isServiceWorker = rawPathname.endsWith('/r1-sw.js');
+                const prebuilt = resolve(_dirname, isServiceWorker ? 'r1-sw.js' : 'sw.js');
+                const srcEntry = isServiceWorker
                   ? (options.swSrc || resolve(_dirname, '../../sw/src/index.ts'))
                   : resolve(_dirname, '../../kernel/src/kernel.worker.ts');
 
-                if (!existsSync(entry)) {
-                  console.warn(`[R1 Plugin] Source not found: ${entry}`);
+                if (existsSync(prebuilt)) {
+                  // Use pre-built file (npm install path)
+                  content = readFileSync(prebuilt, 'utf-8');
+                } else if (existsSync(srcEntry)) {
+                  // Build from source (monorepo path)
+                  const result = await esbuild.build({
+                    entryPoints: [srcEntry],
+                    bundle: true,
+                    write: false,
+                    format: 'esm',
+                    target: 'es2020',
+                    minify: false,
+                    loader: { '.css': 'empty', '.wasm': 'binary' },
+                    define: { 'process.env.NODE_ENV': '"development"' }
+                  });
+                  content = result.outputFiles[0].text;
+                } else {
+                  console.warn(`[R1 Plugin] Source not found for ${rawPathname}`);
                   res.statusCode = 404;
-                  return res.end(`console.error("[R1 Plugin] Source not found for ${rawPathname}");`);
+                  return res.end(`console.error("[R1 Plugin] Source not found for ${rawPathname}. Reinstall @r1-runtime/vite-plugin.");`);
                 }
-
-                const result = await esbuild.build({
-                  entryPoints: [entry],
-                  bundle: true,
-                  write: false,
-                  format: 'esm',
-                  target: 'es2020',
-                  minify: false,
-                  loader: { '.css': 'empty', '.wasm': 'binary' },
-                  define: { 'process.env.NODE_ENV': '"development"' }
-                });
-                content = result.outputFiles[0].text;
               } else if (rawPathname.endsWith('/r1-boot.js')) {
                 const wasmName = getWasmName();
                 const bootScript = `

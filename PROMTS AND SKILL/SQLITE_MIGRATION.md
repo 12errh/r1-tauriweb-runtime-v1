@@ -1,4 +1,4 @@
-# Add SQLite to Existing R1 App (v0.3.5)
+# Add SQLite to Existing R1 App (v0.3.6)
 
 **Instructions**: Use this prompt to add SQLite to an app that's already running on R1.
 

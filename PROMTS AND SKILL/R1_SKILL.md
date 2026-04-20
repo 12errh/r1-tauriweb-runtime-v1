@@ -1,4 +1,4 @@
-# R1 TauriWeb Runtime — AI Agent Skill (v0.3.5)
+# R1 TauriWeb Runtime — AI Agent Skill (v0.3.6)
 
 > This file is the complete knowledge base for any AI agent working with R1.
 > Read this entire file before making any changes to the R1 project.
@@ -25,7 +25,7 @@ End user visits URL → full app runs in browser
 
 ---
 
-## Current Status (v0.3.5 - April 2026)
+## Current Status (v0.3.6 - April 2026)
 
 ✅ **PRODUCTION READY - ALL PACKAGES PUBLISHED**
 
@@ -43,8 +43,8 @@ End user visits URL → full app runs in browser
 | `@r1-runtime/apis` | **0.3.2** | Fixed `@r1/kernel` → `@r1-runtime/kernel` imports |
 | `@r1-runtime/sw` | 0.3.1 | No source changes |
 | `@r1-runtime/window` | 0.3.1 | No source changes |
-| `@r1-runtime/vite-plugin` | **0.3.4** | SQLite path fix + vite 5/6/7 support |
-| `@r1-runtime/cli` | **0.3.5** | Adds `@r1-runtime/window` to user's package.json on sync |
+| `@r1-runtime/vite-plugin` | **0.3.5** | Ships pre-built workers, SQLite path fix, vite 5/6/7 |
+| `@r1-runtime/cli` | **0.3.6** | Injects correct versions, adds window dep on sync |
 | `r1-macros` (crates.io) | 0.3.0 | |
 
 ---
@@ -135,20 +135,21 @@ All packages are published to npm under the `@r1-runtime` scope:
    - Virtual Window Manager
    - OS themes (macOS, Windows 11, Linux)
 
-6. **@r1-runtime/vite-plugin** (**v0.3.4** — use this version)
+6. **@r1-runtime/vite-plugin** (**v0.3.5** — use this version)
    - Automatic Rust→WASM compilation
    - Import patching (maps `@tauri-apps/api/*` → `@r1-runtime/apis/*`)
    - Boot script injection
    - Compatible with vite 5, 6, and 7
+   - **Pre-built `sw.js` and `r1-sw.js` shipped in the package** — no source build needed
    - SQLite files found correctly when installed from npm
 
-7. **@r1-runtime/cli** (**v0.3.5** — use this version)
-   - `npx @r1-runtime/cli sync` command
+7. **@r1-runtime/cli** (**v0.3.6** — use this version)
+   - `npx @r1-runtime/cli sync` command — always uses latest version automatically
    - Automatic project migration
    - Rewrites `#[tauri::command]` → `#[r1::command]` macro (with `pub fn`)
    - Strips `staticlib` from crate-type (Tauri v2 compatibility)
    - SQL import patching
-   - Injects: `^0.3.3` for core, `^0.3.2` for apis, `^0.3.1` for window, `^0.3.4` for vite-plugin
+   - Injects: `^0.3.3` for core, `^0.3.2` for apis, `^0.3.1` for window, `^0.3.5` for vite-plugin
 
 ### crates.io
 
@@ -545,7 +546,12 @@ npx serve dist
 
 ## Version History
 
-### v0.3.5 (Current)
+### v0.3.6 (Current)
+- vite-plugin: pre-built `sw.js` and `r1-sw.js` now shipped in the npm package — fixes 404 errors for Service Worker and Kernel Worker
+- vite-plugin: dev server also uses pre-built workers when source isn't available
+- cli: now injects `^0.3.5` for vite-plugin
+
+### v0.3.6
 - core: added `@r1-runtime/window` to dependencies — no more manual install needed
 - cli: now adds `@r1-runtime/window` to user's package.json on sync
 

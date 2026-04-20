@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/cli",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "R1 TauriWeb Runtime CLI — migrate Tauri apps to the browser with npx r1 sync.",
   "type": "module",
   "author": "R1 Runtime Team",

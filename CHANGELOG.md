@@ -5,17 +5,28 @@ All notable changes to R1 TauriWeb Runtime will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-04-20
+
+### Fixed
+- **vite-plugin**: `sw.js` (Kernel Worker) and `r1-sw.js` (Service Worker) are now pre-built and shipped inside the npm package. Previously the plugin tried to build them from TypeScript source at the user's build time, which failed when installed from npm (source files not included). Now the pre-built files are loaded from `dist/` automatically — fixes the 404 errors that caused `[R1] Kernel Worker crashed` and `[R1] Boot failed`.
+- **vite-plugin**: Dev server middleware also uses pre-built workers when source isn't available.
+- **cli**: Now injects `^0.3.5` for `@r1-runtime/vite-plugin`.
+
+### Packages
+- `@r1-runtime/vite-plugin` → **0.3.5**
+- `@r1-runtime/cli` → **0.3.6**
+
 ## [0.3.5] - 2026-04-20
 
 ### Fixed
-- **core**: Added `@r1-runtime/window` to `dependencies` — npm now installs it automatically when you install `@r1-runtime/core`. Previously users had to run `npm install @r1-runtime/window` manually.
+- **core**: Added `@r1-runtime/window` to `dependencies` — npm now installs it automatically when you install `@r1-runtime/core`. Previously users had to run `npm install @r1-runtime/window` manually, causing `Could not resolve "@r1-runtime/window"` build errors.
 - **cli**: `patch-package.ts` now explicitly adds `@r1-runtime/window` to the user's `package.json` when running `npx @r1-runtime/cli sync`.
 
 ### Packages
 - `@r1-runtime/core` → **0.3.3**
 - `@r1-runtime/cli` → **0.3.5**
 
-
+## [0.3.4] - 2026-04-20
 
 ### Fixed
 - **core**: `kernel-proxy.ts` was importing `@r1/window` and `@r1/kernel` (old names) — fixed to `@r1-runtime/window` and `@r1-runtime/kernel`. This caused the `Could not resolve "@r1/window"` build error in user apps.
@@ -34,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@r1-runtime/window` — no source change, stays at **0.3.1**
 - `@r1-runtime/sw` — no source change, stays at **0.3.1**
 
-
+## [0.3.3] - 2026-04-20
 
 ### Fixed
 - **cli**: `rewrite-rust.ts` now uses `#[r1::command]` macro instead of manual JSON rewriting — no more TODO comments in generated code
