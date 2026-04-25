@@ -1,4 +1,4 @@
-# R1 TauriWeb Runtime — AI Agent Skill (v0.3.6)
+# R1 TauriWeb Runtime — AI Agent Skill (v0.3.7)
 
 > This file is the complete knowledge base for any AI agent working with R1.
 > Read this entire file before making any changes to the R1 project.
@@ -25,7 +25,7 @@ End user visits URL → full app runs in browser
 
 ---
 
-## Current Status (v0.3.6 - April 2026)
+## Current Status (v0.3.7 - April 2026)
 
 ✅ **PRODUCTION READY - ALL PACKAGES PUBLISHED**
 
@@ -39,12 +39,12 @@ End user visits URL → full app runs in browser
 | Package | Version | Notes |
 |---|---|---|
 | `@r1-runtime/kernel` | **0.3.2** | Fixed `@r1/apis` → `@r1-runtime/apis` in kernel.worker |
-| `@r1-runtime/core` | **0.3.3** | Declares `@r1-runtime/window` as dependency — auto-installed |
+| `@r1-runtime/core` | **0.3.4** | Dynamic WindowManager import — fixes production build error |
 | `@r1-runtime/apis` | **0.3.2** | Fixed `@r1/kernel` → `@r1-runtime/kernel` imports |
 | `@r1-runtime/sw` | 0.3.1 | No source changes |
 | `@r1-runtime/window` | 0.3.1 | No source changes |
 | `@r1-runtime/vite-plugin` | **0.3.5** | Ships pre-built workers, SQLite path fix, vite 5/6/7 |
-| `@r1-runtime/cli` | **0.3.6** | Injects correct versions, adds window dep on sync |
+| `@r1-runtime/cli` | **0.3.7** | Injects correct versions, adds window dep on sync |
 | `r1-macros` (crates.io) | 0.3.0 | |
 
 ---
@@ -143,7 +143,7 @@ All packages are published to npm under the `@r1-runtime` scope:
    - **Pre-built `sw.js` and `r1-sw.js` shipped in the package** — no source build needed
    - SQLite files found correctly when installed from npm
 
-7. **@r1-runtime/cli** (**v0.3.6** — use this version)
+7. **@r1-runtime/cli** (**v0.3.7** — use this version)
    - `npx @r1-runtime/cli sync` command — always uses latest version automatically
    - Automatic project migration
    - Rewrites `#[tauri::command]` → `#[r1::command]` macro (with `pub fn`)
@@ -546,12 +546,16 @@ npx serve dist
 
 ## Version History
 
-### v0.3.6 (Current)
-- vite-plugin: pre-built `sw.js` and `r1-sw.js` now shipped in the npm package — fixes 404 errors for Service Worker and Kernel Worker
-- vite-plugin: dev server also uses pre-built workers when source isn't available
-- cli: now injects `^0.3.5` for vite-plugin
+### v0.3.7 (Current)
+- core: `@r1-runtime/window` is now a dynamic import — fixes `Failed to resolve module specifier "@r1-runtime/window"` in production builds
+- cli: injects `^0.3.4` for core
 
 ### v0.3.6
+- vite-plugin: pre-built `sw.js` and `r1-sw.js` now shipped in the npm package — fixes 404 errors for Service Worker and Kernel Worker
+- vite-plugin: dev server also uses pre-built workers when source isn't available
+- cli: injects `^0.3.5` for vite-plugin
+
+### v0.3.5
 - core: added `@r1-runtime/window` to dependencies — no more manual install needed
 - cli: now adds `@r1-runtime/window` to user's package.json on sync
 
@@ -560,7 +564,6 @@ npx serve dist
 - core: fixed `@r1/window`, `@r1/kernel`, `@r1/apis/window` → `@r1-runtime/*`
 - apis: fixed all `@r1/kernel` → `@r1-runtime/kernel` imports
 - vite-plugin: SQLite files now found when installed from npm (not just monorepo)
-- cli: injects `^0.3.2` for core/apis, `^0.3.4` for vite-plugin
 
 ### v0.3.3
 - CLI now uses `#[r1::command]` macro for Rust command rewriting (no more TODO comments)

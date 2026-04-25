@@ -1,4 +1,4 @@
-# R1 New App with SQLite Prompt (v0.3.6)
+# R1 New App with SQLite Prompt (v0.3.7)
 
 **Instructions**: Copy this prompt and describe your SQLite-powered app at the bottom.
 
@@ -7,7 +7,7 @@
 ## PROMPT — Build a New R1 App with SQLite
 
 ```
-You are building a new application with R1 TauriWeb Runtime v0.3.6 that uses SQLite for data persistence.
+You are building a new application with R1 TauriWeb Runtime v0.3.7 that uses SQLite for data persistence.
 
 Read the skill file first:
 PROMTS AND SKILL/R1_SKILL.md
@@ -162,7 +162,7 @@ window.addEventListener('r1:ready', async () => {
 STEP 6 — PACKAGE.JSON
 {
   "dependencies": {
-    "@r1-runtime/core": "^0.3.2",
+    "@r1-runtime/core": "^0.3.4",
     "@r1-runtime/apis": "^0.3.2"
   },
   "devDependencies": {

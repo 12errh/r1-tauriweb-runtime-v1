@@ -1,9 +1,18 @@
 import type { KernelRequest, KernelResponse } from '@r1-runtime/kernel';
 import { EventBus } from './event-bus';
-import { WindowManager } from '@r1-runtime/window';
 
 /** Let's wait up to 30s before considering the worker dead/stuck. */
 const REQUEST_TIMEOUT_MS = 30000;
+
+/** Lazy-loaded WindowManager — only imported when a dialog/window call arrives. */
+let _windowManager: any = null;
+async function getWindowManager() {
+  if (!_windowManager) {
+    const mod = await import('@r1-runtime/window');
+    _windowManager = mod.WindowManager;
+  }
+  return _windowManager;
+}
 
 /**
  * The main thread's proxy to the R1 Kernel Worker.
@@ -116,11 +125,12 @@ export class KernelProxy {
 
     try {
       if (api === 'dialog') {
+        const WM = await getWindowManager();
         if (method === 'message') {
-            await WindowManager.getInstance().showDialog({ message: args.message, title: args.title, type: 'alert' });
+            await WM.getInstance().showDialog({ message: args.message, title: args.title, type: 'alert' });
         }
         else if (method === 'confirm' || method === 'ask') {
-            result = await WindowManager.getInstance().showDialog({ message: args.message, title: args.title, type: 'confirm' });
+            result = await WM.getInstance().showDialog({ message: args.message, title: args.title, type: 'confirm' });
         }
       } else if (api === 'clipboard') {
         if (method === 'write_text') await navigator.clipboard.writeText(args.text);
@@ -140,15 +150,9 @@ export class KernelProxy {
         else if (method === 'app_data_dir') result = '/app_data';
         else if (method === 'resolve') result = args.paths.join('/'); 
       } else if (api === 'window') {
-        const wm = WindowManager.getInstance();
+        const WM = await getWindowManager();
+        const wm = WM.getInstance();
         const winId = args.id || 'main';
-        const methodMapping: Record<string, string> = {
-          'set_title': 'setTitle',
-          'close': 'close',
-          'maximize': 'maximize',
-          'minimize': 'minimize',
-          'focus': 'focus'
-        };
 
         if (method === 'close') {
           wm.close(winId);

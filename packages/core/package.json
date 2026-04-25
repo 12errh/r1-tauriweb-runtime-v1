@@ -1,6 +1,6 @@
 {
   "name": "@r1-runtime/core",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Main thread runtime for R1 — IPC bridge, EventBus, and boot synchronization.",
   "type": "module",
   "author": "R1 Runtime Team",

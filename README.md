@@ -114,12 +114,12 @@ All packages are live on npm and crates.io.
 | Package | Version | Description |
 |---|---|---|
 | [`@r1-runtime/kernel`](https://www.npmjs.com/package/@r1-runtime/kernel) | **0.3.2** | WASM orchestration, VFS, WASI shim |
-| [`@r1-runtime/core`](https://www.npmjs.com/package/@r1-runtime/core) | **0.3.3** | IPC bridge, EventBus, boot runtime |
+| [`@r1-runtime/core`](https://www.npmjs.com/package/@r1-runtime/core) | **0.3.4** | IPC bridge, EventBus, boot runtime |
 | [`@r1-runtime/apis`](https://www.npmjs.com/package/@r1-runtime/apis) | **0.3.2** | Tauri API shims (fs, event, dialog…) |
 | [`@r1-runtime/sw`](https://www.npmjs.com/package/@r1-runtime/sw) | 0.3.1 | Service Worker for `asset://` protocol |
 | [`@r1-runtime/window`](https://www.npmjs.com/package/@r1-runtime/window) | 0.3.1 | Virtual Window Manager + OS themes |
 | [`@r1-runtime/vite-plugin`](https://www.npmjs.com/package/@r1-runtime/vite-plugin) | **0.3.5** | Vite plugin — ships pre-built workers, Rust compilation |
-| [`@r1-runtime/cli`](https://www.npmjs.com/package/@r1-runtime/cli) | **0.3.6** | Migration CLI: `npx @r1-runtime/cli sync` |
+| [`@r1-runtime/cli`](https://www.npmjs.com/package/@r1-runtime/cli) | **0.3.7** | Migration CLI: `npx @r1-runtime/cli sync` |
 
 ### crates.io
 

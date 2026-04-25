@@ -1,4 +1,4 @@
-# R1 Debug Prompt (v0.3.6)
+# R1 Debug Prompt (v0.3.7)
 
 **Instructions for the user**: When your R1 app has errors, copy the prompt block below, paste it to your AI agent, and add your error output at the bottom.
 
@@ -6,7 +6,7 @@
 
 ## PROMPT — Debug My R1 App
 
-You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.6.
+You are debugging a Tauri application running on the R1 TauriWeb Runtime v0.3.7.
 
 Before doing anything, read the skill file at:
 `PROMTS AND SKILL/R1_SKILL.md`
@@ -95,7 +95,7 @@ Apply the fix. Common fixes:
 - Database paths must start with `/`
 
 **"error: can only #[wasm_bindgen] public functions"**
-- Your Rust command is missing `pub`. The CLI (v0.3.6+) adds it automatically.
+- Your Rust command is missing `pub`. The CLI (v0.3.7+) adds it automatically.
 - Fix manually: add `pub` before `fn`:
 
       #[command]
@@ -103,7 +103,7 @@ Apply the fix. Common fixes:
 
 **wasm-pack fails with "staticlib is not supported"**
 - Your `Cargo.toml` has `staticlib` in `crate-type` (Tauri v2 templates include it).
-- The CLI (v0.3.6+) removes it automatically.
+- The CLI (v0.3.7+) removes it automatically.
 - Fix manually in `src-tauri/Cargo.toml`:
 
       crate-type = ["cdylib", "rlib"]   # remove "staticlib"

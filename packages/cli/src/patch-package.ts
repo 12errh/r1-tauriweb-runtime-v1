@@ -27,7 +27,7 @@ export async function patchPackage(root: string): Promise<void> {
   let modified = false;
   
   if (!pkg.dependencies['@r1-runtime/core']) {
-    pkg.dependencies['@r1-runtime/core'] = '^0.3.3';
+    pkg.dependencies['@r1-runtime/core'] = '^0.3.4';
     modified = true;
   }
   

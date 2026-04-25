@@ -1,4 +1,4 @@
-# R1 New App Prompt (v0.3.6)
+# R1 New App Prompt (v0.3.7)
 
 **Instructions for the user**: Copy everything below the line and paste it to your AI agent. Describe what app you want to build at the bottom of the prompt.
 
@@ -7,7 +7,7 @@
 ## PROMPT — Build a New App With R1
 
 ```
-You are building a new Tauri-compatible application using the R1 TauriWeb Runtime v0.3.6.
+You are building a new Tauri-compatible application using the R1 TauriWeb Runtime v0.3.7.
 This app will run entirely in the browser — no installer, no server required.
 
 Before writing any code, read the skill file at:
@@ -98,7 +98,7 @@ STEP 5 — GENERATE PACKAGE.JSON
 Install R1 packages from npm:
 {
   "dependencies": {
-    "@r1-runtime/core": "^0.3.2",
+    "@r1-runtime/core": "^0.3.4",
     "@r1-runtime/apis": "^0.3.2"
   },
   "devDependencies": {
