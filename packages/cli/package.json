@@ -12,23 +12,6 @@
   "files": [
     "dist"
   ],
-  "keywords": [
-    "tauri",
-    "wasm",
-    "webassembly",
-    "browser",
-    "runtime",
-    "r1",
-    "cli",
-    "migration"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/12errh/r1-tauriweb-runtime-v1"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run"
