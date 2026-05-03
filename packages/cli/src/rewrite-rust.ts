@@ -3,9 +3,6 @@ import { fileExists, readFile, writeFile, createBackup, findRustFiles } from './
 
 /**
  * Rewrite Rust commands from #[tauri::command] to #[r1::command] macro.
- * 
- * This is the preferred approach — the r1-macros crate handles all JSON
- * serialization automatically, so we just swap the attribute.
  */
 export async function rewriteRust(root: string): Promise<void> {
   const srcDir = path.join(root, 'src-tauri', 'src');
@@ -14,8 +11,8 @@ export async function rewriteRust(root: string): Promise<void> {
   for (const file of rustFiles) {
     const content = readFile(file);
     
-    // Check if file has tauri::command annotations
-    if (!content.includes('#[tauri::command]')) {
+    // Check if file has tauri::command annotations or other tauri things we need to gate
+    if (!content.includes('#[tauri::command]') && !content.includes('tauri::Builder') && !content.includes('fn main()')) {
       continue;
     }
     
@@ -29,14 +26,72 @@ export async function rewriteRust(root: string): Promise<void> {
 }
 
 /**
- * Rewrite a single Rust file to use #[r1::command] macro.
+ * Rewrite a single Rust file to use #[r1::command] macro and add necessary stubs.
  */
 function rewriteRustFile(content: string): string {
   let result = content;
 
-  // 1. Add r1_macros import if not present
+  // 1. Add r1_macros and stubs
   if (!result.includes('use r1_macros') && !result.includes('r1_macros::command')) {
-    result = 'use r1_macros::command;\n' + result;
+    const stubs = `
+#[cfg(target_arch = "wasm32")]
+mod r1_tauri_stubs {
+    use serde::Deserialize;
+    use std::ops::Deref;
+
+    pub struct State<T>(pub T);
+    impl<T> Deref for State<T> {
+        type Target = T;
+        fn deref(&self) -> &Self::Target { &self.0 }
+    }
+    impl<'de, T: Default> Deserialize<'de> for State<T> {
+        fn deserialize<D>(_: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
+            Ok(State(T::default()))
+        }
+    }
+
+    pub struct Window;
+    impl Window {
+        pub fn label(&self) -> &str { "main" }
+        pub fn close(&self) -> Result<(), ()> { Ok(()) }
+    }
+    impl<'de> Deserialize<'de> for Window {
+        fn deserialize<D>(_: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
+            Ok(Window)
+        }
+    }
+
+    pub struct AppHandle<R = ()>(std::marker::PhantomData<R>);
+    impl<R> AppHandle<R> {
+        pub fn package_info(&self) -> &str { "" }
+    }
+    impl<'de, R> Deserialize<'de> for AppHandle<R> {
+        fn deserialize<D>(_: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
+            Ok(AppHandle(std::marker::PhantomData))
+        }
+    }
+
+    pub trait Runtime {}
+    impl Runtime for () {}
+}
+#[cfg(target_arch = "wasm32")]
+#[allow(unused_imports)]
+use r1_tauri_stubs::*;
+use r1_macros::command;
+`;
+    // Find a good place to insert - after inner attributes
+    const lines = result.split('\n');
+    let insertIndex = 0;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('#![') || line.startsWith('//') || line === '') {
+            insertIndex = i + 1;
+        } else {
+            break;
+        }
+    }
+    lines.splice(insertIndex, 0, stubs);
+    result = lines.join('\n');
   }
 
   // 2. Replace #[tauri::command] with #[command] and ensure function is pub
@@ -44,35 +99,45 @@ function rewriteRustFile(content: string): string {
     /#\[tauri::command\]\s*\n(\s*)(async\s+)?fn\s+/g,
     '#[command]\n$1pub $2fn '
   );
-  // Also handle cases where pub is already there
   result = result.replace(/#\[tauri::command\]/g, '#[command]');
 
-  // 3. Remove &str parameter types — replace with String (macro needs owned types)
-  //    Only inside function signatures that now have #[command]
+  // 3. Remove &str parameter types — replace with String
   result = result.replace(
     /(#\[command\][^{]*fn\s+\w+\s*\([^)]*)\b(\w+)\s*:\s*&str([^)]*\))/g,
     (match, before, paramName, after) => `${before}${paramName}: String${after}`
   );
 
-  // 4. Gate the run() function so it doesn't compile to WASM.
-  //    Step A: replace #[cfg_attr(mobile, tauri::mobile_entry_point)] with #[cfg(not(...))]
+  // 4. Clean up signatures in WASM
   result = result.replace(
-    /#\[cfg_attr\(mobile,\s*tauri::mobile_entry_point\)\]\s*\n(pub\s+)?fn\s+run\(\)/g,
-    '#[cfg(not(target_arch = "wasm32"))]\npub fn run()'
+      /(#\[command\][^{]*fn\s+\w+\s*\([^)]*)\bState\s*<\s*'\s*\w+\s*,\s*([^>]*)\s*>([^)]*\))/g,
+      '$1State<$2>$3'
   );
-  //    Step B: if run() still has no cfg gate, add one
-  //    (only matches lines NOT already preceded by #[cfg(not(target_arch...)])
-  if (!result.includes('#[cfg(not(target_arch = "wasm32"))]\npub fn run()') &&
-      !result.includes('#[cfg(not(target_arch = "wasm32"))]\nfn run()')) {
-    result = result.replace(
-      /^((pub\s+)?fn\s+run\(\))/gm,
-      '#[cfg(not(target_arch = "wasm32"))]\n$1'
-    );
-  }
 
-  // 5. Remove wasm_bindgen imports that may have been added by a previous run
-  //    (the macro handles this internally)
-  result = result.replace(/^use wasm_bindgen::prelude::\*;\n/gm, '');
+  result = result.replace(
+      /(#\[command\][^{]*fn\s+\w+)\s*<\s*[^>]*\s*>(\s*\()/g,
+      '$1$2'
+  );
+
+  result = result.replace(
+      /(#\[command\][^{]*fn\s+\w+\s*\([^)]*)\bAppHandle\s*<\s*[^>]*\s*>([^)]*\))/g,
+      '$1AppHandle$2'
+  );
+
+  // 5. Gate imports and functions
+  result = result.replace(
+    /^(use\s+tauri\b)/gm,
+    '#[cfg(not(target_arch = "wasm32"))]\n$1'
+  );
+
+  result = result.replace(
+    /^((pub\s+)?fn\s+run\(\))/gm,
+    '#[cfg(not(target_arch = "wasm32"))]\n$1'
+  );
+
+  result = result.replace(
+      /^((pub\s+)?fn\s+main\(\))/gm,
+      '#[cfg(not(target_arch = "wasm32"))]\n$1'
+  );
 
   return result;
 }

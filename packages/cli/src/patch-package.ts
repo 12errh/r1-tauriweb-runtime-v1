@@ -26,24 +26,29 @@ export async function patchPackage(root: string): Promise<void> {
   // Add R1 dependencies if not already present
   let modified = false;
   
-  if (!pkg.dependencies['@r1-runtime/core']) {
-    pkg.dependencies['@r1-runtime/core'] = '^0.3.4';
-    modified = true;
-  }
-  
-  if (!pkg.dependencies['@r1-runtime/apis']) {
-    pkg.dependencies['@r1-runtime/apis'] = '^0.3.2';
-    modified = true;
+  const deps = {
+      '@r1-runtime/core': '^0.3.4',
+      '@r1-runtime/apis': '^0.3.2',
+      '@r1-runtime/window': '^0.3.1',
+  };
+
+  const devDeps = {
+      '@r1-runtime/vite-plugin': '^0.3.5',
+      'wasm-pack': 'latest'
+  };
+
+  for (const [name, version] of Object.entries(deps)) {
+      if (!pkg.dependencies[name]) {
+          pkg.dependencies[name] = version;
+          modified = true;
+      }
   }
 
-  if (!pkg.dependencies['@r1-runtime/window']) {
-    pkg.dependencies['@r1-runtime/window'] = '^0.3.1';
-    modified = true;
-  }
-  
-  if (!pkg.devDependencies['@r1-runtime/vite-plugin']) {
-    pkg.devDependencies['@r1-runtime/vite-plugin'] = '^0.3.5';
-    modified = true;
+  for (const [name, version] of Object.entries(devDeps)) {
+      if (!pkg.devDependencies[name]) {
+          pkg.devDependencies[name] = version;
+          modified = true;
+      }
   }
   
   // Only write if we made changes

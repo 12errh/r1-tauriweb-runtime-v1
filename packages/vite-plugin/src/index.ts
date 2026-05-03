@@ -178,14 +178,17 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         '@tauri-apps/api/http':         '@r1-runtime/apis/http',
         '@tauri-apps/api/store':        '@r1-runtime/apis/store',
         '@tauri-apps/plugin-store':     '@r1-runtime/apis/store',
-        // SQLite: @tauri-apps/plugin-sql → @r1-runtime/apis/sql
-        '@tauri-apps/plugin-sql/index': '@r1-runtime/apis/sql',
         '@tauri-apps/plugin-sql':       '@r1-runtime/apis/sql',
+        '@tauri-apps/plugin-fs':        '@r1-runtime/apis/fs',
+        '@tauri-apps/plugin-dialog':    '@r1-runtime/apis/dialog',
+        '@tauri-apps/plugin-notification': '@r1-runtime/apis/notification',
+        '@tauri-apps/plugin-shell':     '@r1-runtime/apis/shell',
+        '@tauri-apps/plugin-http':      '@r1-runtime/apis/http',
         '@tauri-apps/api':              '@r1-runtime/apis',
       };
 
       // Check if code contains any Tauri imports
-      if (code.includes('@tauri-apps/api') || code.includes('@tauri-apps/plugin-store') || code.includes('@tauri-apps/plugin-sql')) {
+      if (code.includes('@tauri-apps/api') || code.includes('@tauri-apps/plugin-')) {
         let newCode = code;
         
         // Sort keys by length (longest first) to match sub-paths before bare imports
@@ -223,8 +226,6 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
 
     async generateBundle() {
       // 1. Emit the Service Worker (r1-sw.js)
-      // When installed from npm, use the pre-built file from dist/.
-      // When running in the monorepo, build from source as fallback.
       const prebuiltSw = resolve(_dirname, 'r1-sw.js');
       const swSrcEntry = options.swSrc || resolve(_dirname, '../../sw/src/index.ts');
 
@@ -250,76 +251,49 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
           fileName: 'r1-sw.js',
           source: result.outputFiles[0].text,
         });
-      } else {
-        console.warn('[R1] r1-sw.js not found — Service Worker will be missing. Reinstall @r1-runtime/vite-plugin.');
       }
 
-      // SQLite OPFS Proxy (required for OPFS persistence — must be served same-origin)
-      // Search in: user's app node_modules, monorepo root, and inside @r1-runtime/kernel
+      // SQLite OPFS Proxy
       const proxyPaths = [
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
         resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
-        // Inside @r1-runtime/kernel's own node_modules (npm install path)
         resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
-        // Hoisted to the vite-plugin's parent node_modules
-        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
       ];
       const proxyFile = proxyPaths.find(p => existsSync(p));
       if (proxyFile) {
-        console.log('[R1] Emitting SQLite OPFS Proxy from:', proxyFile);
         this.emitFile({
           type: 'asset',
           fileName: 'sqlite3-opfs-async-proxy.js',
           source: readFileSync(proxyFile, 'utf-8'),
         });
-      } else {
-        console.warn('[R1] sqlite3-opfs-async-proxy.js not found — OPFS persistence will not work. Run: npm install @sqlite.org/sqlite-wasm in packages/kernel');
       }
 
-      // SQLite WASM Binary (required for the core engine)
+      // SQLite WASM Binary
       const wasmPaths = [
         resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-        resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
         resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-        resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
-        // Inside @r1-runtime/kernel's own node_modules (npm install path)
         resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-        resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
-        // Hoisted to the vite-plugin's parent node_modules
-        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-        resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3.wasm'),
       ];
       const wasmFile = wasmPaths.find(p => existsSync(p));
       if (wasmFile) {
-        console.log('[R1] Emitting SQLite WASM from:', wasmFile);
         this.emitFile({
           type: 'asset',
           fileName: 'sqlite3.wasm',
           source: readFileSync(wasmFile),
         });
-      } else {
-        console.error('[R1] sqlite3.wasm NOT FOUND. SQLite will fail to load.');
       }
 
       // 2. Emit the Kernel Worker (sw.js)
-      // When installed from npm, use the pre-built file from dist/.
-      // When running in the monorepo, build from source as fallback.
       const prebuiltKernel = resolve(_dirname, 'sw.js');
       const kernelSrcEntry = resolve(_dirname, '../../kernel/src/kernel.worker.ts');
 
       if (existsSync(prebuiltKernel)) {
-        console.log('[R1] Emitting pre-built Kernel Worker from dist/sw.js...');
         this.emitFile({
           type: 'asset',
           fileName: 'sw.js',
           source: readFileSync(prebuiltKernel, 'utf-8'),
         });
       } else if (existsSync(kernelSrcEntry)) {
-        console.log(`[R1] Bundling Kernel Worker from ${kernelSrcEntry}...`);
         const result = await esbuild.build({
           entryPoints: [kernelSrcEntry],
           bundle: true,
@@ -333,11 +307,9 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
           fileName: 'sw.js',
           source: result.outputFiles[0].text,
         });
-      } else {
-        console.warn('[R1] sw.js not found — Kernel Worker will be missing. Reinstall @r1-runtime/vite-plugin.');
       }
 
-      // 3. Bundle and emit the R1 Boot script (to avoid bare import errors)
+      // 3. Bundle and emit the R1 Boot script
       const wasmName = getWasmName();
       const bootScript = `
         import { R1Runtime } from '@r1-runtime/core';
@@ -351,7 +323,6 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         });
       `;
       
-      console.log('[R1] Bundling R1 Boot script...');
       const result = await esbuild.build({
         stdin: {
           contents: bootScript,
@@ -363,9 +334,6 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
         format: 'esm',
         minify: true,
         loader: { '.css': 'empty' },
-        // Mark @r1-runtime/window as external — it's loaded by the kernel worker,
-        // not needed in the main thread boot script directly.
-        // core imports it but the WindowManager is only used when the kernel calls back.
         external: ['@r1-runtime/window'],
       });
 
@@ -377,14 +345,12 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
     },
 
     configureServer(server) {
-      // Use unshift to ensure R1 middleware is at the very top of the stack
       server.middlewares.stack.unshift({
         route: '',
         handle: (req: any, res: any, next: any) => {
           const url = req.url || '';
           const rawPathname = url.split('?')[0].split('#')[0];
           
-          // Identify virtual files strictly but independently of base path prefixes
           const isR1 = rawPathname.endsWith('/r1-sw.js') || 
                        rawPathname.endsWith('/sw.js') || 
                        rawPathname.endsWith('/r1-boot.js') ||
@@ -397,16 +363,12 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
             return next();
           }
 
-          // Ensure SQLite assets have CORP headers so they can be loaded by the secure worker
           res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
           res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
 
-          // We are handling this request. Strictly DO NOT call next() after this point.
           (async () => {
             try {
-              console.log(`[R1 Plugin] Intercepting: ${rawPathname}`);
-
-              let content = '';
+              let content: string | Buffer = '';
               if (rawPathname.endsWith('/r1-sw.js') || rawPathname.endsWith('/sw.js')) {
                 const isServiceWorker = rawPathname.endsWith('/r1-sw.js');
                 const prebuilt = resolve(_dirname, isServiceWorker ? 'r1-sw.js' : 'sw.js');
@@ -415,10 +377,8 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   : resolve(_dirname, '../../kernel/src/kernel.worker.ts');
 
                 if (existsSync(prebuilt)) {
-                  // Use pre-built file (npm install path)
                   content = readFileSync(prebuilt, 'utf-8');
                 } else if (existsSync(srcEntry)) {
-                  // Build from source (monorepo path)
                   const result = await esbuild.build({
                     entryPoints: [srcEntry],
                     bundle: true,
@@ -430,10 +390,6 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                     define: { 'process.env.NODE_ENV': '"development"' }
                   });
                   content = result.outputFiles[0].text;
-                } else {
-                  console.warn(`[R1 Plugin] Source not found for ${rawPathname}`);
-                  res.statusCode = 404;
-                  return res.end(`console.error("[R1 Plugin] Source not found for ${rawPathname}. Reinstall @r1-runtime/vite-plugin.");`);
                 }
               } else if (rawPathname.endsWith('/r1-boot.js')) {
                 const wasmName = getWasmName();
@@ -442,9 +398,7 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   import * as R1APIs from '@r1-runtime/apis';
                   
                   if (!window.__R1_BOOT_STATUS__) {
-                    // Expose APIs for console debugging
                     window.R1 = R1APIs;
-                    
                     const r1 = new R1Runtime();
                     r1.boot({ 
                       wasmPath: '/wasm/${wasmName}.js' 
@@ -503,12 +457,10 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   export const poll_oneoff = delegate('poll_oneoff');
                 `;
               } else if (rawPathname.startsWith('/wasm/') && rawPathname.endsWith('.js')) {
-                // Patch static WASM glue code on the fly
                 const filePath = resolve(config.root, wasmOut, rawPathname.replace('/wasm/', ''));
                 if (existsSync(filePath)) {
                   let code = readFileSync(filePath, 'utf8');
                   if (code.includes('from "env"')) {
-                    console.log(`[R1 Plugin] Middleware patching "env" in ${rawPathname}`);
                     const protocol = req.socket.remotePort === 443 ? 'https' : 'http'; 
                     const origin = `${protocol}://${req.headers.host}`;
                     const envUrl = `${origin}${virtualEnvId}`;
@@ -516,70 +468,40 @@ export function r1Plugin(options: R1PluginOptions = {}): Plugin {
                   }
                   content = code;
                 } else {
-                  return next(); // Let Vite handle 404
+                  return next();
                 }
               } else if (rawPathname.endsWith('/sqlite3.wasm')) {
                 const wasmPaths = [
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
                   resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
                   resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3.wasm'),
-                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3.wasm'),
-                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3.wasm'),
                 ];
                 const wasmFile = wasmPaths.find(p => existsSync(p));
                 if (wasmFile) {
                   res.setHeader('Content-Type', 'application/wasm');
-                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
                   return res.end(readFileSync(wasmFile));
                 }
-                return next();
               } else if (rawPathname.endsWith('/sqlite3-opfs-async-proxy.js')) {
                 const proxyPaths = [
                   resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-                  resolve(config.root, 'node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
                   resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-                  resolve(config.root, '../../node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
                   resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-                  resolve(_dirname, '../../kernel/node_modules/@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
-                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/dist/sqlite3-opfs-async-proxy.js'),
-                  resolve(_dirname, '../../../@sqlite.org/sqlite-wasm/sqlite3-opfs-async-proxy.js'),
                 ];
                 const proxyFile = proxyPaths.find(p => existsSync(p));
                 if (proxyFile) {
                   res.setHeader('Content-Type', 'application/javascript');
-                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
                   return res.end(readFileSync(proxyFile, 'utf-8'));
                 }
-                return next();
               }
 
               res.setHeader('Content-Type', 'application/javascript');
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-              
-              // Enable Cross-Origin Isolation for SharedArrayBuffer
               res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
               res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
               res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-              res.setHeader('Access-Control-Allow-Origin', '*');
-              
-              if (config.command === 'serve') {
-                console.log(`[R1 Plugin] Serving ${rawPathname} with CORP/COOP/COEP headers`);
-              }
-
-              if (rawPathname.endsWith('/r1-sw.js')) {
-                res.setHeader('Service-Worker-Allowed', '/');
-              }
               res.end(content);
             } catch (err) {
-              console.error(`[R1 Plugin] Error serving ${rawPathname}:`, err);
-              if (!res.headersSent) {
-                res.statusCode = 500;
-                res.setHeader('Content-Type', 'application/javascript');
-                res.end(`console.error("[R1 Plugin] Failed to build ${rawPathname}: ${String(err).replace(/"/g, "'")}");`);
-              }
+              next(err);
             }
           })();
         }
