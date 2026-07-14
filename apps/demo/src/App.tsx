@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { R1Runtime } from '@r1/core';
+import { R1Runtime } from '@r1-runtime/core';
 import './index.css';
 
 // ─── Web-native dialog shims (inline, no dynamic import needed) ────────────────
