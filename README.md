@@ -13,13 +13,13 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-orange)](https://todo-demo-by-r1-runtime.netlify.app/)
 
-**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a React + Rust + SQLite backend, running entirely in your browser.
+**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a React + Rust + SQLite backend, running entirely in your browser. *(Note: Demo may no longer be available as the project is discontinued.)*
 
 ---
 
 ## Realistic Capabilities & Expectations
 
-R1 is an **experimental proof-of-concept (POC)** designed to run lightweight, self-contained Tauri applications as static websites. It compiles the Rust backend to WebAssembly (`wasm32-wasip1`) and proxies Tauri's system calls to browser-level shims.
+R1 is an **experimental proof-of-concept (POC)** designed to run lightweight, self-contained Tauri applications as static websites. It compiles the Rust backend to WebAssembly (`wasm32-unknown-unknown` via `wasm-pack build --target web`) and proxies Tauri's system calls to browser-level shims.
 
 Contrary to early marketing claims, **R1 cannot run arbitrary or unmodified Tauri apps.** Standard desktop applications with native dependencies or complex OS integrations require significant manual rewrite, removal of incompatible dependencies, and custom porting to run on this runtime.
 
@@ -157,11 +157,15 @@ r1-tauriweb-runtime-v1/
 │   ├── sw/            — Service Worker
 │   ├── window/        — Virtual Window Manager
 │   ├── vite-plugin/   — Build tooling
-│   └── cli/           — Migration tool
+│   ├── cli/           — Migration tool
+│   └── wasm-template/ — Rust WASM template with example commands
 ├── apps/
 │   ├── todo-demo/     — Live demo app (React + Rust + SQLite)
 │   ├── phase6-test-app/ — TaskFlow: full SQLite CRUD demo
-│   └── demo/          — Technical showcase
+│   ├── demo/          — Technical showcase
+│   ├── test-greet/    — Tauri v2 greet test app
+│   ├── cli-test-app/  — CLI migration test app
+│   └── r1-notes-e2e/  — E2E notes app with SQLite
 ├── templates/
 │   └── r1-macros/     — Proc macro crate source
 └── tests/
