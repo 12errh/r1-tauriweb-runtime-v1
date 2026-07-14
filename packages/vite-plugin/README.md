@@ -43,8 +43,8 @@ interface R1PluginOptions {
   rustSrc?: string;
 
   /**
-   * WASM output directory (relative to rustSrc)
-   * @default './target/wasm32-unknown-unknown/release'
+   * WASM output directory (relative to project root)
+   * @default './public/wasm'
    */
   wasmOut?: string;
 
@@ -61,9 +61,8 @@ interface R1PluginOptions {
 ### 1. Rust → WASM Compilation
 
 During build, the plugin:
-1. Runs `cargo build --target wasm32-unknown-unknown --release`
-2. Runs `wasm-bindgen` to generate JavaScript bindings
-3. Copies WASM files to your `public/wasm/` directory
+1. Runs `wasm-pack build <rustSrc> --target web --out-dir <wasmOut>`
+2. Copies the generated WASM and JS glue files to the output directory
 
 ### 2. Import Patching
 
@@ -126,22 +125,15 @@ The plugin automatically patches imports for:
 
 ## Requirements
 
-- Vite 5.0+
-- Rust toolchain with `wasm32-unknown-unknown` target
-- `wasm-bindgen-cli` installed
+- Vite 5.0+ (also supports Vite 6 and 7)
+- Rust toolchain with `wasm-pack` installed
 
 ## Troubleshooting
 
-### "wasm-bindgen not found"
+### "wasm-pack: command not found"
 Install it:
 ```bash
-cargo install wasm-bindgen-cli
-```
-
-### "target wasm32-unknown-unknown not found"
-Add the target:
-```bash
-rustup target add wasm32-unknown-unknown
+cargo install wasm-pack
 ```
 
 ### WASM file not found in build
