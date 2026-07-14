@@ -21,11 +21,11 @@ npm install @r1-runtime/window
 
 ```typescript
 import { WindowManager } from '@r1-runtime/window';
-import '@r1-runtime/window/style.css';
+import '@r1-runtime/window/window.css';
 
 // Create window manager
 const wm = new WindowManager({
-  theme: 'macos', // 'macos' | 'windows11' | 'linux'
+  theme: 'macos', // 'macos' | 'windows' | 'linux' | 'auto'
   container: document.body,
 });
 
@@ -131,20 +131,20 @@ class Window {
 Import the CSS file:
 
 ```typescript
-import '@r1-runtime/window/style.css';
+import '@r1-runtime/window/window.css';
 ```
 
 Or in your HTML:
 
 ```html
-<link rel="stylesheet" href="node_modules/@r1-runtime/window/dist/style.css">
+<link rel="stylesheet" href="node_modules/@r1-runtime/window/dist/window.css">
 ```
 
 ## Example
 
 ```typescript
 import { WindowManager } from '@r1-runtime/window';
-import '@r1-runtime/window/style.css';
+import '@r1-runtime/window/window.css';
 
 const wm = new WindowManager({
   theme: 'macos',
