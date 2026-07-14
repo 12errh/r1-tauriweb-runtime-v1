@@ -294,7 +294,7 @@ If your app uses SQLite or OPFS persistence, your hosting provider must send the
 
 ```
 Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Embedder-Policy: credentialless
 Cross-Origin-Resource-Policy: cross-origin
 ```
 
@@ -305,7 +305,7 @@ Cross-Origin-Resource-Policy: cross-origin
   for = "/*"
   [headers.values]
     Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Embedder-Policy = "credentialless"
     Cross-Origin-Resource-Policy = "cross-origin"
 ```
 
@@ -318,7 +318,7 @@ Cross-Origin-Resource-Policy: cross-origin
       "source": "/(.*)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
         { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }
       ]
     }
