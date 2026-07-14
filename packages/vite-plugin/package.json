@@ -4,7 +4,7 @@
   "description": "Official Vite plugin for R1 — automates Rust→WASM compilation and Tauri import patching.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

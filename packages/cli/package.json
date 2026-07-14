@@ -4,7 +4,7 @@
   "description": "R1 TauriWeb Runtime CLI — migrate Tauri apps to the browser with npx r1 sync.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "bin": {
     "r1": "./dist/index.js"
   },

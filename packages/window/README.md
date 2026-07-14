@@ -165,4 +165,4 @@ mainWindow.on('close', () => {
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

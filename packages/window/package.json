@@ -4,7 +4,7 @@
   "description": "Virtual Window Manager for R1 — macOS, Windows 11, and Linux themed desktop environments.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

@@ -4,7 +4,7 @@
   "description": "Tauri API shims for R1 — fs, path, event, dialog, clipboard, os, window, store, and SQL.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

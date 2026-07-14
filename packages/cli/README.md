@@ -152,4 +152,4 @@ Use `npx @r1-runtime/cli sync` instead of just `r1 sync`.
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

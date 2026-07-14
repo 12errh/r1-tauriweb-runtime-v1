@@ -4,7 +4,7 @@
   "description": "Service Worker for R1 — handles asset:// URL interception and VFS asset loading.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

@@ -182,4 +182,4 @@ The `#[r1::command]` macro is designed to be a drop-in replacement for `#[tauri:
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

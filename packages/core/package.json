@@ -4,7 +4,7 @@
   "description": "Main thread runtime for R1 — IPC bridge, EventBus, and boot synchronization.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

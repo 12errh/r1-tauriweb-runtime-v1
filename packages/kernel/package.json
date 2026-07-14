@@ -4,7 +4,7 @@
   "description": "Core OS-like kernel for R1 — WASM orchestration, VFS, and WASI shim.",
   "type": "module",
   "author": "R1 Runtime Team",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

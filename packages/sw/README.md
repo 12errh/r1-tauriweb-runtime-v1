@@ -68,4 +68,4 @@ To see Service Worker logs, open DevTools → Application → Service Workers an
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

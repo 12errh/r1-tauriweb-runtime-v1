@@ -10,7 +10,7 @@
 [![npm cli](https://img.shields.io/npm/v/@r1-runtime/cli?label=npm%20cli)](https://www.npmjs.com/package/@r1-runtime/cli)
 [![crates.io](https://img.shields.io/crates/v/r1-macros?label=crates.io)](https://crates.io/crates/r1-macros)
 [![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen)](https://github.com/12errh/r1-tauriweb-runtime-v1)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-orange)](https://todo-demo-by-r1-runtime.netlify.app/)
 
 **[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a React + Rust + SQLite backend, running entirely in your browser. *(Note: Demo may no longer be available as the project is discontinued.)*
@@ -205,4 +205,4 @@ All AI resources are in the [`PROMTS AND SKILL/`](./PROMTS%20AND%20SKILL/) direc
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

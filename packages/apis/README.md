@@ -136,4 +136,4 @@ These APIs are designed to be drop-in replacements for `@tauri-apps/api`. Your e
 
 ## License
 
-MIT © 2026 R1 Runtime Team
+AGPL-3.0 © 2026 R1 Runtime Team

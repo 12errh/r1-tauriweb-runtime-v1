@@ -127,4 +127,4 @@ Open an issue on GitHub. A good bug report includes:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License that covers this project.
+By contributing, you agree that your contributions will be licensed under the AGPL-3.0 License that covers this project.
