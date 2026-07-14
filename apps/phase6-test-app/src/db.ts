@@ -1,7 +1,7 @@
 // SQLite Database Helper for R1
 // Uses R1's built-in SQL API
 
-import { Database } from "@r1/apis/sql";
+import { Database } from "@r1-runtime/apis/sql";
 
 export interface Task {
   id?: number;
