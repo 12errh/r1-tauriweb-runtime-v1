@@ -363,7 +363,7 @@ SQLite uses `SharedArrayBuffer` internally. Your hosting provider must send thes
 
 ```
 Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Embedder-Policy: credentialless
 Cross-Origin-Resource-Policy: cross-origin
 ```
 
@@ -524,7 +524,7 @@ Required if your app uses SQLite or OPFS persistence:
   for = "/*"
   [headers.values]
     Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Embedder-Policy = "credentialless"
     Cross-Origin-Resource-Policy = "cross-origin"
 ```
 
@@ -537,7 +537,7 @@ Required if your app uses SQLite or OPFS persistence:
       "source": "/(.*)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
         { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }
       ]
     }
@@ -576,7 +576,7 @@ Required if your app uses SQLite or OPFS persistence:
 | `std::fs` read/write | ✅ | Redirected to OPFS |
 | `serde` / `serde_json` | ✅ | Core to the JSON bridge |
 | Async Rust | ✅ | Via `wasm-bindgen-futures` |
-| External crates | ✅ Most | Must compile to `wasm32-wasip1` |
+| External crates | ✅ Most | Must compile to `wasm32-unknown-unknown` |
 | `std::time` | ✅ | Via WASI `clock_time_get` |
 | `rand` | ✅ | Via `crypto.getRandomValues()` |
 | HTTP requests | ✅ | Mapped to browser `fetch` |
