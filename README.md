@@ -1,6 +1,10 @@
 # R1 TauriWeb Runtime
 
-> Run your Tauri app in the browser. No server. No installer. Just a URL.
+> **⚠️ DISCONTINUED PROJECT**
+> This project is **discontinued and no longer actively maintained**. It was created as an experimental research project to explore running Tauri applications entirely in the browser via WebAssembly and virtualized environments.
+> *If you need any information or want to contact us, please feel free to reach out.*
+
+---
 
 [![npm](https://img.shields.io/npm/v/@r1-runtime/core?label=npm%20core)](https://www.npmjs.com/package/@r1-runtime/core)
 [![npm cli](https://img.shields.io/npm/v/@r1-runtime/cli?label=npm%20cli)](https://www.npmjs.com/package/@r1-runtime/cli)
@@ -9,29 +13,46 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-orange)](https://todo-demo-by-r1-runtime.netlify.app/)
 
-**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a Rust + SQLite backend, running entirely in your browser.
+**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a React + Rust + SQLite backend, running entirely in your browser.
 
 ---
 
-## What is R1?
+## Realistic Capabilities & Expectations
 
-R1 is a runtime that lets you deploy Tauri desktop apps as static websites. You write a standard Tauri app — Rust backend, React/Vue/Svelte frontend — and R1 compiles the Rust to WebAssembly and runs it in the browser.
+R1 is an **experimental proof-of-concept (POC)** designed to run lightweight, self-contained Tauri applications as static websites. It compiles the Rust backend to WebAssembly (`wasm32-wasip1`) and proxies Tauri's system calls to browser-level shims.
 
-Your users visit a URL. No download. No installer. No trust prompt.
+Contrary to early marketing claims, **R1 cannot run arbitrary or unmodified Tauri apps.** Standard desktop applications with native dependencies or complex OS integrations require significant manual rewrite, removal of incompatible dependencies, and custom porting to run on this runtime.
 
-```
-Your Tauri App
-      │
-      ▼  npm run build  (R1 compiles Rust → WASM automatically)
-      │
-      ▼  deploy to Vercel / Netlify / GitHub Pages
-      │
-      ▼  user visits URL → full app runs in browser
-```
+### What Actually Works (Real Capabilities)
+
+If you design or heavily refactor your Tauri app specifically for this runtime, the following features are functional:
+
+| Feature | What is actually supported |
+|---|---|
+| **Simple `invoke()` Calls** | Passing JSON strings back and forth between the JS frontend and the WASM-compiled Rust backend works. |
+| **Rust `std::fs` (Virtualized)** | File writes and reads inside Rust are intercepted by a WASI shim and routed to an in-memory Virtual File System (VFS) backed by the Origin Private File System (OPFS). |
+| **Event Bridge** | Emitting events from JS to Rust and listening to Rust-emitted events in JS (`emit`/`listen`) is supported. |
+| **Self-Contained SQLite** | SQLite database operations persist in the browser's OPFS sandbox. |
+| **Virtual Window Manager** | Multiple simulated OS-like windows can be rendered within a single browser tab using macOS/Windows 11 CSS themes. |
+| **Mock API Shims** | Basic subset of Tauri APIs (`fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard`) are partially shimmed to use equivalent Web/browser APIs. |
 
 ---
 
-## Quick Start
+## Severe Limitations (The Reality Check)
+
+Because the entire application runs inside the browser's strict sandbox, many native features are fundamentally impossible:
+
+* **Incompatible Rust Crates**: Any crate that depends on native C-bindings, OS system APIs, native cryptography, thread-pooling, or platform-specific libraries **will fail to compile to WASM** or crash at runtime.
+* **No Child Processes**: Commands like `Command::new` or Tauri's `shell::execute` are non-functional and stubbed as no-ops.
+* **No Raw Sockets or TCP/UDP**: Standard networking using `std::net` is unsupported. All external network calls must use standard Web `fetch` or the shimmed HTTP API.
+* **No Multi-Threading**: The WASM runtime in the Web Worker is strictly single-threaded. Multi-threaded asynchronous features or parallel loops will cause deadlocks or panic.
+* **No Native System UI**: Features like the system tray, global shortcuts, native file dialogues, native notifications, window transparency, and multi-window management do not exist and are simulated or disabled.
+
+---
+
+## Quick Start (For Historical Reference)
+
+To test a compatible or heavily-simplified app:
 
 ### Migrate an existing Tauri app
 
@@ -56,7 +77,7 @@ npm run build
 npx serve dist -l 3000
 ```
 
-That's it. See [GETTING_STARTED.md](./GETTING_STARTED.md) for a full walkthrough.
+See [GETTING_STARTED.md](./GETTING_STARTED.md) for a full walkthrough.
 
 ---
 
@@ -83,25 +104,6 @@ IPC Bridge ──► Kernel Worker ──► WASM (your Rust code)
                    VFS              WASI Shim
                  (OPFS)          (std::fs → OPFS)
 ```
-
----
-
-## Features
-
-| Feature | Status |
-|---|---|
-| `invoke()` — Tauri v1 and v2 compatible | ✅ |
-| `std::fs` read/write from Rust | ✅ |
-| Rust → JS event bridge (`emit` / `listen`) | ✅ |
-| SQLite with OPFS persistence | ✅ |
-| Persistent storage + data loss prevention | ✅ |
-| Virtual Window Manager (macOS, Windows 11, Linux themes) | ✅ |
-| Tauri APIs: `fs`, `event`, `store`, `os`, `path`, `dialog`, `clipboard` | ✅ |
-| WASM panic isolation | ✅ |
-| Automatic Rust → WASM compilation via Vite plugin | ✅ |
-| One-command migration: `npx @r1-runtime/cli sync` | ✅ |
-| `#[r1::command]` proc macro for automatic serialization | ✅ |
-| 105 tests passing | ✅ |
 
 ---
 
@@ -141,20 +143,6 @@ All packages are live on npm and crates.io.
 6. **Rust commands** — rewrites `#[tauri::command]` to `#[r1::command]` macro (adds `pub`, removes `staticlib` from crate-type)
 
 All modified files get a `.r1-backup` copy before changes are applied.
-
----
-
-## Limitations
-
-R1 runs in a browser sandbox. Some things are not possible:
-
-- **Child processes** — `shell::execute` is stubbed, not functional
-- **System tray / global shortcuts** — not browser concepts
-- **Raw sockets** — not available in WASM
-- **Native OS libraries** — crates that depend on C system libraries may not compile to WASM
-- **Multi-threading** — WASM workers are single-threaded
-
-For most Tauri apps — CRUD, file management, tools, utilities — none of these are blockers.
 
 ---
 

@@ -42,9 +42,9 @@ const wasmOrchestrator = new WasmOrchestrator(vfs, router, (event, payload) => {
 });
 
 // Modular Architecture: Plug in standard Tauri APIs
-router.use(new FsPlugin(vfs));
+router.use(new FsPlugin(vfs as any));
 router.use(new CorePlugin());
-router.use(new StorePlugin(vfs));
+router.use(new StorePlugin(vfs as any));
 router.use(new OsPlugin(onMainThreadCall));
 router.use(new HttpPlugin());
 router.use(new PathPlugin());
