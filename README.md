@@ -1,15 +1,19 @@
 # R1 TauriWeb Runtime
 
-> **ARCHIVED — This project is discontinued and will receive no further updates.**
->
-> R1 was an experimental proof-of-concept that explored running Tauri applications in the browser via WebAssembly. The research is complete. All published packages remain on npm and crates.io for reference, but are no longer maintained.
->
-> Thank you to everyone who followed along.
+> **⚠️ DISCONTINUED PROJECT**
+> This project is **discontinued and no longer actively maintained**. It was created as an experimental research project to explore running Tauri applications entirely in the browser via WebAssembly and virtualized environments.
+> *If you need any information or want to contact us, please feel free to reach out.*
 
 ---
 
-[![Archived](https://img.shields.io/badge/status-archived-lightgrey)](https://github.com/12errh/r1-tauriweb-runtime-v1)
+[![npm](https://img.shields.io/npm/v/@r1-runtime/core?label=npm%20core)](https://www.npmjs.com/package/@r1-runtime/core)
+[![npm cli](https://img.shields.io/npm/v/@r1-runtime/cli?label=npm%20cli)](https://www.npmjs.com/package/@r1-runtime/cli)
+[![crates.io](https://img.shields.io/crates/v/r1-macros?label=crates.io)](https://crates.io/crates/r1-macros)
+[![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen)](https://github.com/12errh/r1-tauriweb-runtime-v1)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-orange)](https://todo-demo-by-r1-runtime.netlify.app/)
+
+**[▶ Live Demo](https://todo-demo-by-r1-runtime.netlify.app/)** — a real Tauri todo app with a React + Rust + SQLite backend, running entirely in your browser. *(Note: Demo may no longer be available as the project is discontinued.)*
 
 ---
 
