@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@r1-runtime/core` → **0.3.4**
 - `@r1-runtime/cli` → **0.3.7**
 
-
+## [0.3.6] - 2026-04-20
 
 ### Fixed
 - **vite-plugin**: `sw.js` (Kernel Worker) and `r1-sw.js` (Service Worker) are now pre-built and shipped inside the npm package. Previously the plugin tried to build them from TypeScript source at the user's build time, which failed when installed from npm (source files not included). Now the pre-built files are loaded from `dist/` automatically — fixes the 404 errors that caused `[R1] Kernel Worker crashed` and `[R1] Boot failed`.
