@@ -104,11 +104,12 @@ export default defineConfig({
 ```json
 {
   "dependencies": {
-    "@r1-runtime/core": "^0.3.0",
-    "@r1-runtime/apis": "^0.3.0"
+    "@r1-runtime/core": "^0.3.4",
+    "@r1-runtime/apis": "^0.3.2",
+    "@r1-runtime/window": "^0.3.1"
   },
   "devDependencies": {
-    "@r1-runtime/vite-plugin": "^0.3.0"
+    "@r1-runtime/vite-plugin": "^0.3.5"
   }
 }
 ```
