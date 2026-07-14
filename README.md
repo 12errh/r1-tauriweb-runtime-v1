@@ -1,8 +1,7 @@
 # R1 TauriWeb Runtime
 
-> **⚠️ DISCONTINUED PROJECT**
-> This project is **discontinued and no longer actively maintained**. It was created as an experimental research project to explore running Tauri applications entirely in the browser via WebAssembly and virtualized environments.
-> *If you need any information or want to contact us, please feel free to reach out.*
+> **⚠️ DISCONTINUED**
+> This project is discontinued and will no longer receive updates or support.
 
 ---
 
