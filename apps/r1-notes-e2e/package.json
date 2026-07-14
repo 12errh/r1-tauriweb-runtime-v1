@@ -16,7 +16,7 @@
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
-    "@r1/vite-plugin": "*",
+    "@r1-runtime/vite-plugin": "*",
     "@tailwindcss/vite": "^4.0.0",
     "tailwindcss": "^4.0.0",
     "@tauri-apps/api": "^2.1.1",

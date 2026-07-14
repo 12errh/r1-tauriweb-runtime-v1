@@ -21,8 +21,8 @@
     "@tauri-apps/plugin-notification": "^2",
     "@tauri-apps/plugin-http": "^2",
     "@tauri-apps/plugin-store": "^2",
-    "@r1/core": "*",
-    "@r1/apis": "*"
+    "@r1-runtime/core": "*",
+    "@r1-runtime/apis": "*"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",
@@ -31,6 +31,6 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
     "@tauri-apps/cli": "^2",
-    "@r1/vite-plugin": "*"
+    "@r1-runtime/vite-plugin": "*"
   }
 }
