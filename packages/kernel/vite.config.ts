@@ -5,7 +5,7 @@ import { baseLibConfig } from '../../vite.config.base.ts';
 export default mergeConfig(baseLibConfig, defineConfig({
   plugins: [
     dts({ 
-      rollupTypes: false,
+      rollupTypes: true,
       skipDiagnostics: true,
       exclude: ['**/*.test.ts', '**/*.spec.ts']
     })
